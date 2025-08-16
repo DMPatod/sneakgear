@@ -1,0 +1,143 @@
+# This file tells Git about engine files that never really belong in source control. They are usually build products, log
+# files and intermediate files generated from a compiler or the engine runtime.
+#
+# Paths that start with / match paths relative to the root (where the .gitignore file is)
+# Paths that end with / will match a folder and all files under it (but not a regular file with no extension)
+# Use * for wildcards. Wildcards stop at path separators
+# Use ** for a wildcard that spans path separators
+# Paths in this file should use forward slash characters, not back slashes
+# Use \ to escape special characters like ! and #
+# Use ! to negate a previous pattern. But it doesn't work if the parent sub-folder was masked out already.
+
+# Visual Studio 2015 user specific files
+.vs/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Resource files
+*.res
+
+# Compiled Static libraries
+*.lib
+*.a
+
+# Executables
+*.exe
+*.com
+*.dll
+*.so
+*.dylib
+
+# Logs and other files
+*.log
+*.ini
+*.bak
+*.cache
+*.swp
+*.user
+*.config
+*.DS_Store # Mac OS
+*.lnk # Windows shortcut
+*.sln.docstates # Visual Studio
+
+# Unreal Engine generated files and folders
+# The root folders are relative to the project directory, not the engine installation.
+DerivedDataCache/
+Build/
+Binaries/
+Intermediate/
+Saved/
+
+# DDC folders created at the root of the drive (UnrealGameSync related)
+.vs/
+.vsconfig
+
+# VS Code generated files
+.vscode/
+
+# Rider generated files
+.idea/
+
+# Custom plugins generated files
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+Plugins/*/Saved/
+Plugins/*/Build/
+
+# Other engine specific
+*.udatasmith
+*.uprojectdirs
+*.assetlog
+*.buildlog
+*.upack
+*.target
+*.generated.h
+*.generated.cpp
+*.d.ts
+.uproject.asset
+.uproject.bak
+
+# Exclude cooked content from the Content directory if you're not using source control to manage cooked builds
+# and want to rely solely on the editor's cook-on-demand.
+# You generally SHOULD track uncooked .uasset and .umap files.
+# For cooked content, you'd typically handle it outside of the main project repo.
+# For example, if you build a shipping version, those cooked files go elsewhere.
+# Generally, do NOT ignore the Content folder itself, only specific cooked data within it if applicable.
+# Content/Cooked/
+# Content/Paks/
+
+# Lightmap data (can be large)
+*_BuiltData.uasset # These are lightmap and navigation mesh data for levels. You might choose to include these if you want to share built lighting, but they can be large. If ignored, each team member will have to rebuild lighting locally.
+
+# Crash Reports
+CrashReportClient/
+
+# Automation Tool logs
+AutomationTool/
+
+# This is for Git LFS setup. Make sure you install Git LFS if you use this.
+# For all .uasset and .umap files
+*.uasset filter=lfs diff=lfs merge=lfs -text
+*.umap filter=lfs diff=lfs merge=lfs -text
+
+# Other large binary files that might not be directly linked to Unreal's asset system
+*.fbx filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.tga filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.avi filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text # If you store blender files directly in the project
+
+# Visual Studio specific files for C++ projects
+*.VC.db
+*.VC.VC.opendb
+.vs
+*.sdf
+*.suo
+*.ipch
+*.user
+
+# Per-user config files, typically not shared
+Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini
