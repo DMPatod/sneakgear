@@ -33,6 +33,17 @@ public:
 	UFUNCTION()
 	void GiveItem(UItemDefinition* ItemDefinition);
 
+	UPROPERTY(BlueprintAssignable, Category = "Player|Health")
+	FIntStatUpdated OnHealthChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Player|Stamina")
+	FFloatStatUpdated OnStaminaChanged;
+
+	UFUNCTION(BlueprintCallable, Category = "Player|Stats")
+	void BroadcastCurrentStats();
+
+	UFUNCTION(BlueprintCallable, Category = "Player|Movement")
+	void ToggleSprint();
 protected:
 	virtual void BeginPlay() override;
 
@@ -46,9 +57,6 @@ protected:
 	void SetMaxHealth(int NewMaxHealth);
 
 	UPROPERTY(BlueprintAssignable, Category = "Player|Health")
-	FIntStatUpdated OnHealthChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Player|Health")
 	FPlayerIsDead OnPlayerDied;
 
 	UFUNCTION(BlueprintPure, Category = "Player|Stamina")
@@ -60,9 +68,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Player|Stamina")
 	void SetStaminaRegenRate(float NewStaminaRegenRate);
 
-	UPROPERTY(BlueprintAssignable, Category = "Player|Stamina")
-	FFloatStatUpdated OnStaminaChanged;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Movement", meta = (AllowPrivateAccess = "true"))
 	float NormalMaxWalkSpeed = 400.0f;
 
@@ -71,12 +76,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Player|Movement")
 	void SetSprinting(bool IsSprinting);
-
-	UFUNCTION(BlueprintCallable, Category = "Player|Movement")
-	void ToggleSprint();
-
-	UFUNCTION(BlueprintCallable, Category = "Player|Stats")
-	void BroadcastCurrentStats();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> UseAction;
@@ -95,8 +94,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Tools)
 	TObjectPtr<AEquipableToolBase> EquippedTool;
-
-
 
 private:
 	static constexpr int BaseStatValue = 3;

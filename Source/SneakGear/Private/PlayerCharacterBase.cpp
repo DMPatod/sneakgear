@@ -87,15 +87,17 @@ void APlayerCharacterBase::GiveItem(UItemDefinition* ItemDefinition)
 	switch (ItemDefinition->ItemType)
 	{
 	case EItemType::Tool:
-		auto* ToolDefinition = Cast<UEquipableToolDefinition>(ItemDefinition);
-		if (ToolDefinition)
 		{
-			AttachTool(ToolDefinition);
+			if (auto* ToolDefinition = Cast<UEquipableToolDefinition>(ItemDefinition))
+			{
+				AttachTool(ToolDefinition);
+			}
 		}
 		break;
 	case EItemType::Consumable:
 		break;
 	case EItemType::None:
+		break;
 	default:
 		break;
 	}
