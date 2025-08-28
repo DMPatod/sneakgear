@@ -2,7 +2,7 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "ItemData.h"
+#include "Data/ItemData.h"
 #include "EquipableToolBase.h"
 #include "EquipableToolDefinition.h"
 #include "InventoryComponent.h"

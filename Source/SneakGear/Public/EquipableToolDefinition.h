@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ItemDefinition.h"
+#include "Data/ItemDefinition.h"
 #include "EquipableToolDefinition.generated.h"
 
 class AEquipableToolBase;

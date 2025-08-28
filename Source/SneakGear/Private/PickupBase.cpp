@@ -1,6 +1,6 @@
 #include "PickupBase.h"
 
-#include "ItemDefinition.h"
+#include "Data/ItemDefinition.h"
 
 APickupBase::APickupBase()
 {
