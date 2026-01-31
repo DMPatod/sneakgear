@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Cover/CoverComponent.h"
 #include "GameFramework/Character.h"
 #include "StealthPlayerCharacter.generated.h"
 
@@ -42,10 +43,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> CrouchAction;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cover")
+	TObjectPtr<UCoverComponent> CoverComponent;
+
 private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 
 	void StartCrouch();
 	void StopCrouch();
+
+	bool bInCover = false;
+	FCoverHit CurrentCover;
 };

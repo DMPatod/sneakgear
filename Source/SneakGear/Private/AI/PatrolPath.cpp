@@ -1,4 +1,4 @@
-#include "PatrolPath.h"
+#include "AI/PatrolPath.h"
 
 FVector APatrolPath::GetWorldPoint(int32 Index) const
 {

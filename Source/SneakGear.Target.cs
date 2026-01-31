@@ -10,6 +10,6 @@ public class SneakGearTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V6;
 
-		ExtraModuleNames.AddRange( new string[] { "SneakGear" } );
+		ExtraModuleNames.AddRange(new string[] { "SneakGear" });
 	}
 }

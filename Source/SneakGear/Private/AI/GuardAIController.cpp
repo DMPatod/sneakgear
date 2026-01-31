@@ -1,6 +1,6 @@
-#include "GuardAIController.h"
+#include "AI/GuardAIController.h"
 
-#include "PatrolPath.h"
+#include "AI/PatrolPath.h"
 #include "Navigation/PathFollowingComponent.h"
 
 void AGuardAIController::OnPossess(APawn* InPawn)

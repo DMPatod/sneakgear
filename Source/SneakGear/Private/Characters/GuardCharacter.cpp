@@ -1,6 +1,7 @@
-#include "GuardCharacter.h"
+#include "Characters/GuardCharacter.h"
 
-#include "GuardAIController.h"
+#include "AI/GuardAIController.h"
+#include "Radar/RadarRegistrySubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 AGuardCharacter::AGuardCharacter()
@@ -14,10 +15,18 @@ AGuardCharacter::AGuardCharacter()
 void AGuardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (HasAuthority() && Controller == nullptr)
 	{
 		SpawnDefaultController();
+	}
+
+	if (auto W = GetWorld())
+	{
+		if (auto Radar = W->GetSubsystem<URadarRegistrySubsystem>())
+		{
+			Radar->RegisterActor(this);
+		}
 	}
 
 	if (!TargetActor)
@@ -31,6 +40,19 @@ void AGuardCharacter::BeginPlay()
 		Aic->SetPatrolPath(PatrolPath);
 		Aic->MovetoNextPoint();
 	}
+}
+
+void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (auto W = GetWorld())
+	{
+		if (auto Radar = W->GetSubsystem<URadarRegistrySubsystem>())
+		{
+			Radar->UnregisterActor(this);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 bool AGuardCharacter::CanSeeTarget(const AActor* Target, float& OutVisionScore) const

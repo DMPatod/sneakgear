@@ -14,14 +14,20 @@ class SNEAKGEAR_API AGuardCharacter : public ACharacter
 public:
 	AGuardCharacter();
 
-	virtual void Tick(float DeltaTime) override;
-
-protected:
-	bool bHasLineOfSight = false;
+	UPROPERTY(EditAnywhere, Category="Stealth|Awareness")
+	float Awareness = 0.f;
 
 	UPROPERTY(EditAnywhere, Category="Stealth|Vision")
 	float VisionRange = 1500.f;
 
+	UPROPERTY(EditAnywhere, Category="Stealth|Hearing")
+	float HearingRange = 1200.f;
+
+	bool bHasLineOfSight = false;
+
+	virtual void Tick(float DeltaTime) override;
+
+protected:
 	UPROPERTY(EditAnywhere, Category="Stealth|Vision", meta=(ClampMin="0", ClampMax="180"))
 	float VisionHalfAngleDeg = 45.f;
 
@@ -31,9 +37,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Stealth|Awareness")
 	float AwarenessDecayPerSecond = 0.35;
 
-	UPROPERTY(EditAnywhere, Category="Stealth|Awareness")
-	float Awareness = 0.f;
-
 	UPROPERTY(EditAnywhere, Category="Stealth")
 	TObjectPtr<AActor> TargetActor;
 
@@ -41,6 +44,7 @@ protected:
 	TObjectPtr<APatrolPath> PatrolPath;
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	bool CanSeeTarget(const AActor* Target, float& OutVisionScore) const;
 	void DrawDebugVision(const AActor* Target, bool bCanSee, float VisionScore) const;

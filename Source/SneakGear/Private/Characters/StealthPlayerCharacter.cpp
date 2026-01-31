@@ -1,4 +1,4 @@
-#include "StealthPlayerCharacter.h"
+#include "Characters/StealthPlayerCharacter.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -8,6 +8,7 @@
 
 AStealthPlayerCharacter::AStealthPlayerCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
 	bUseControllerRotationPitch = false;
@@ -33,6 +34,8 @@ AStealthPlayerCharacter::AStealthPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
+	CoverComponent = CreateDefaultSubobject<UCoverComponent>(TEXT("CoverComponent"));
 }
 
 void AStealthPlayerCharacter::BeginPlay()
@@ -43,6 +46,21 @@ void AStealthPlayerCharacter::BeginPlay()
 void AStealthPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!CoverComponent)
+	{
+		return;
+	}
+
+	if (!bInCover)
+	{
+		auto Hit = CoverComponent->FindCover();
+		if (Hit.bValid)
+		{
+			CurrentCover = Hit;
+			UE_LOG(LogTemp, Warning, TEXT("Cover found!"))
+		}
+	}
 }
 
 void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

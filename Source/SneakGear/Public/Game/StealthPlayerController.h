@@ -4,6 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "StealthPlayerController.generated.h"
 
+class URadarWidget;
 class UInputMappingContext;
 
 UCLASS()
@@ -17,4 +18,12 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Inputs")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
+
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<URadarWidget> RadarWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<URadarWidget> RadarWidget;
+
+	virtual void Tick(float DeltaSeconds) override;
 };
