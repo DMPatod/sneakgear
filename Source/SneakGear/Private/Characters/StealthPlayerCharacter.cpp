@@ -92,27 +92,19 @@ void AStealthPlayerCharacter::Move(const FInputActionValue& Value)
 	{
 		return;
 	}
-
-	auto ControlRot = Controller->GetControlRotation();
-	FRotator YawRot(0.f, ControlRot.Yaw, 0.f);
-
-	auto Forward = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
-	auto Right = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
-
-	auto Desired = (Forward * Axis.X) + (Right * Axis.Y);
-
+	
 	if (CoverState == ECoverState::Locked)
 	{
 		auto Tangent = CurrentCover.Tangent;
 		Tangent.Z = 0.f;
 		Tangent = Tangent.GetSafeNormal();
 
-		auto Slide = Axis.Y;
-		AddMovementInput(Tangent, Slide);
+		CoverMoveAxis = Axis.Y;
+		AddMovementInput(Tangent, CoverMoveAxis);
 
-		if (FMath::Abs(Slide) > 0.1f)
+		if (FMath::Abs(CoverMoveAxis) > 0.1f)
 		{
-			CoverFacingSign = (Slide >= 0.f) ? 1.f : -1.f;
+			CoverFacingSign = (CoverMoveAxis >= 0.f) ? 1.f : -1.f;
 		}
 
 		if (Axis.X < -0.4f)
@@ -232,7 +224,7 @@ void AStealthPlayerCharacter::UpdateCoverRotation(float DeltaTime)
 	SetActorRotation(NewRotation);
 }
 
-FVector AStealthPlayerCharacter::GetCoverTangetAlignedToCamera() const
+FVector AStealthPlayerCharacter::GetCoverTangentAlignedToCamera() const
 {
 	auto Tangent = CurrentCover.Tangent;
 	Tangent.Z = 0.f;

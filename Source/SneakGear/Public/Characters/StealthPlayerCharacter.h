@@ -24,6 +24,16 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	bool IsInCover() const
+	{
+		return CoverState == ECoverState::Locked;
+	}
+
+	float GetCoverMoveAxis() const
+	{
+		return CoverMoveAxis;
+	}
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -76,8 +86,9 @@ private:
 	void UpdateCoverApproach(float DeltaTime);
 	void UpdateCoverRotation(float DeltaTime);
 
-	FVector GetCoverTangetAlignedToCamera() const;
+	FVector GetCoverTangentAlignedToCamera() const;
 
 	float CoverApproachTime = 0.f;
 	float CoverFacingSign = 1.f;
+	float CoverMoveAxis = 0.f;
 };

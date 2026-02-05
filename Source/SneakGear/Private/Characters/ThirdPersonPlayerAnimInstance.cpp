@@ -1,0 +1,45 @@
+#include "Characters/ThirdPersonPlayerAnimInstance.h"
+
+#include "Characters/ThirdPersonPlayerCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+void UThirdPersonPlayerAnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+	OwnerPawn = TryGetPawnOwner();
+	ThirdPersonCharacter = Cast<AThirdPersonPlayerCharacter>(TryGetPawnOwner());
+	MovementComponent = ThirdPersonCharacter ? ThirdPersonCharacter->GetCharacterMovement() : nullptr;
+}
+
+void UThirdPersonPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+
+	if (!ThirdPersonCharacter || !MovementComponent)
+	{
+		NativeInitializeAnimation();
+		if (!ThirdPersonCharacter || !MovementComponent)
+		{
+			return;
+		}
+	}
+
+	auto Vel = ThirdPersonCharacter->GetVelocity();
+	auto Vel2D = FVector(Vel.X, Vel.Y, 0.f);
+
+	Speed = Vel2D.Size();
+	bIsInAir = MovementComponent->IsFalling();
+	bIsCrouching = ThirdPersonCharacter->bIsCrouched;
+
+	bIsRunning = Speed > 300.f;
+
+	if (Vel2D.SizeSquared() > 1.f)
+	{
+		auto LocalVel = ThirdPersonCharacter->GetActorTransform().InverseTransformVectorNoScale(Vel2D);
+		Direction = FMath::RadiansToDegrees(FMath::Atan2(LocalVel.Y, LocalVel.X));
+	}
+	else
+	{
+		Direction = 0.f;
+	}
+}
