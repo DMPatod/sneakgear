@@ -55,12 +55,19 @@ public:
 	float EnterDotThreshold = 0.35;
 
 	UPROPERTY(EditAnywhere, Category="Cover")
+	float ValidateCoverNormalThreshold = 0.85f;
+
+	UPROPERTY(EditAnywhere, Category="Cover")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 
 	UPROPERTY(EditAnywhere, Category="Cover")
 	bool bDrawDebug = true;
-	
+
 	FCoverHit FindCover() const;
+
+	UFUNCTION(BlueprintCallable, Category="Cover")
+	bool ValidateCover(const FVector& ExpectedNormal, float MaxDistance = 80.f) const;
+
 private:
 	ACharacter* GetOwnerCharacter() const;
 };

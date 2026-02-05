@@ -1,40 +1,10 @@
 #include "Characters/StealthPlayerCharacter.h"
 
-#include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AStealthPlayerCharacter::AStealthPlayerCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
-
-	auto MoveComponent = GetCharacterMovement();
-	MoveComponent->bOrientRotationToMovement = true;
-	MoveComponent->RotationRate = FRotator(0.f, 540.f, 0.f);
-	MoveComponent->JumpZVelocity = 600.f;
-	MoveComponent->AirControl = 0.35f;
-	MoveComponent->MaxWalkSpeed = 450.f;
-
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 350.f;
-	CameraBoom->bUsePawnControlRotation = true;
-
-	CameraBoom->SetRelativeLocation(FVector(0.f, 0.f, 60.f));
-
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	FollowCamera->bUsePawnControlRotation = false;
-
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-
 	CoverComponent = CreateDefaultSubobject<UCoverComponent>(TEXT("CoverComponent"));
 }
 
@@ -52,13 +22,42 @@ void AStealthPlayerCharacter::Tick(float DeltaTime)
 		return;
 	}
 
-	if (!bInCover)
+	if (CoverState == ECoverState::None)
 	{
 		auto Hit = CoverComponent->FindCover();
 		if (Hit.bValid)
 		{
-			CurrentCover = Hit;
-			UE_LOG(LogTemp, Warning, TEXT("Cover found!"))
+			EnterCover(Hit);
+		}
+	}
+	else
+	{
+		if (!CoverComponent->ValidateCover(CurrentCover.Normal, 90.f))
+		{
+			ExitCover();
+			return;
+		}
+
+		if (CoverState == ECoverState::Approaching)
+		{
+			UpdateCoverApproach(DeltaTime);
+		}
+		else if (CoverState == ECoverState::Locked)
+		{
+			UpdateCoverRotation(DeltaTime);
+		}
+	}
+
+	auto Velocity = GetVelocity();
+	FVector Velocity2D(Velocity.X, Velocity.Y, 0.f);
+	if (Velocity2D.Size() > 10.f)
+	{
+		const FVector MoveDirection = Velocity2D.GetSafeNormal();
+		const float AwayDot = FVector::DotProduct(MoveDirection, CurrentCover.Normal);
+		if (AwayDot > CoverExitBackDotThreshold)
+		{
+			ExitCover();
+			return;
 		}
 	}
 }
@@ -71,16 +70,6 @@ void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 	if (!Eic)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerInputComponent is not an enhanced input component"));
-	}
-
-	if (MoveAction)
-	{
-		Eic->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AStealthPlayerCharacter::Move);
-	}
-
-	if (LookAction)
-	{
-		Eic->BindAction(LookAction, ETriggerEvent::Triggered, this, &AStealthPlayerCharacter::Look);
 	}
 
 	if (JumpAction)
@@ -110,15 +99,31 @@ void AStealthPlayerCharacter::Move(const FInputActionValue& Value)
 	auto Forward = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
 	auto Right = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
 
-	AddMovementInput(Forward, Axis.X);
-	AddMovementInput(Right, Axis.Y);
-}
+	auto Desired = (Forward * Axis.X) + (Right * Axis.Y);
 
-void AStealthPlayerCharacter::Look(const FInputActionValue& Value)
-{
-	auto Axis = Value.Get<FVector2D>();
-	AddControllerYawInput(Axis.X);
-	AddControllerPitchInput(Axis.Y);
+	if (CoverState == ECoverState::Locked)
+	{
+		auto Tangent = CurrentCover.Tangent;
+		Tangent.Z = 0.f;
+		Tangent = Tangent.GetSafeNormal();
+
+		auto Slide = Axis.Y;
+		AddMovementInput(Tangent, Slide);
+
+		if (FMath::Abs(Slide) > 0.1f)
+		{
+			CoverFacingSign = (Slide >= 0.f) ? 1.f : -1.f;
+		}
+
+		if (Axis.X < -0.4f)
+		{
+			ExitCover();
+		}
+
+		return;
+	}
+
+	Super::Move(Value);
 }
 
 void AStealthPlayerCharacter::StartCrouch()
@@ -129,4 +134,123 @@ void AStealthPlayerCharacter::StartCrouch()
 void AStealthPlayerCharacter::StopCrouch()
 {
 	UnCrouch();
+}
+
+void AStealthPlayerCharacter::EnterCover(const FCoverHit& Hit)
+{
+	if (CoverState != ECoverState::None)
+	{
+		return;
+	}
+
+	CurrentCover = Hit;
+	CoverState = ECoverState::Approaching;
+
+	auto Move = GetCharacterMovement();
+	Move->MaxWalkSpeed = CoverMaxSpeed;
+
+	Move->SetPlaneConstraintEnabled(true);
+	Move->SetPlaneConstraintNormal(CurrentCover.Normal);
+	Move->SetPlaneConstraintOrigin(CurrentCover.SnapLocation);
+	Move->bConstrainToPlane = true;
+
+	Move->bOrientRotationToMovement = false;
+	bUseControllerRotationYaw = false;
+
+	Move->MaxWalkSpeed = 300.f;
+}
+
+void AStealthPlayerCharacter::LockCover()
+{
+	CurrentCover.Tangent *= -1.f;
+	CoverState = ECoverState::Locked;
+
+	auto Move = GetCharacterMovement();
+	Move->MaxWalkSpeed = CoverMaxSpeed;
+
+	Move->SetPlaneConstraintEnabled(true);
+	Move->SetPlaneConstraintNormal(CurrentCover.Normal);
+	Move->SetPlaneConstraintOrigin(CurrentCover.SnapLocation);
+	Move->bConstrainToPlane = true;
+
+	Move->bOrientRotationToMovement = false;
+	bUseControllerRotationYaw = false;
+}
+
+void AStealthPlayerCharacter::ExitCover()
+{
+	if (CoverState == ECoverState::None)
+	{
+		return;
+	}
+
+	CoverState = ECoverState::None;
+	CoverApproachTime = 0.f;
+
+	auto Move = GetCharacterMovement();
+
+	Move->SetPlaneConstraintEnabled(false);
+	Move->bConstrainToPlane = false;
+
+	Move->bOrientRotationToMovement = true;
+	Move->MaxWalkSpeed = 450;
+}
+
+void AStealthPlayerCharacter::UpdateCoverApproach(float DeltaTime)
+{
+	CoverApproachTime += DeltaTime;
+
+	if (CoverApproachTime > CoverApproachTimeout)
+	{
+		ExitCover();
+		return;
+	}
+
+	auto CurrentLocation = GetActorLocation();
+	auto TargetLocation = FVector(CurrentCover.SnapLocation.X, CurrentCover.SnapLocation.Y, CurrentLocation.Z);
+
+	auto NewLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, CoverAssistStrength);
+	SetActorLocation(NewLocation, true);
+
+	auto NewRotation = FMath::RInterpTo(GetActorRotation(), CurrentCover.SnapRotation, DeltaTime, CoverTurnSpeed);
+	SetActorRotation(NewRotation);
+
+	if (FVector::Dist2D(NewLocation, TargetLocation) <= CoverLockDistance)
+	{
+		LockCover();
+	}
+}
+
+void AStealthPlayerCharacter::UpdateCoverRotation(float DeltaTime)
+{
+	auto FaceDir = CurrentCover.Tangent * CoverFacingSign;
+	FaceDir.Z = 0.f;
+	FaceDir.Normalize();
+
+	auto TargetRotation = FaceDir.Rotation();
+	auto NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, CoverTurnSpeed);
+	SetActorRotation(NewRotation);
+}
+
+FVector AStealthPlayerCharacter::GetCoverTangetAlignedToCamera() const
+{
+	auto Tangent = CurrentCover.Tangent;
+	Tangent.Z = 0.f;
+	Tangent.Normalize();
+
+	if (!Controller)
+	{
+		return Tangent;
+	}
+
+	FRotator YawRot(0.f, Controller->GetControlRotation().Yaw, 0.f);
+	auto CamRight = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+	CamRight.Z = 0.f;
+	CamRight.Normalize();
+
+	if (FVector::DotProduct(CamRight, Tangent) < 0.f)
+	{
+		Tangent *= -1.f;
+	}
+	return Tangent;
 }

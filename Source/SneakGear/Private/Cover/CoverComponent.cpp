@@ -97,6 +97,50 @@ FCoverHit UCoverComponent::FindCover() const
 	return Out;
 }
 
+bool UCoverComponent::ValidateCover(const FVector& ExpectedNormal, float MaxDistance) const
+{
+	auto Character = GetOwnerCharacter();
+	if (!Character)
+	{
+		return false;
+	}
+
+	auto World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	auto Normal = ExpectedNormal.GetSafeNormal();
+
+	auto Start = Character->GetActorLocation();
+	auto End = Start - Normal * MaxDistance;
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(CoverValidate), false);
+	Params.AddIgnoredActor(Character);
+
+	FHitResult Hit;
+	auto bHit = World->LineTraceSingleByChannel(Hit, Start, End, TraceChannel, Params);
+	if (bDrawDebug)
+	{
+		DrawDebugLine(World, Start, End, bHit ? FColor::Green : FColor::Red, false, 0.f, 0, 1.f);
+	}
+
+	if (!bHit)
+	{
+		return false;
+	}
+
+	auto HitNormal = Hit.ImpactNormal.GetSafeNormal();
+	if (FMath::Abs(HitNormal.Z) >= MaxWallSlopeZ)
+	{
+		return false;
+	}
+
+	auto NormalDot = FVector::DotProduct(HitNormal, Normal);
+	return NormalDot > ValidateCoverNormalThreshold;
+}
+
 ACharacter* UCoverComponent::GetOwnerCharacter() const
 {
 	return Cast<ACharacter>(GetOwner());
