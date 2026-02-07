@@ -3,7 +3,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Characters/GuardCharacter.h"
 #include "Radar/RadarRegistrySubsystem.h"
-#include "Radar/RadarWidget.h"
+#include "UI/RadarWidget.h"
 #include "Blueprint/UserWidget.h"
 
 static FVector2D WorldToRadar(const FVector& PlayerLocation, const float PlayerYawDeg, const FVector& TargetLocation,

@@ -1,4 +1,4 @@
-#include "Radar/RadarWidget.h"
+#include "UI/RadarWidget.h"
 
 int32 URadarWidget::NativePaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry,
                                 const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements,

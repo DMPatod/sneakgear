@@ -3,6 +3,12 @@
 
 # JetBrains Rider user specific files
 .idea/
+*.DotSettings.user
+*.DotSettings
+
+# OS/editor noise
+.DS_Store
+.vscode/
 
 # Compiled Object files
 *.slo

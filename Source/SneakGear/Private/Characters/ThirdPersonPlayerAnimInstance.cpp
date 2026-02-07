@@ -3,6 +3,12 @@
 #include "Characters/ThirdPersonPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+static float CalculateDirectionDegrees(const FVector& Velocity2D, const FTransform& ActorTransform)
+{
+	auto LocalVel = ActorTransform.InverseTransformVectorNoScale(Velocity2D);
+	return FMath::RadiansToDegrees(FMath::Atan2(LocalVel.Y, LocalVel.X));
+}
+
 void UThirdPersonPlayerAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
@@ -35,8 +41,7 @@ void UThirdPersonPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (Vel2D.SizeSquared() > 1.f)
 	{
-		auto LocalVel = ThirdPersonCharacter->GetActorTransform().InverseTransformVectorNoScale(Vel2D);
-		Direction = FMath::RadiansToDegrees(FMath::Atan2(LocalVel.Y, LocalVel.X));
+		Direction = CalculateDirectionDegrees(Vel2D, ThirdPersonCharacter->GetActorTransform());
 	}
 	else
 	{

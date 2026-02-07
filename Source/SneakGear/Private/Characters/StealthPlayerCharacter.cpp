@@ -104,7 +104,7 @@ void AStealthPlayerCharacter::Move(const FInputActionValue& Value)
 
 		if (FMath::Abs(CoverMoveAxis) > 0.1f)
 		{
-			CoverFacingSign = (CoverMoveAxis >= 0.f) ? 1.f : -1.f;
+			CoverFacingSign = CoverMoveAxis >= 0.f ? 1.f : -1.f;
 		}
 
 		if (Axis.X < -0.4f)
