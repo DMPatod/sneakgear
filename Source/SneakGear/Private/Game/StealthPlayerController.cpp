@@ -3,6 +3,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Characters/GuardCharacter.h"
 #include "Radar/RadarRegistrySubsystem.h"
+#include "UI/MainHUDWidget.h"
 #include "UI/RadarWidget.h"
 #include "Blueprint/UserWidget.h"
 
@@ -26,6 +27,10 @@ static FVector2D WorldToRadar(const FVector& PlayerLocation, const float PlayerY
 	return Px * Dir;
 }
 
+AStealthPlayerController::AStealthPlayerController()
+{
+}
+
 void AStealthPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -33,29 +38,24 @@ void AStealthPlayerController::BeginPlay()
 	if (!DefaultMappingContext)
 	{
 		UE_LOG(LogTemp, Error, TEXT("DefaultMappingContext is not set on %s"), *GetName());
-		return;
 	}
 
 	auto* LocalPlayer = GetLocalPlayer();
-	if (!LocalPlayer)
+	if (LocalPlayer && DefaultMappingContext)
 	{
-		return;
-	}
-
-	auto* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-	if (!Subsystem)
-	{
-		return;
-	}
-
-	Subsystem->AddMappingContext(DefaultMappingContext, 0);
-
-	if (RadarWidgetClass)
-	{
-		RadarWidget = CreateWidget<URadarWidget>(this, RadarWidgetClass);
-		if (RadarWidget)
+		auto* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+		if (Subsystem)
 		{
-			RadarWidget->AddToViewport();
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
+
+	if (MainHUDWidgetClass)
+	{
+		MainHUDWidget = CreateWidget<UMainHUDWidget>(this, MainHUDWidgetClass);
+		if (MainHUDWidget)
+		{
+			MainHUDWidget->AddToViewport();
 		}
 	}
 }
@@ -64,6 +64,12 @@ void AStealthPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if (!MainHUDWidget)
+	{
+		return;
+	}
+
+	auto* RadarWidget = MainHUDWidget->GetRadarWidget();
 	if (!RadarWidget)
 	{
 		return;

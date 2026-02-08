@@ -11,8 +11,13 @@ class SNEAKGEAR_API URadarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
 	float RadarRadiusPx = 90.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
+	bool bUseWidgetSizeForRadius = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
 	float RadarRangeWorld = 2500.f;

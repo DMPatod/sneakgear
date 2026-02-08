@@ -5,6 +5,7 @@
 #include "StealthPlayerController.generated.h"
 
 class URadarWidget;
+class UMainHUDWidget;
 class UInputMappingContext;
 
 UCLASS()
@@ -13,6 +14,7 @@ class SNEAKGEAR_API AStealthPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+	AStealthPlayerController();
 	virtual void BeginPlay() override;
 
 protected:
@@ -20,10 +22,10 @@ protected:
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
-	TSubclassOf<URadarWidget> RadarWidgetClass;
+	TSubclassOf<UMainHUDWidget> MainHUDWidgetClass;
 
 	UPROPERTY()
-	TObjectPtr<URadarWidget> RadarWidget;
+	TObjectPtr<UMainHUDWidget> MainHUDWidget;
 
 	virtual void Tick(float DeltaSeconds) override;
 };

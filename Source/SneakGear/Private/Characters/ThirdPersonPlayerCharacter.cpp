@@ -1,11 +1,13 @@
 #include "Characters/ThirdPersonPlayerCharacter.h"
 
-#include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/PlayerAimComponent.h"
+#include "Components/PlayerWeaponComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Data/PlayerTuningData.h"
+#include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Weapon/WeaponBase.h"
 
 AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 {
@@ -37,7 +39,7 @@ AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 	ThirdPersonCamera->bUsePawnControlRotation = false;
 
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-	FirstPersonCamera->SetupAttachment(GetMesh(), FirstPersonCameraSocket);
+	FirstPersonCamera->SetupAttachment(GetMesh(), TEXT("first_person_camera_attachment"));
 	FirstPersonCamera->bUsePawnControlRotation = true;
 	FirstPersonCamera->SetRelativeLocation(FVector(0.f, 8.f, 4.f));
 
@@ -45,6 +47,10 @@ AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 	ThirdPersonCamera->SetActive(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
+	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
+	AimComponent = CreateDefaultSubobject<UPlayerAimComponent>(TEXT("AimComponent"));
+	DefaultTuningData = CreateDefaultSubobject<UPlayerTuningData>(TEXT("DefaultTuningData"));
 }
 
 UAbilitySystemComponent* AThirdPersonPlayerCharacter::GetAbilitySystemComponent() const
@@ -56,14 +62,37 @@ void AThirdPersonPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (StartedWeaponClass)
+	const UPlayerTuningData* ActiveTuning = TuningData ? TuningData : DefaultTuningData;
+	if (ActiveTuning)
 	{
-		CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(StartedWeaponClass);
-		if (CurrentWeapon)
+		const FPlayerMovementTuning& Movement = ActiveTuning->Movement;
+		GetCapsuleComponent()->InitCapsuleSize(Movement.CapsuleRadius, Movement.CapsuleHalfHeight);
+
+		auto* MoveComponent = GetCharacterMovement();
+		MoveComponent->MaxWalkSpeed = Movement.MaxWalkSpeed;
+		MoveComponent->JumpZVelocity = Movement.JumpZVelocity;
+		MoveComponent->AirControl = Movement.AirControl;
+		MoveComponent->RotationRate = FRotator(0.f, Movement.RotationRateYaw, 0.f);
+
+		const FPlayerCameraTuning& Camera = ActiveTuning->Camera;
+		if (CameraBoom)
 		{
-			CurrentWeapon->SetOwner(this);
-			CurrentWeapon->AttachToCharacter(GetMesh(), HolsterSocketName);
+			CameraBoom->TargetArmLength = Camera.CameraBoomLength;
+			CameraBoom->CameraLagSpeed = Camera.CameraLagSpeed;
+			CameraBoom->SetRelativeLocation(Camera.CameraBoomOffset);
 		}
+
+		if (FirstPersonCamera)
+		{
+			FirstPersonCamera->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform,
+			                                     Camera.FirstPersonCameraSocket);
+			FirstPersonCamera->SetRelativeLocation(Camera.FirstPersonCameraOffset);
+		}
+	}
+
+	if (AimComponent)
+	{
+		AimComponent->Initialize(CameraBoom, ThirdPersonCamera, FirstPersonCamera, ActiveTuning);
 	}
 }
 
@@ -73,37 +102,6 @@ void AThirdPersonPlayerCharacter::InitGAS()
 
 void AThirdPersonPlayerCharacter::BindHealthDeath()
 {
-}
-
-void AThirdPersonPlayerCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	auto bTPS = !bAimFirstPerson;
-
-	auto TargetOffset = bIsAiming ? bTPS ? OverTheShouldOffset_Aim : FVector::ZeroVector : OverTheShouldOffset_Normal;
-
-	if (CameraBoom)
-	{
-		CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaTime,
-		                                            AimInterpolationSpeed);
-	}
-
-	auto targetFOV = !bIsAiming ? NormalFOV : bAimFirstPerson ? AimFOV_FirstPerson : AimFOV_ThirdPerson;
-
-	if (ThirdPersonCamera && ThirdPersonCamera->IsActive())
-	{
-		ThirdPersonCamera->SetFieldOfView(FMath::FInterpTo(ThirdPersonCamera->FieldOfView, targetFOV, DeltaTime,
-		                                                   AimInterpolationSpeed));
-	}
-	if (FirstPersonCamera && FirstPersonCamera->IsActive())
-	{
-		FirstPersonCamera->SetFieldOfView(FMath::FInterpTo(FirstPersonCamera->FieldOfView, targetFOV, DeltaTime,
-		                                                   AimInterpolationSpeed));
-	}
-
-	auto TargetTurn = bIsAiming ? AimTurnRate : NormalTurnRate;
-	CurrentTurnScalar = FMath::FInterpTo(CurrentTurnScalar, TargetTurn, DeltaTime, 12.f);
 }
 
 void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -170,61 +168,57 @@ void AThirdPersonPlayerCharacter::Move(const FInputActionValue& Value)
 void AThirdPersonPlayerCharacter::Look(const FInputActionValue& Value)
 {
 	auto Axis = Value.Get<FVector2D>();
-	AddControllerYawInput(Axis.X * CurrentTurnScalar);
-	AddControllerPitchInput(Axis.Y * CurrentTurnScalar);
+	const float TurnScalar = AimComponent ? AimComponent->GetCurrentTurnScalar() : 1.f;
+	AddControllerYawInput(Axis.X * TurnScalar);
+	AddControllerPitchInput(Axis.Y * TurnScalar);
 }
 
 void AThirdPersonPlayerCharacter::StartAim()
 {
-	bIsAiming = true;
-
-	if (!bAimFirstPerson)
+	if (AimComponent)
 	{
-		ThirdPersonCamera->SetActive(true);
-		FirstPersonCamera->SetActive(false);
+		AimComponent->StartAim();
 	}
 }
 
 void AThirdPersonPlayerCharacter::StopAim()
 {
-	bIsAiming = false;
-
-	bAimFirstPerson = false;
-	ThirdPersonCamera->SetActive(true);
-	FirstPersonCamera->SetActive(false);
+	if (AimComponent)
+	{
+		AimComponent->StopAim();
+	}
 }
 
 void AThirdPersonPlayerCharacter::ToggleAimView()
 {
-	if (!bIsAiming)
+	if (AimComponent)
 	{
-		return;
-	}
-
-	bAimFirstPerson = !bAimFirstPerson;
-
-	if (bAimFirstPerson)
-	{
-		FirstPersonCamera->SetActive(true);
-		ThirdPersonCamera->SetActive(false);
-	}
-	else
-	{
-		ThirdPersonCamera->SetActive(true);
-		FirstPersonCamera->SetActive(false);
+		AimComponent->ToggleAimView();
 	}
 }
 
 void AThirdPersonPlayerCharacter::ToggleEquip()
 {
-	if (!CurrentWeapon)
+	if (!WeaponComponent)
 	{
 		return;
 	}
 
-	auto TargetSocket = CurrentWeapon->GetAttachParentSocketName() == HolsterSocketName
-		                    ? HandSocketName
-		                    : HolsterSocketName;
+	WeaponComponent->ToggleEquip();
+}
 
-	CurrentWeapon->AttachToCharacter(GetMesh(), TargetSocket);
+void AThirdPersonPlayerCharacter::StartFire()
+{
+	if (WeaponComponent)
+	{
+		WeaponComponent->StartFire();
+	}
+}
+
+void AThirdPersonPlayerCharacter::StopFire()
+{
+	if (WeaponComponent)
+	{
+		WeaponComponent->StopFire();
+	}
 }

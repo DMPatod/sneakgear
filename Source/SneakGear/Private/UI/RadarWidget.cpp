@@ -1,5 +1,13 @@
 #include "UI/RadarWidget.h"
 
+#include "Components/Widget.h"
+
+void URadarWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	SetClipping(EWidgetClipping::ClipToBounds);
+}
+
 int32 URadarWidget::NativePaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry,
                                 const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements,
                                 int32 LayerId,
@@ -7,6 +15,8 @@ int32 URadarWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Allotte
 {
 	auto Size = AllottedGeometry.GetLocalSize();
 	auto Center = Size * 0.5f;
+	const float RadiusFromSize = 0.5f * FMath::Min(Size.X, Size.Y);
+	const float EffectiveRadius = (bUseWidgetSizeForRadius && RadiusFromSize > 1.f) ? RadiusFromSize : RadarRadiusPx;
 
 	auto Segments = 48;
 	TArray<FVector2D> CirclePts;
@@ -14,7 +24,7 @@ int32 URadarWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Allotte
 	for (auto i = 0; i <= Segments; i++)
 	{
 		auto T = 2.f * PI * float(i) / float(Segments);
-		CirclePts.Add(Center + FVector2D(FMath::Cos(T), FMath::Sin(T)) * RadarRadiusPx);
+		CirclePts.Add(Center + FVector2D(FMath::Cos(T), FMath::Sin(T)) * EffectiveRadius);
 	}
 	FSlateDrawElement::MakeLines(OutDrawElements, LayerId, AllottedGeometry.ToPaintGeometry(), CirclePts,
 	                             ESlateDrawEffect::None, FLinearColor(1, 1, 1, 0.8));
@@ -24,8 +34,8 @@ int32 URadarWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Allotte
 	{
 		auto P = Center + C.RadarPos;
 
-		auto VisionPx = C.VisionRange / RadarRangeWorld * RadarRadiusPx;
-		auto HearingPX = C.HearingRange / RadarRangeWorld * RadarRadiusPx;
+		auto VisionPx = C.VisionRange / RadarRangeWorld * EffectiveRadius;
+		auto HearingPX = C.HearingRange / RadarRangeWorld * EffectiveRadius;
 
 		auto DrawRing = [&](float RadiusPx, float Alpha, float Thickness)
 		{

@@ -19,6 +19,18 @@ public:
 	virtual void StartFire();
 	virtual void StopFire();
 
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	float GetFireRate() const
+	{
+		return FireRate;
+	}
+
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	FName GetMuzzleSocketName() const
+	{
+		return MuzzleSocketName;
+	}
+
 protected:
 	FTimerHandle FireTimer;
 
