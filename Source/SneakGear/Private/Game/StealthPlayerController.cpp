@@ -1,7 +1,7 @@
 #include "Game/StealthPlayerController.h"
 
 #include "EnhancedInputSubsystems.h"
-#include "Characters/GuardCharacter.h"
+#include "Characters/AI/GuardCharacter.h"
 #include "Radar/RadarRegistrySubsystem.h"
 #include "UI/MainHUDWidget.h"
 #include "UI/RadarWidget.h"

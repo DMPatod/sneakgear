@@ -1,6 +1,5 @@
-#include "Characters/ThirdPersonPlayerCharacter.h"
+#include "Characters/Player/ThirdPersonPlayerCharacter.h"
 
-#include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -9,9 +8,6 @@
 #include "Data/PlayerTuningData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameplayEffectTypes.h"
-#include "GAS/HealthAttributeSet.h"
-#include "GAS/StaminaAttributeSet.h"
 
 AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 {
@@ -55,13 +51,6 @@ AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
 	AimComponent = CreateDefaultSubobject<UPlayerAimComponent>(TEXT("AimComponent"));
 	DefaultTuningData = CreateDefaultSubobject<UPlayerTuningData>(TEXT("DefaultTuningData"));
-
-	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
-	AbilitySystem->SetIsReplicated(true);
-	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
-
-	HealthSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthSet"));
-	StaminaSet = CreateDefaultSubobject<UStaminaAttributeSet>(TEXT("StaminaSet"));
 }
 
 void AThirdPersonPlayerCharacter::BeginPlay()
@@ -100,63 +89,6 @@ void AThirdPersonPlayerCharacter::BeginPlay()
 	{
 		AimComponent->Initialize(CameraBoom, ThirdPersonCamera, FirstPersonCamera, ActiveTuning);
 	}
-
-	InitGAS();
-	BindHealthDeath();
-}
-
-void AThirdPersonPlayerCharacter::InitGAS()
-{
-	if (!AbilitySystem)
-	{
-		AbilitySystem = FindComponentByClass<UAbilitySystemComponent>();
-		if (!AbilitySystem)
-		{
-			UE_LOG(LogTemp, Error, TEXT("AbilitySystemComponent is not set on %s"), *GetName());
-			return;
-		}
-	}
-
-	AbilitySystem->InitAbilityActorInfo(this, this);
-
-	auto ApplyGE = [&](TSubclassOf<UGameplayEffect> EffectClass)
-	{
-		if (!EffectClass)
-		{
-			return;
-		}
-
-		auto Context = AbilitySystem->MakeEffectContext();
-		Context.AddSourceObject(this);
-
-		auto Spec = AbilitySystem->MakeOutgoingSpec(EffectClass, 1.f, Context);
-		if (Spec.IsValid())
-		{
-			AbilitySystem->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-		}
-	};
-
-	ApplyGE(GE_DefaultHealth);
-	ApplyGE(GE_DefaultStamina);
-}
-
-void AThirdPersonPlayerCharacter::BindHealthDeath()
-{
-	if (!AbilitySystem)
-	{
-		return;
-	}
-
-	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UHealthAttributeSet::GetHealthAttribute()).AddLambda(
-		[this](const FOnAttributeChangeData& Data)
-		{
-			if (Data.NewValue <= 0.f)
-			{
-				auto TextLoc = GetActorLocation() + FVector(0.f, 0.f, 120.f);
-				auto Txt = FString::Printf(TEXT("Player Died!"));
-				DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::Red, 0.f, false);
-			}
-		});
 }
 
 void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -209,20 +141,6 @@ void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 	{
 		Eic->BindAction(EquipAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::ToggleEquip);
 	}
-}
-
-float AThirdPersonPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-                                              AController* EventInstigator, AActor* DamageCauser)
-{
-	const float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	if (AppliedDamage <= 0.f || !AbilitySystem)
-	{
-		return AppliedDamage;
-	}
-
-	AbilitySystem->ApplyModToAttribute(UHealthAttributeSet::GetHealthAttribute(), EGameplayModOp::Additive,
-	                                   -AppliedDamage);
-	return AppliedDamage;
 }
 
 void AThirdPersonPlayerCharacter::Move(const FInputActionValue& Value)

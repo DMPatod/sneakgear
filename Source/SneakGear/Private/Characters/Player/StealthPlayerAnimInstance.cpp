@@ -1,6 +1,6 @@
-#include "Characters/StealthPlayerAnimInstance.h"
+#include "Characters/Player/StealthPlayerAnimInstance.h"
 
-#include "Characters/StealthPlayerCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 
 void UStealthPlayerAnimInstance::NativeInitializeAnimation()
 {

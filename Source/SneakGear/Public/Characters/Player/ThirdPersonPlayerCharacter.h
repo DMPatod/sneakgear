@@ -1,16 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "AbilitySystemInterface.h"
+#include "Characters/BaseCharacter.h"
 #include "Components/PlayerAimComponent.h"
 #include "Components/PlayerWeaponComponent.h"
 #include "ThirdPersonPlayerCharacter.generated.h"
 
-class UGameplayEffect;
-class UStaminaAttributeSet;
-class UHealthAttributeSet;
-class UAbilitySystemComponent;
 class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
@@ -21,7 +16,7 @@ class AWeaponBase;
 struct FInputActionValue;
 
 UCLASS()
-class SNEAKGEAR_API AThirdPersonPlayerCharacter : public ACharacter, public IAbilitySystemInterface
+class SNEAKGEAR_API AThirdPersonPlayerCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
@@ -33,37 +28,17 @@ public:
 		return AimComponent ? AimComponent->IsAiming() : false;
 	}
 
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
-	{
-		return AbilitySystem;
-	}
-
 	AWeaponBase* GetCurrentWeapon() const
 	{
 		return WeaponComponent ? WeaponComponent->GetCurrentWeapon() : nullptr;
 	}
 
-	const UHealthAttributeSet* GetHealthSet() const
-	{
-		return HealthSet;
-	}
-
-	const UStaminaAttributeSet* GetStaminaSet() const
-	{
-		return StaminaSet;
-	}
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-	                         AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void Move(const FInputActionValue& Value);
 	virtual void Look(const FInputActionValue& Value);
-
-	void InitGAS();
-	void BindHealthDeath();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -103,21 +78,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerAimComponent> AimComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<UAbilitySystemComponent> AbilitySystem;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<UHealthAttributeSet> HealthSet;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<UStaminaAttributeSet> StaminaSet;
-
-	UPROPERTY(EditDefaultsOnly, Category="GAS")
-	TSubclassOf<UGameplayEffect> GE_DefaultHealth;
-
-	UPROPERTY(EditDefaultsOnly, Category="GAS")
-	TSubclassOf<UGameplayEffect> GE_DefaultStamina;
 
 private:
 	void StartFire();

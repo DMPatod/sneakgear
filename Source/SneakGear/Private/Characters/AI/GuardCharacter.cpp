@@ -1,4 +1,4 @@
-#include "Characters/GuardCharacter.h"
+#include "Characters/AI/GuardCharacter.h"
 
 #include "AbilitySystemComponent.h"
 #include "AI/GuardAIController.h"
@@ -12,12 +12,6 @@ AGuardCharacter::AGuardCharacter()
 
 	AIControllerClass = AGuardAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-
-	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
-	AbilitySystem->SetIsReplicated(true);
-	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
-
-	HealthSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthSet"));
 }
 
 void AGuardCharacter::BeginPlay()

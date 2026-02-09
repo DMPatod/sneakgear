@@ -1,4 +1,4 @@
-#include "Stealth/StealthSignatureComponent.h"
+#include "Components/Stealth/StealthSignatureComponent.h"
 
 UStealthSignatureComponent::UStealthSignatureComponent()
 {

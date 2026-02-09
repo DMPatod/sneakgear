@@ -1,6 +1,6 @@
-#include "Characters/ThirdPersonPlayerAnimInstance.h"
+#include "Characters/Player/ThirdPersonPlayerAnimInstance.h"
 
-#include "Characters/ThirdPersonPlayerCharacter.h"
+#include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 static float CalculateDirectionDegrees(const FVector& Velocity2D, const FTransform& ActorTransform)

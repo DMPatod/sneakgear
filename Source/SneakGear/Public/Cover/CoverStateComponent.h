@@ -1,28 +1,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ThirdPersonPlayerCharacter.h"
+#include "Components/ActorComponent.h"
 #include "Cover/CoverComponent.h"
-#include "StealthPlayerCharacter.generated.h"
+#include "CoverStateComponent.generated.h"
 
-class UInputAction;
+struct FInputActionValue;
 
-UCLASS()
-class SNEAKGEAR_API AStealthPlayerCharacter : public AThirdPersonPlayerCharacter
+UENUM(BlueprintType)
+enum class ECoverState : uint8
+{
+	None,
+	Approaching,
+	Locked
+};
+
+UCLASS(ClassGroup=(Cover), meta=(BlueprintSpawnableComponent))
+class SNEAKGEAR_API UCoverStateComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-	enum class ECoverState : uint8
-	{
-		None,
-		Approaching,
-		Locked
-	};
-
 public:
-	AStealthPlayerCharacter();
-
-	virtual void Tick(float DeltaTime) override;
+	UCoverStateComponent();
 
 	bool IsInCover() const
 	{
@@ -34,22 +33,14 @@ public:
 		return CoverMoveAxis;
 	}
 
+	bool HandleMoveInput(ACharacter* OwnerCharacter, const FInputActionValue& Value);
+
 protected:
 	virtual void BeginPlay() override;
-
-	virtual void Move(const FInputActionValue& Value) override;
-
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputAction> JumpAction;
-
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputAction> CrouchAction;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cover")
-	TObjectPtr<UCoverComponent> CoverComponent;
-
 	ECoverState CoverState = ECoverState::None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cover")
@@ -77,16 +68,15 @@ protected:
 	float CoverFaceTurnSpeed = 12.f;
 
 private:
-	void StartCrouch();
-	void StopCrouch();
+	void EnterCover(ACharacter* OwnerCharacter, const FCoverHit& Hit);
+	void LockCover(ACharacter* OwnerCharacter);
+	void ExitCover(ACharacter* OwnerCharacter);
+	void UpdateCoverApproach(ACharacter* OwnerCharacter, float DeltaTime);
+	void UpdateCoverRotation(ACharacter* OwnerCharacter, float DeltaTime);
+	FVector GetCoverTangentAlignedToCamera(const ACharacter* OwnerCharacter) const;
 
-	void EnterCover(const FCoverHit& Hit);
-	void LockCover();
-	void ExitCover();
-	void UpdateCoverApproach(float DeltaTime);
-	void UpdateCoverRotation(float DeltaTime);
-
-	FVector GetCoverTangentAlignedToCamera() const;
+	UPROPERTY(Transient)
+	TObjectPtr<UCoverComponent> CoverComponent;
 
 	float CoverApproachTime = 0.f;
 	float CoverFacingSign = 1.f;

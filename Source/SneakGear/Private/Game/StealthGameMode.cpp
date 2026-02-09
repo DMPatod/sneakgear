@@ -1,6 +1,6 @@
 #include "Game/StealthGameMode.h"
 
-#include "Characters/StealthPlayerCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Game/StealthPlayerController.h"
 
 AStealthGameMode::AStealthGameMode()

@@ -1,6 +1,6 @@
 #include "UI/PlayerVitalsWidget.h"
 
-#include "Characters/ThirdPersonPlayerCharacter.h"
+#include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"

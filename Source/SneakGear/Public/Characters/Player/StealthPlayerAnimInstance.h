@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ThirdPersonPlayerAnimInstance.h"
+#include "Characters/Player/ThirdPersonPlayerAnimInstance.h"
 #include "StealthPlayerAnimInstance.generated.h"
 
 class AStealthPlayerCharacter;
