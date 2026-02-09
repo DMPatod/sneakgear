@@ -2,6 +2,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GAS/HealthAttributeSet.h"
 
 AStealthPlayerCharacter::AStealthPlayerCharacter()
 {

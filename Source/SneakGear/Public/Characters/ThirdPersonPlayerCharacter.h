@@ -7,6 +7,7 @@
 #include "Components/PlayerWeaponComponent.h"
 #include "ThirdPersonPlayerCharacter.generated.h"
 
+class UGameplayEffect;
 class UStaminaAttributeSet;
 class UHealthAttributeSet;
 class UAbilitySystemComponent;
@@ -32,7 +33,10 @@ public:
 		return AimComponent ? AimComponent->IsAiming() : false;
 	}
 
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	{
+		return AbilitySystem;
+	}
 
 	AWeaponBase* GetCurrentWeapon() const
 	{
@@ -51,10 +55,15 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+	                         AController* EventInstigator, AActor* DamageCauser) override;
+
+	virtual void Move(const FInputActionValue& Value);
+	virtual void Look(const FInputActionValue& Value);
+
 	void InitGAS();
 	void BindHealthDeath();
-
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -98,14 +107,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystem;
 
-	UPROPERTY()
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UHealthAttributeSet> HealthSet;
 
-	UPROPERTY()
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UStaminaAttributeSet> StaminaSet;
 
-	virtual void Move(const FInputActionValue& Value);
-	virtual void Look(const FInputActionValue& Value);
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<UGameplayEffect> GE_DefaultHealth;
+
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<UGameplayEffect> GE_DefaultStamina;
 
 private:
 	void StartFire();

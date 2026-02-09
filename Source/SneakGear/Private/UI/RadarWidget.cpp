@@ -71,6 +71,20 @@ int32 URadarWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Allotte
 		LayerId++;
 	}
 
+	if (bDrawWorldNorth)
+	{
+		const float NorthAngleRad = FMath::DegreesToRadians(-WorldNorthYawDeg);
+		const FVector2D NorthDir(FMath::Cos(NorthAngleRad), FMath::Sin(NorthAngleRad));
+		const FVector2D NorthPos = Center + NorthDir * EffectiveRadius;
+
+		TArray<FVector2D> NorthLine;
+		NorthLine.Add(Center + NorthDir * (EffectiveRadius - 10.f));
+		NorthLine.Add(NorthPos);
+		FSlateDrawElement::MakeLines(OutDrawElements, LayerId, AllottedGeometry.ToPaintGeometry(), NorthLine,
+		                             ESlateDrawEffect::None, FLinearColor(0.2f, 0.8f, 1.f, 0.9f), true, 2.f);
+		LayerId++;
+	}
+
 	return Super::NativePaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle,
 	                          bParentEnabled);
 }

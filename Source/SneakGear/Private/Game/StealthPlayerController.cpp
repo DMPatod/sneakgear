@@ -7,14 +7,14 @@
 #include "UI/RadarWidget.h"
 #include "Blueprint/UserWidget.h"
 
-static FVector2D WorldToRadar(const FVector& PlayerLocation, const float PlayerYawDeg, const FVector& TargetLocation,
+static FVector2D WorldToRadar(const FVector& PlayerLocation, const float RefYawDeg, const FVector& TargetLocation,
                               const float RadarRadiusPx, const float RadarRangeWorld)
 {
 	auto Delta = TargetLocation - PlayerLocation;
 
 	FVector2D D2(Delta.X, Delta.Y);
 
-	auto YawRad = FMath::DegreesToRadians(PlayerYawDeg);
+	auto YawRad = FMath::DegreesToRadians(RefYawDeg);
 	auto Cos = FMath::Cos(-YawRad);
 	auto Sin = FMath::Sin(-YawRad);
 	FVector2D Rotator(D2.X * Cos - D2.Y * Sin, D2.X * Sin + D2.Y * Cos);
@@ -39,6 +39,10 @@ void AStealthPlayerController::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("DefaultMappingContext is not set on %s"), *GetName());
 	}
+	if (!DebugMappingContext && bDebug)
+	{
+		UE_LOG(LogTemp, Error, TEXT("DebugMappingContext is not set on %s"), *GetName());
+	}
 
 	auto* LocalPlayer = GetLocalPlayer();
 	if (LocalPlayer && DefaultMappingContext)
@@ -47,6 +51,11 @@ void AStealthPlayerController::BeginPlay()
 		if (Subsystem)
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+
+			if (bDebug)
+			{
+				Subsystem->AddMappingContext(DebugMappingContext, 0);
+			}
 		}
 	}
 
@@ -82,7 +91,10 @@ void AStealthPlayerController::Tick(float DeltaSeconds)
 	}
 
 	auto PlayerLocation = P->GetActorLocation();
-	auto PlayerYaw = P->GetActorRotation().Yaw;
+	FVector ViewLoc;
+	FRotator ViewRot;
+	GetPlayerViewPoint(ViewLoc, ViewRot);
+	auto RefYaw = ViewRot.Yaw;
 
 	auto RadarSys = GetWorld() ? GetWorld()->GetSubsystem<URadarRegistrySubsystem>() : nullptr;
 	if (!RadarSys)
@@ -115,12 +127,13 @@ void AStealthPlayerController::Tick(float DeltaSeconds)
 		C.HearingRange = G->HearingRange;
 		C.bHasLOS = G->bHasLineOfSight;
 
-		C.RadarPos = WorldToRadar(PlayerLocation, PlayerYaw, G->GetActorLocation(), RadarWidget->RadarRadiusPx,
+		C.RadarPos = WorldToRadar(PlayerLocation, RefYaw, G->GetActorLocation(), RadarWidget->RadarRadiusPx,
 		                          RadarWidget->RadarRangeWorld);
 
 		Contacts.Add(C);
 	}
 
+	RadarWidget->WorldNorthYawDeg = RefYaw;
 	RadarWidget->SetContacts(Contacts);
 	RadarWidget->InvalidateLayoutAndVolatility();
 }

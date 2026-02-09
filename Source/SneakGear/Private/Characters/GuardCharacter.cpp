@@ -1,6 +1,8 @@
 #include "Characters/GuardCharacter.h"
 
+#include "AbilitySystemComponent.h"
 #include "AI/GuardAIController.h"
+#include "GAS/HealthAttributeSet.h"
 #include "Radar/RadarRegistrySubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -10,6 +12,12 @@ AGuardCharacter::AGuardCharacter()
 
 	AIControllerClass = AGuardAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
+	AbilitySystem->SetIsReplicated(true);
+	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+	HealthSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthSet"));
 }
 
 void AGuardCharacter::BeginPlay()
@@ -40,6 +48,9 @@ void AGuardCharacter::BeginPlay()
 		Aic->SetPatrolPath(PatrolPath);
 		Aic->MovetoNextPoint();
 	}
+
+	InitGAS();
+	BindHealthDeath();
 }
 
 void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -130,8 +141,61 @@ void AGuardCharacter::DrawDebugVision(const AActor* Target, bool bCanSee, float 
 	DrawDebugLine(GetWorld(), Eyes, TargetPoint, ConeColor, false, 0.f, 0, 2.f);
 
 	auto TextLoc = GetActorLocation() + FVector(0.f, 0.f, 120.f);
-	auto Txt = FString::Printf(TEXT("A: %.2f, V: %.2f"), Awareness, VisionScore);
+	auto Txt = FString::Printf(TEXT("H: %.2f, A: %.2f, V: %.2f"), HealthSet.Get()->GetHealth(), Awareness, VisionScore);
 	DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::White, 0.f, false);
+}
+
+void AGuardCharacter::InitGAS()
+{
+	if (!AbilitySystem)
+	{
+		AbilitySystem = FindComponentByClass<UAbilitySystemComponent>();
+		if (!AbilitySystem)
+		{
+			UE_LOG(LogTemp, Error, TEXT("AbilitySystemComponent is not set on %s"), *GetName());
+			return;
+		}
+	}
+
+	AbilitySystem->InitAbilityActorInfo(this, this);
+
+	auto ApplyGE = [&](TSubclassOf<UGameplayEffect> EffectClass)
+	{
+		if (!EffectClass)
+		{
+			return;
+		}
+
+		auto Context = AbilitySystem->MakeEffectContext();
+		Context.AddSourceObject(this);
+
+		auto Spec = AbilitySystem->MakeOutgoingSpec(EffectClass, 1.f, Context);
+		if (Spec.IsValid())
+		{
+			AbilitySystem->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	};
+
+	ApplyGE(GE_DefaultHealth);
+}
+
+void AGuardCharacter::BindHealthDeath()
+{
+	if (!AbilitySystem)
+	{
+		return;
+	}
+
+	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UHealthAttributeSet::GetHealthAttribute()).AddLambda(
+		[this](const FOnAttributeChangeData& Data)
+		{
+			if (Data.NewValue <= 0.f)
+			{
+				auto TextLoc = GetActorLocation() + FVector(0.f, 0.f, 120.f);
+				auto Txt = FString::Printf(TEXT("Player Died!"));
+				DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::Red, 0.f, false);
+			}
+		});
 }
 
 void AGuardCharacter::Tick(float DeltaTime)
@@ -158,9 +222,9 @@ void AGuardCharacter::Tick(float DeltaTime)
 
 	DrawDebugVision(TargetActor, bCanSee, VisionScore);
 
-	if (GEngine)
-	{
-		auto Msg = FString::Printf(TEXT("Awareness: %.2f    LOS:"), Awareness, bCanSee ? TEXT("YES") : TEXT("NO"));
-		GEngine->AddOnScreenDebugMessage((uint64)(PTRINT)this, 0.f, FColor::Cyan, Msg);
-	}
+	// if (GEngine)
+	// {
+	// 	auto Msg = FString::Printf(TEXT("Awareness: %.2f    LOS:"), Awareness, bCanSee ? TEXT("YES") : TEXT("NO"));
+	// 	GEngine->AddOnScreenDebugMessage((uint64)(PTRINT)this, 0.f, FColor::Cyan, Msg);
+	// }
 }

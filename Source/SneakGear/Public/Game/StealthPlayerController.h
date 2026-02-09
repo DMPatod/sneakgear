@@ -21,6 +21,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Inputs")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
+	UPROPERTY(EditDefaultsOnly, Category="Inputs")
+	TObjectPtr<UInputMappingContext> DebugMappingContext;
+
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UMainHUDWidget> MainHUDWidgetClass;
 
@@ -28,4 +31,8 @@ protected:
 	TObjectPtr<UMainHUDWidget> MainHUDWidget;
 
 	virtual void Tick(float DeltaSeconds) override;
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Debug")
+	bool bDebug = false;
 };

@@ -22,6 +22,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
 	float RadarRangeWorld = 2500.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
+	bool bDrawWorldNorth = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
+	float WorldNorthYawDeg = 0.f;
+
 	UFUNCTION(BlueprintCallable)
 	void SetContacts(const TArray<FRadarContact>& NewContacts)
 	{
