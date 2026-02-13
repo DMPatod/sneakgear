@@ -89,6 +89,11 @@ void AThirdPersonPlayerCharacter::BeginPlay()
 	{
 		AimComponent->Initialize(CameraBoom, ThirdPersonCamera, FirstPersonCamera, ActiveTuning);
 	}
+
+	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
+	{
+		WeaponComponent->ToggleEquip();
+	}
 }
 
 void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

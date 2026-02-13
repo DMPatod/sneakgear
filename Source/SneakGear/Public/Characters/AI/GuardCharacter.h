@@ -52,6 +52,6 @@ protected:
 	void DrawDebugVision(const AActor* Target, bool bCanSee, float VisionScore) const;
 	
 private:
-	void InitGAS();
-	void BindHealthDeath();
+	virtual void InitGAS() override;
+	virtual void BindHealthDeath() override;
 };

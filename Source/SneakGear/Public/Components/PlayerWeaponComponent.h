@@ -26,8 +26,8 @@ public:
 	}
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	TSubclassOf<AWeaponBase> StartedWeaponClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon", meta=(AllowPrivateAccess="true"))
+	TSubclassOf<AWeaponBase> StartedWeaponClass;;
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName HandSocketName = "hand_r_socket";

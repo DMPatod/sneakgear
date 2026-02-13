@@ -31,6 +31,9 @@ public:
 		return MuzzleSocketName;
 	}
 
+	UPROPERTY(EditDefaultsOnly, Category="Animation")
+	TSubclassOf<UAnimInstance> AnimationSetBP;
+
 protected:
 	FTimerHandle FireTimer;
 
@@ -52,4 +55,11 @@ protected:
 	virtual void BeginPlay() override;
 
 	void FireOnce();
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Details")
+	FName Name;
+
+	UPROPERTY(EditDefaultsOnly, Category="Details")
+	int8 ClipSize = 8;
 };

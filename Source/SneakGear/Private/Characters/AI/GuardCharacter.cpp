@@ -3,8 +3,8 @@
 #include "AbilitySystemComponent.h"
 #include "AI/GuardAIController.h"
 #include "GAS/HealthAttributeSet.h"
-#include "Radar/RadarRegistrySubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "Radar/RadarRegistrySubsystem.h"
 
 AGuardCharacter::AGuardCharacter()
 {
@@ -131,12 +131,12 @@ void AGuardCharacter::DrawDebugVision(const AActor* Target, bool bCanSee, float 
 	DrawDebugLine(GetWorld(), Eyes, Eyes + RightDir * VisionRange, ConeColor, false, 0.f, 0, 1.5f);
 	DrawDebugLine(GetWorld(), Eyes, Eyes + Forward * VisionRange, ConeColor, false, 0.f, 0, 1.5f);
 
-	auto TargetPoint = Target->GetActorLocation() + FVector(0.f, 0.f, 60.f);
-	DrawDebugLine(GetWorld(), Eyes, TargetPoint, ConeColor, false, 0.f, 0, 2.f);
-
-	auto TextLoc = GetActorLocation() + FVector(0.f, 0.f, 120.f);
-	auto Txt = FString::Printf(TEXT("H: %.2f, A: %.2f, V: %.2f"), HealthSet.Get()->GetHealth(), Awareness, VisionScore);
-	DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::White, 0.f, false);
+	// auto TargetPoint = Target->GetActorLocation() + FVector(0.f, 0.f, 60.f);
+	// DrawDebugLine(GetWorld(), Eyes, TargetPoint, ConeColor, false, 0.f, 0, 2.f);
+	//
+	// auto TextLoc = GetActorLocation() + FVector(0.f, 0.f, 120.f);
+	// auto Txt = FString::Printf(TEXT("H: %.2f, A: %.2f, V: %.2f"), HealthSet.Get()->GetHealth(), Awareness, VisionScore);
+	// DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::White, 0.f, false);
 }
 
 void AGuardCharacter::InitGAS()

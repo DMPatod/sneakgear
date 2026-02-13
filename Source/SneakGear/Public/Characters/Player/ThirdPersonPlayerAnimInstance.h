@@ -31,6 +31,21 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
 	bool bIsRunning = false;
 
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
+	bool bIsProning = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Aim")
+	bool bIsAiming = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	TSubclassOf<UAnimInstance> WeaponSetAnimationBP;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	TSubclassOf<UAnimInstance> DefaultSetAnimationBP;
+
+	UPROPERTY(Transient)
+	TSubclassOf<UAnimInstance> LinkedWeaponSet;
+
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<APawn> OwnerPawn;

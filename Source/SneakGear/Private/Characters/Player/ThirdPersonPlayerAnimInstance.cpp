@@ -2,6 +2,7 @@
 
 #include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Weapon/WeaponBase.h"
 
 static float CalculateDirectionDegrees(const FVector& Velocity2D, const FTransform& ActorTransform)
 {
@@ -36,6 +37,7 @@ void UThirdPersonPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Speed = Vel2D.Size();
 	bIsInAir = MovementComponent->IsFalling();
 	bIsCrouching = ThirdPersonCharacter->bIsCrouched;
+	bIsAiming = ThirdPersonCharacter->IsAiming();
 
 	bIsRunning = Speed > 300.f;
 
@@ -46,5 +48,21 @@ void UThirdPersonPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	else
 	{
 		Direction = 0.f;
+	}
+
+	auto CurrentWeapon = ThirdPersonCharacter->GetCurrentWeapon();
+	if (CurrentWeapon && CurrentWeapon->AnimationSetBP)
+	{
+		WeaponSetAnimationBP = CurrentWeapon->AnimationSetBP;
+	}
+	else
+	{
+		WeaponSetAnimationBP = DefaultSetAnimationBP;
+	}
+
+	if (WeaponSetAnimationBP && WeaponSetAnimationBP != LinkedWeaponSet)
+	{
+		LinkAnimClassLayers(WeaponSetAnimationBP);
+		LinkedWeaponSet = WeaponSetAnimationBP;
 	}
 }

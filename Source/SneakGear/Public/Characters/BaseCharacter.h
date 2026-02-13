@@ -35,8 +35,8 @@ protected:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 	                         AController* EventInstigator, AActor* DamageCauser) override;
 
-	void InitGAS();
-	void BindHealthDeath();
+	virtual void InitGAS();
+	virtual void BindHealthDeath();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystem;
