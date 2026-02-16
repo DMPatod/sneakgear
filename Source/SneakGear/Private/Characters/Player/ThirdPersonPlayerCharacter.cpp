@@ -5,7 +5,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/PlayerAimComponent.h"
 #include "Components/PlayerWeaponComponent.h"
-#include "Data/PlayerTuningData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -50,44 +49,21 @@ AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 
 	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
 	AimComponent = CreateDefaultSubobject<UPlayerAimComponent>(TEXT("AimComponent"));
-	DefaultTuningData = CreateDefaultSubobject<UPlayerTuningData>(TEXT("DefaultTuningData"));
 }
 
 void AThirdPersonPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const UPlayerTuningData* ActiveTuning = TuningData ? TuningData : DefaultTuningData;
-	if (ActiveTuning)
+	BaseWalkSpeed = GetCharacterMovement() ? GetCharacterMovement()->MaxWalkSpeed : BaseWalkSpeed;
+	if (bIsSprinting && GetCharacterMovement())
 	{
-		const FPlayerMovementTuning& Movement = ActiveTuning->Movement;
-		GetCapsuleComponent()->InitCapsuleSize(Movement.CapsuleRadius, Movement.CapsuleHalfHeight);
-
-		auto* MoveComponent = GetCharacterMovement();
-		MoveComponent->MaxWalkSpeed = Movement.MaxWalkSpeed;
-		MoveComponent->JumpZVelocity = Movement.JumpZVelocity;
-		MoveComponent->AirControl = Movement.AirControl;
-		MoveComponent->RotationRate = FRotator(0.f, Movement.RotationRateYaw, 0.f);
-
-		const FPlayerCameraTuning& Camera = ActiveTuning->Camera;
-		if (CameraBoom)
-		{
-			CameraBoom->TargetArmLength = Camera.CameraBoomLength;
-			CameraBoom->CameraLagSpeed = Camera.CameraLagSpeed;
-			CameraBoom->SetRelativeLocation(Camera.CameraBoomOffset);
-		}
-
-		if (FirstPersonCamera)
-		{
-			FirstPersonCamera->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform,
-			                                     Camera.FirstPersonCameraSocket);
-			FirstPersonCamera->SetRelativeLocation(Camera.FirstPersonCameraOffset);
-		}
+		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * SprintSpeedMultiplier;
 	}
 
 	if (AimComponent)
 	{
-		AimComponent->Initialize(CameraBoom, ThirdPersonCamera, FirstPersonCamera, ActiveTuning);
+		AimComponent->Initialize(CameraBoom, ThirdPersonCamera, FirstPersonCamera);
 	}
 
 	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
@@ -140,6 +116,17 @@ void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 	if (AimViewToggleAction)
 	{
 		Eic->BindAction(AimViewToggleAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::ToggleAimView);
+	}
+
+	if (SprintToggleAction)
+	{
+		Eic->BindAction(SprintToggleAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::ToggleSprint);
+	}
+
+	if (JumpAction)
+	{
+		Eic->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		Eic->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	}
 
 	if (EquipAction)
@@ -206,6 +193,18 @@ void AThirdPersonPlayerCharacter::ToggleEquip()
 	}
 
 	WeaponComponent->ToggleEquip();
+}
+
+void AThirdPersonPlayerCharacter::ToggleSprint()
+{
+	auto* MoveComponent = GetCharacterMovement();
+	if (!MoveComponent)
+	{
+		return;
+	}
+
+	bIsSprinting = !bIsSprinting;
+	MoveComponent->MaxWalkSpeed = bIsSprinting ? BaseWalkSpeed * SprintSpeedMultiplier : BaseWalkSpeed;
 }
 
 void AThirdPersonPlayerCharacter::StartFire()

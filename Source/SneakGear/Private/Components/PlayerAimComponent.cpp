@@ -2,7 +2,6 @@
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Data/PlayerTuningData.h"
 
 UPlayerAimComponent::UPlayerAimComponent()
 {
@@ -12,16 +11,15 @@ UPlayerAimComponent::UPlayerAimComponent()
 void UPlayerAimComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentTurnScalar = 1.f;
+	CurrentTurnScalar = NormalTurnRate;
 }
 
 void UPlayerAimComponent::Initialize(USpringArmComponent* InCameraBoom, UCameraComponent* InThirdPersonCamera,
-                                     UCameraComponent* InFirstPersonCamera, const UPlayerTuningData* InTuningData)
+                                     UCameraComponent* InFirstPersonCamera)
 {
 	CameraBoom = InCameraBoom;
 	ThirdPersonCamera = InThirdPersonCamera;
 	FirstPersonCamera = InFirstPersonCamera;
-	TuningData = InTuningData;
 }
 
 void UPlayerAimComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -84,27 +82,26 @@ void UPlayerAimComponent::UpdateAim(float DeltaTime)
 		return;
 	}
 
-	const FPlayerAimTuning& Aim = TuningData ? TuningData->Aim : FPlayerAimTuning();
 	const bool bTPS = !bAimFirstPerson;
 
-	const FVector TargetOffset = bIsAiming ? (bTPS ? Aim.OverTheShoulderOffset_Aim : FVector::ZeroVector)
-	                                       : Aim.OverTheShoulderOffset_Normal;
+	const FVector TargetOffset = bIsAiming ? (bTPS ? OverTheShoulderOffsetAim : FVector::ZeroVector)
+	                                       : OverTheShoulderOffsetNormal;
 
-	CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaTime, Aim.AimInterpolationSpeed);
+	CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaTime, AimInterpolationSpeed);
 
-	const float TargetFOV = !bIsAiming ? Aim.NormalFOV : (bAimFirstPerson ? Aim.AimFOV_FirstPerson : Aim.AimFOV_ThirdPerson);
+	const float TargetFOV = !bIsAiming ? NormalFOV : (bAimFirstPerson ? AimFOVFirstPerson : AimFOVThirdPerson);
 
 	if (ThirdPersonCamera && ThirdPersonCamera->IsActive())
 	{
 		ThirdPersonCamera->SetFieldOfView(FMath::FInterpTo(ThirdPersonCamera->FieldOfView, TargetFOV, DeltaTime,
-		                                                  Aim.AimInterpolationSpeed));
+		                                                  AimInterpolationSpeed));
 	}
 	if (FirstPersonCamera && FirstPersonCamera->IsActive())
 	{
 		FirstPersonCamera->SetFieldOfView(FMath::FInterpTo(FirstPersonCamera->FieldOfView, TargetFOV, DeltaTime,
-		                                                  Aim.AimInterpolationSpeed));
+		                                                  AimInterpolationSpeed));
 	}
 
-	const float TargetTurn = bIsAiming ? Aim.AimTurnRate : Aim.NormalTurnRate;
+	const float TargetTurn = bIsAiming ? AimTurnRate : NormalTurnRate;
 	CurrentTurnScalar = FMath::FInterpTo(CurrentTurnScalar, TargetTurn, DeltaTime, 12.f);
 }

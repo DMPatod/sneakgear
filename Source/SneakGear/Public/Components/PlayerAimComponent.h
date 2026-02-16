@@ -6,7 +6,6 @@
 
 class UCameraComponent;
 class USpringArmComponent;
-class UPlayerTuningData;
 
 UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
 class SNEAKGEAR_API UPlayerAimComponent : public UActorComponent
@@ -20,7 +19,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void Initialize(USpringArmComponent* InCameraBoom, UCameraComponent* InThirdPersonCamera,
-	                UCameraComponent* InFirstPersonCamera, const UPlayerTuningData* InTuningData);
+	                UCameraComponent* InFirstPersonCamera);
 
 	void StartAim();
 	void StopAim();
@@ -46,8 +45,29 @@ private:
 	UPROPERTY()
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 
-	UPROPERTY()
-	TObjectPtr<const UPlayerTuningData> TuningData;
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	float NormalFOV = 90.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	float AimFOVFirstPerson = 60.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	float AimFOVThirdPerson = 72.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	float AimInterpolationSpeed = 18.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	float NormalTurnRate = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	float AimTurnRate = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	FVector OverTheShoulderOffsetNormal = FVector(0.f, 50.f, 75.f);
+
+	UPROPERTY(EditDefaultsOnly, Category="Aim")
+	FVector OverTheShoulderOffsetAim = FVector(0.f, 70.f, 60.f);
 
 	bool bIsAiming = false;
 	bool bAimFirstPerson = false;

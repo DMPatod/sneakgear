@@ -2,6 +2,8 @@
 
 #include "AbilitySystemComponent.h"
 #include "AI/GuardAIController.h"
+#include "AI/GuardManagerSubsystem.h"
+#include "Data/GuardArchetypeData.h"
 #include "GAS/HealthAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
 #include "Radar/RadarRegistrySubsystem.h"
@@ -18,6 +20,8 @@ void AGuardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	ApplyArchetypeData();
+
 	if (HasAuthority() && Controller == nullptr)
 	{
 		SpawnDefaultController();
@@ -28,6 +32,10 @@ void AGuardCharacter::BeginPlay()
 		if (auto Radar = W->GetSubsystem<URadarRegistrySubsystem>())
 		{
 			Radar->RegisterActor(this);
+		}
+		if (auto GuardManager = W->GetSubsystem<UGuardManagerSubsystem>())
+		{
+			GuardManager->RegisterGuard(this);
 		}
 	}
 
@@ -55,9 +63,38 @@ void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		{
 			Radar->UnregisterActor(this);
 		}
+		if (auto GuardManager = W->GetSubsystem<UGuardManagerSubsystem>())
+		{
+			GuardManager->UnregisterGuard(this);
+		}
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void AGuardCharacter::SetTargetActor(AActor* NewTarget)
+{
+	TargetActor = NewTarget;
+}
+
+void AGuardCharacter::AddAwareness(float DeltaAwareness)
+{
+	Awareness = FMath::Clamp(Awareness + DeltaAwareness, 0.f, 1.f);
+}
+
+void AGuardCharacter::ApplyArchetypeData()
+{
+	if (!ArchetypeData)
+	{
+		return;
+	}
+
+	Awareness = FMath::Clamp(ArchetypeData->InitialAwareness, 0.f, 1.f);
+	VisionRange = ArchetypeData->VisionRange;
+	VisionHalfAngleDeg = ArchetypeData->VisionHalfAngleDeg;
+	HearingRange = ArchetypeData->HearingRange;
+	AwarenessGainPerSecond = ArchetypeData->AwarenessGainPerSecond;
+	AwarenessDecayPerSecond = ArchetypeData->AwarenessDecayPerSecond;
 }
 
 bool AGuardCharacter::CanSeeTarget(const AActor* Target, float& OutVisionScore) const

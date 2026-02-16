@@ -7,6 +7,7 @@
 class UGameplayEffect;
 class UHealthAttributeSet;
 class APatrolPath;
+class UGuardArchetypeData;
 
 UCLASS()
 class SNEAKGEAR_API AGuardCharacter : public ABaseCharacter
@@ -27,9 +28,18 @@ public:
 
 	bool bHasLineOfSight = false;
 
+	UFUNCTION(BlueprintCallable, Category="Stealth")
+	void SetTargetActor(AActor* NewTarget);
+
+	UFUNCTION(BlueprintCallable, Category="Stealth|Awareness")
+	void AddAwareness(float DeltaAwareness);
+
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+	UPROPERTY(EditDefaultsOnly, Category="Stealth|Archetype")
+	TObjectPtr<UGuardArchetypeData> ArchetypeData;
+
 	UPROPERTY(EditAnywhere, Category="Stealth|Vision", meta=(ClampMin="0", ClampMax="180"))
 	float VisionHalfAngleDeg = 45.f;
 
@@ -50,6 +60,7 @@ protected:
 
 	bool CanSeeTarget(const AActor* Target, float& OutVisionScore) const;
 	void DrawDebugVision(const AActor* Target, bool bCanSee, float VisionScore) const;
+	void ApplyArchetypeData();
 	
 private:
 	virtual void InitGAS() override;

@@ -34,9 +34,6 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputAction> JumpAction;
-
-	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> CrouchAction;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cover")

@@ -11,7 +11,6 @@ class USpringArmComponent;
 class UInputAction;
 class UPlayerAimComponent;
 class UPlayerWeaponComponent;
-class UPlayerTuningData;
 class AWeaponBase;
 struct FInputActionValue;
 
@@ -67,11 +66,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> AimViewToggleAction;
 
-	UPROPERTY(EditDefaultsOnly, Category="Tuning")
-	TObjectPtr<UPlayerTuningData> TuningData;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> SprintToggleAction;
 
-	UPROPERTY(Transient)
-	TObjectPtr<UPlayerTuningData> DefaultTuningData;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> JumpAction;
+
+	UPROPERTY(EditDefaultsOnly, Category="Movement")
+	float SprintSpeedMultiplier = 1.5f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
@@ -86,4 +88,8 @@ private:
 	void StopAim();
 	void ToggleAimView();
 	void ToggleEquip();
+	void ToggleSprint();
+
+	bool bIsSprinting = false;
+	float BaseWalkSpeed = 450.f;
 };

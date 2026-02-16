@@ -23,6 +23,8 @@ public:
 	void MovetoNextPoint();
 
 protected:
+	FTimerHandle WaypointActionTimer;
+
 	int32 PatrolIndex = 0;
 
 	UPROPERTY(EditAnywhere, Category="Patrol")
@@ -33,6 +35,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Patrol")
 	bool bLoop = true;
+
+	void ExecuteWaypointAction(int32 ReachedIndex);
+	void FinishWaypointAction();
 	
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 };

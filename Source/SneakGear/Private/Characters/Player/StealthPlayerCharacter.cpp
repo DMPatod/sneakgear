@@ -18,12 +18,7 @@ void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 	if (!Eic)
 	{
 		UE_LOG(LogTemp, Error, TEXT("PlayerInputComponent is not an enhanced input component"));
-	}
-
-	if (JumpAction)
-	{
-		Eic->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		Eic->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		return;
 	}
 
 	if (CrouchAction)

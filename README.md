@@ -11,12 +11,16 @@ The main reference to the game is the Metal Gear Solid franchise.
 - Third-person character with camera boom and aim FOV interpolation
 - Aim toggle with first-person/third-person view switch
 - Equip/holster weapon on sockets
+- Toggle sprint input action on base third-person player
+- Jump input action owned by base third-person player (inherited by stealth player)
 - Aim + weapon logic extracted into components
-- Player tuning data asset for aim/movement/camera
+- Aim tuning is configured directly via `PlayerAimComponent` Blueprint defaults
+- Movement/camera values are configured via character/component Blueprint defaults (no `PlayerTuningData` asset)
 
 ### Combat
 - Weapon base actor with fire rate and muzzle socket support
 - Hitscan fire mode component
+- Projectile fire mode component (camera-assisted aim + projectile spawn)
 - Default pistol weapon
 
 ### Stealth + Cover
@@ -26,7 +30,11 @@ The main reference to the game is the Metal Gear Solid franchise.
 ### AI
 - Guard AI controller
 - Patrol path actor
+- Guard patrol data asset with per-waypoint action objects
+- Interface-driven waypoint actions (`IWaypointAction`) with built-in StandBy/LookAround actions
 - Guard awareness/vision/hearing data for radar
+- Guard archetype data asset for shared tuning
+- Guard manager world subsystem for guard registration and global coordination
 
 ### GAS (Attributes)
 - Health and stamina attribute sets
