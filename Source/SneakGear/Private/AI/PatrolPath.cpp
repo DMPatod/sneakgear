@@ -1,5 +1,7 @@
 #include "AI/PatrolPath.h"
 
+#include "DrawDebugHelpers.h"
+
 const FGuardPatrolWaypoint* APatrolPath::GetDataWaypoint(int32 Index) const
 {
 	if (!PatrolData || !PatrolData->Waypoints.IsValidIndex(Index))
@@ -50,11 +52,11 @@ void APatrolPath::OnConstruction(const FTransform& Transform)
 		auto P = GetWorldPoint(i);
 		const auto Color = GetWaypointAction(i) ? FColor::Cyan : FColor::Yellow;
 
-		DrawDebugSphere(GetWorld(), P, 25.f, 12, Color, false, 0.f, 0.f, 2.f);
+		DrawDebugSphere(GetWorld(), P, 25.f, 12, Color, false, EditorPreviewDuration, 0.f, 2.f);
 		
 		if (i + 1 < Num())
 		{
-			DrawDebugLine(GetWorld(), P, GetWorldPoint(i + 1), Color, false, 0.f, 0.f, 2.f);
+			DrawDebugLine(GetWorld(), P, GetWorldPoint(i + 1), Color, false, EditorPreviewDuration, 0.f, 2.f);
 		}
 	}
 }

@@ -23,6 +23,9 @@ protected:
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UTextBlock> FireRateText;
 
+	UPROPERTY(meta=(BindWidgetOptional))
+	TObjectPtr<UTextBlock> AmmoText;
+
 private:
 	TWeakObjectPtr<AThirdPersonPlayerCharacter> CachedPlayer;
 

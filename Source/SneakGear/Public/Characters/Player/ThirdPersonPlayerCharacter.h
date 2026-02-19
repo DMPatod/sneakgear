@@ -32,6 +32,18 @@ public:
 		return WeaponComponent ? WeaponComponent->GetCurrentWeapon() : nullptr;
 	}
 
+	float GetAmmo() const
+	{
+		return Armor;
+	}
+
+	float ConsumeAmmo(float Amount)
+	{
+		const float UsedArmor = FMath::Clamp(Amount, 0.f, Armor);
+		Armor -= UsedArmor;
+		return UsedArmor;
+	}
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -72,8 +84,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> JumpAction;
 
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> ReloadAction;
+
 	UPROPERTY(EditDefaultsOnly, Category="Movement")
 	float SprintSpeedMultiplier = 1.5f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ammo")
+	float Armor = 0.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
@@ -89,6 +107,7 @@ private:
 	void ToggleAimView();
 	void ToggleEquip();
 	void ToggleSprint();
+	void ReloadWeapon();
 
 	bool bIsSprinting = false;
 	float BaseWalkSpeed = 450.f;

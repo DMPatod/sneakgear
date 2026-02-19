@@ -2,6 +2,7 @@
 
 #include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "Blueprint/WidgetTree.h"
+#include "Components/PlayerWeaponComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Weapon/WeaponBase.h"
@@ -10,7 +11,7 @@ void UWeaponStatusWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (WeaponNameText || FireRateText)
+	if (WeaponNameText || FireRateText || AmmoText)
 	{
 		return;
 	}
@@ -39,6 +40,9 @@ void UWeaponStatusWidget::NativeConstruct()
 
 	FireRateText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("FireRateText"));
 	VBox->AddChild(FireRateText);
+
+	AmmoText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("AmmoText"));
+	VBox->AddChild(AmmoText);
 }
 
 void UWeaponStatusWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -72,6 +76,10 @@ void UWeaponStatusWidget::UpdateFromPlayer()
 		{
 			FireRateText->SetText(FText::GetEmpty());
 		}
+		if (AmmoText)
+		{
+			AmmoText->SetText(FText::GetEmpty());
+		}
 		return;
 	}
 
@@ -87,5 +95,18 @@ void UWeaponStatusWidget::UpdateFromPlayer()
 	{
 		FireRateText->SetText(FText::Format(NSLOCTEXT("SneakGear", "WeaponRateFmt", "Fire Rate: {0}"),
 		                                    FText::AsNumber(Weapon->GetFireRate())));
+	}
+
+	const auto* PlayerWeaponComponent = Player->FindComponentByClass<UPlayerWeaponComponent>();
+	const int32 InClip = PlayerWeaponComponent ? PlayerWeaponComponent->GetInClip() : 0;
+	const int32 ClipSize = PlayerWeaponComponent ? PlayerWeaponComponent->GetClipSize() : 0;
+	const int32 ReserveAmmo = FMath::Max(FMath::FloorToInt(Player->GetAmmo()), 0);
+
+	if (AmmoText)
+	{
+		AmmoText->SetText(FText::Format(NSLOCTEXT("SneakGear", "WeaponAmmoFmt", "Ammo: {0} | Clip: {1}/{2}"),
+		                                FText::AsNumber(ReserveAmmo),
+		                                FText::AsNumber(InClip),
+		                                FText::AsNumber(ClipSize)));
 	}
 }

@@ -1,6 +1,7 @@
 #include "UI/MainHUDWidget.h"
 
 #include "Components/CanvasPanelSlot.h"
+#include "UI/EventFeedWidget.h"
 #include "UI/PlayerVitalsWidget.h"
 #include "UI/RadarWidget.h"
 #include "UI/WeaponStatusWidget.h"
@@ -22,5 +23,10 @@ void UMainHUDWidget::NativeConstruct()
 	if (auto* WeaponSlot = WeaponStatusWidget ? Cast<UCanvasPanelSlot>(WeaponStatusWidget->Slot) : nullptr)
 	{
 		WeaponSlot->SetZOrder(WeaponStatusZOrder);
+	}
+
+	if (auto* EventSlot = EventFeedWidget ? Cast<UCanvasPanelSlot>(EventFeedWidget->Slot) : nullptr)
+	{
+		EventSlot->SetZOrder(EventFeedZOrder);
 	}
 }

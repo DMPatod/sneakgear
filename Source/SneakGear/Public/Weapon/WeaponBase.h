@@ -5,6 +5,7 @@
 #include "WeaponBase.generated.h"
 
 class UWeaponFireModeComponent;
+DECLARE_MULTICAST_DELEGATE(FOnWeaponFired);
 
 UCLASS(Abstract)
 class SNEAKGEAR_API AWeaponBase : public AActor
@@ -18,6 +19,11 @@ public:
 
 	virtual void StartFire();
 	virtual void StopFire();
+
+	FOnWeaponFired& OnWeaponFiredEvent()
+	{
+		return OnWeaponFired;
+	}
 
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	float GetFireRate() const
@@ -57,6 +63,8 @@ protected:
 	void FireOnce();
 
 private:
+	FOnWeaponFired OnWeaponFired;
+
 	UPROPERTY(EditDefaultsOnly, Category="Details")
 	FName Name;
 

@@ -3,10 +3,13 @@
 #include "AbilitySystemComponent.h"
 #include "AI/GuardAIController.h"
 #include "AI/GuardManagerSubsystem.h"
+#include "AI/PatrolPath.h"
 #include "Data/GuardArchetypeData.h"
+#include "DrawDebugHelpers.h"
 #include "GAS/HealthAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
 #include "Radar/RadarRegistrySubsystem.h"
+#include "UI/EventLogSubsystem.h"
 
 AGuardCharacter::AGuardCharacter()
 {
@@ -19,6 +22,21 @@ AGuardCharacter::AGuardCharacter()
 void AGuardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!bSpawnAtLevelStart)
+	{
+		if (HasAuthority())
+		{
+			Destroy();
+		}
+		else
+		{
+			SetActorHiddenInGame(true);
+			SetActorEnableCollision(false);
+			SetActorTickEnabled(false);
+		}
+		return;
+	}
 
 	ApplyArchetypeData();
 
@@ -51,9 +69,46 @@ void AGuardCharacter::BeginPlay()
 		Aic->MovetoNextPoint();
 	}
 
+	AwarenessState = ResolveAwarenessState(Awareness);
+
 	InitGAS();
 	BindHealthDeath();
 }
+
+#if WITH_EDITOR
+void AGuardCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	if (!bShowPatrolPathInEditor || !PatrolPath || PatrolPath->Num() <= 0)
+	{
+		return;
+	}
+
+	const uint32 Hash = GetTypeHash(GetFName());
+	const FColor PathColor(
+		64 + (Hash & 0x7F),
+		64 + ((Hash >> 8) & 0x7F),
+		64 + ((Hash >> 16) & 0x7F));
+
+	const FVector GuardHead = GetActorLocation() + FVector(0.f, 0.f, 70.f);
+	DrawDebugLine(GetWorld(), GuardHead, PatrolPath->GetWorldPoint(0), PathColor, false, PatrolPathPreviewDuration, 0,
+	              2.f);
+
+	for (int32 Index = 0; Index < PatrolPath->Num(); ++Index)
+	{
+		const FVector Point = PatrolPath->GetWorldPoint(Index);
+		const FColor PointColor = PatrolPath->GetWaypointAction(Index) ? FColor::Cyan : PathColor;
+		DrawDebugSphere(GetWorld(), Point, 30.f, 12, PointColor, false, PatrolPathPreviewDuration, 0, 2.f);
+
+		if (Index + 1 < PatrolPath->Num())
+		{
+			DrawDebugLine(GetWorld(), Point, PatrolPath->GetWorldPoint(Index + 1), PointColor, false,
+			              PatrolPathPreviewDuration, 0, 2.f);
+		}
+	}
+}
+#endif
 
 void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
@@ -77,9 +132,21 @@ void AGuardCharacter::SetTargetActor(AActor* NewTarget)
 	TargetActor = NewTarget;
 }
 
+void AGuardCharacter::SetPatrolPath(APatrolPath* NewPatrolPath)
+{
+	PatrolPath = NewPatrolPath;
+
+	if (auto* Aic = Cast<AGuardAIController>(GetController()))
+	{
+		Aic->SetPatrolPath(PatrolPath);
+		Aic->MovetoNextPoint();
+	}
+}
+
 void AGuardCharacter::AddAwareness(float DeltaAwareness)
 {
 	Awareness = FMath::Clamp(Awareness + DeltaAwareness, 0.f, 1.f);
+	UpdateAwarenessStateAndEmitEvent();
 }
 
 void AGuardCharacter::ApplyArchetypeData()
@@ -95,6 +162,47 @@ void AGuardCharacter::ApplyArchetypeData()
 	HearingRange = ArchetypeData->HearingRange;
 	AwarenessGainPerSecond = ArchetypeData->AwarenessGainPerSecond;
 	AwarenessDecayPerSecond = ArchetypeData->AwarenessDecayPerSecond;
+}
+
+EGuardAwarenessState AGuardCharacter::ResolveAwarenessState(float InAwareness) const
+{
+	if (InAwareness >= 0.75f)
+	{
+		return EGuardAwarenessState::Alerted;
+	}
+
+	if (InAwareness >= 0.33f)
+	{
+		return EGuardAwarenessState::Suspicious;
+	}
+
+	return EGuardAwarenessState::Calm;
+}
+
+void AGuardCharacter::UpdateAwarenessStateAndEmitEvent()
+{
+	const EGuardAwarenessState NewState = ResolveAwarenessState(Awareness);
+	if (NewState == AwarenessState)
+	{
+		return;
+	}
+
+	AwarenessState = NewState;
+
+	FText StateLabel = NSLOCTEXT("SneakGear", "AwarenessCalm", "Calm");
+	if (AwarenessState == EGuardAwarenessState::Suspicious)
+	{
+		StateLabel = NSLOCTEXT("SneakGear", "AwarenessSuspicious", "Suspicious");
+	}
+	else if (AwarenessState == EGuardAwarenessState::Alerted)
+	{
+		StateLabel = NSLOCTEXT("SneakGear", "AwarenessAlerted", "Alerted");
+	}
+
+	if (auto* EventLog = GetWorld() ? GetWorld()->GetSubsystem<UEventLogSubsystem>() : nullptr)
+	{
+		EventLog->ReportGuardAwarenessChanged(this, StateLabel);
+	}
 }
 
 bool AGuardCharacter::CanSeeTarget(const AActor* Target, float& OutVisionScore) const
@@ -250,6 +358,8 @@ void AGuardCharacter::Tick(float DeltaTime)
 	{
 		Awareness = FMath::Clamp(Awareness - AwarenessDecayPerSecond * DeltaTime, 0.f, 1.f);
 	}
+
+	UpdateAwarenessStateAndEmitEvent();
 
 	DrawDebugVision(TargetActor, bCanSee, VisionScore);
 

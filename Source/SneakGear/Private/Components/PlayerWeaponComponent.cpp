@@ -1,81 +1,40 @@
 #include "Components/PlayerWeaponComponent.h"
 
-#include "GameFramework/Character.h"
-#include "Weapon/WeaponBase.h"
+#include "Characters/Player/ThirdPersonPlayerCharacter.h"
 
 UPlayerWeaponComponent::UPlayerWeaponComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UPlayerWeaponComponent::BeginPlay()
+void UPlayerWeaponComponent::Reload()
 {
-	Super::BeginPlay();
+	auto* PlayerCharacter = Cast<AThirdPersonPlayerCharacter>(GetOwner());
+	if (!PlayerCharacter)
+	{
+		Super::Reload();
+		return;
+	}
 
-	if (!StartedWeaponClass)
+	const int32 MissingAmmo = FMath::Max(ClipSize - InClip, 0);
+	if (MissingAmmo <= 0)
 	{
 		return;
 	}
 
-	auto* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter)
+	const int32 AvailableFromArmor = FMath::Max(FMath::FloorToInt(GetPlayerArmor()), 0);
+	const int32 AmmoToLoad = FMath::Min(MissingAmmo, AvailableFromArmor);
+	if (AmmoToLoad <= 0)
 	{
 		return;
 	}
 
-	auto* World = GetWorld();
-	if (!World)
-	{
-		return;
-	}
-
-	CurrentWeapon = World->SpawnActor<AWeaponBase>(StartedWeaponClass);
-	if (!CurrentWeapon)
-	{
-		return;
-	}
-
-	CurrentWeapon->SetOwner(OwnerCharacter);
-	AttachWeaponToSocket(HolsterSocketName);
+	const float ConsumedArmor = PlayerCharacter->ConsumeAmmo(static_cast<float>(AmmoToLoad));
+	const int32 LoadedAmmo = FMath::Clamp(FMath::FloorToInt(ConsumedArmor), 0, AmmoToLoad);
+	InClip = FMath::Clamp(InClip + LoadedAmmo, 0, ClipSize);
 }
 
-void UPlayerWeaponComponent::StartFire()
+float UPlayerWeaponComponent::GetPlayerArmor() const
 {
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->StartFire();
-	}
-}
-
-void UPlayerWeaponComponent::StopFire()
-{
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->StopFire();
-	}
-}
-
-void UPlayerWeaponComponent::ToggleEquip()
-{
-	if (!CurrentWeapon)
-	{
-		return;
-	}
-
-	auto TargetSocket = CurrentWeapon->GetAttachParentSocketName() == HolsterSocketName
-		                    ? HandSocketName
-		                    : HolsterSocketName;
-
-	AttachWeaponToSocket(TargetSocket);
-}
-
-void UPlayerWeaponComponent::AttachWeaponToSocket(FName SocketName) const
-{
-	auto* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!OwnerCharacter || !OwnerCharacter->GetMesh() || !CurrentWeapon)
-	{
-		return;
-	}
-
-	CurrentWeapon->AttachToCharacter(OwnerCharacter->GetMesh(), SocketName);
+	const auto* PlayerCharacter = Cast<AThirdPersonPlayerCharacter>(GetOwner());
+	return PlayerCharacter ? PlayerCharacter->GetAmmo() : 0.f;
 }

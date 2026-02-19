@@ -17,6 +17,9 @@ public:
 	UPROPERTY(EditAnywhere, Category="Patrol")
 	TArray<FVector> Waypoints;
 
+	UPROPERTY(EditAnywhere, Category="Patrol|Editor", meta=(ClampMin="0.0"))
+	float EditorPreviewDuration = 60.f;
+
 	UFUNCTION(BlueprintCallable, Category="Patrol")
 	FVector GetWorldPoint(int32 Index) const;
 

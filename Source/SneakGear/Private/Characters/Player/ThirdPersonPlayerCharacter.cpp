@@ -129,6 +129,11 @@ void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		Eic->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	}
 
+	if (ReloadAction)
+	{
+		Eic->BindAction(ReloadAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::ReloadWeapon);
+	}
+
 	if (EquipAction)
 	{
 		Eic->BindAction(EquipAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::ToggleEquip);
@@ -205,6 +210,14 @@ void AThirdPersonPlayerCharacter::ToggleSprint()
 
 	bIsSprinting = !bIsSprinting;
 	MoveComponent->MaxWalkSpeed = bIsSprinting ? BaseWalkSpeed * SprintSpeedMultiplier : BaseWalkSpeed;
+}
+
+void AThirdPersonPlayerCharacter::ReloadWeapon()
+{
+	if (WeaponComponent)
+	{
+		WeaponComponent->Reload();
+	}
 }
 
 void AThirdPersonPlayerCharacter::StartFire()

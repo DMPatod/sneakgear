@@ -7,6 +7,7 @@
 class URadarWidget;
 class UPlayerVitalsWidget;
 class UWeaponStatusWidget;
+class UEventFeedWidget;
 
 UCLASS()
 class SNEAKGEAR_API UMainHUDWidget : public UUserWidget
@@ -31,6 +32,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category="UI")
 	int32 WeaponStatusZOrder = 2;
 
+	UPROPERTY(EditAnywhere, Category="UI")
+	int32 EventFeedZOrder = 3;
+
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<URadarWidget> RadarWidget;
 
@@ -39,4 +43,7 @@ protected:
 
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UWeaponStatusWidget> WeaponStatusWidget;
+
+	UPROPERTY(meta=(BindWidgetOptional))
+	TObjectPtr<UEventFeedWidget> EventFeedWidget;
 };

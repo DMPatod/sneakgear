@@ -5,6 +5,7 @@
 #include "GameplayEffectTypes.h"
 #include "GAS/HealthAttributeSet.h"
 #include "GAS/StaminaAttributeSet.h"
+#include "UI/EventLogSubsystem.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -94,5 +95,11 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
 	AbilitySystem->ApplyModToAttribute(UHealthAttributeSet::GetHealthAttribute(), EGameplayModOp::Additive,
 	                                   -AppliedDamage);
+
+	if (auto* EventLog = GetWorld() ? GetWorld()->GetSubsystem<UEventLogSubsystem>() : nullptr)
+	{
+		EventLog->ReportDamageTaken(this, AppliedDamage, DamageCauser);
+	}
+
 	return AppliedDamage;
 }

@@ -27,8 +27,8 @@ void AWeaponBase::StartFire()
 {
 	auto Interval = FireRate > 0.f ? 1.f / FireRate : 0.1f;
 
-	FireOnce();
 	GetWorldTimerManager().SetTimer(FireTimer, this, &AWeaponBase::FireOnce, Interval, true);
+	FireOnce();
 }
 
 void AWeaponBase::StopFire()
@@ -84,4 +84,5 @@ void AWeaponBase::FireOnce()
 	Context.MuzzleSocket = MuzzleSocketName;
 
 	PrimaryFireMode->FireOnce(Context);
+	OnWeaponFiredEvent().Broadcast();
 }
