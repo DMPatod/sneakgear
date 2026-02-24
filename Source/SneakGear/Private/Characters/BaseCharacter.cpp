@@ -103,3 +103,11 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
 	return AppliedDamage;
 }
+
+float ABaseCharacter::InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Point damage is not supported for %s"), *GetName());
+	
+	return Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);
+}

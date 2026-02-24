@@ -6,6 +6,8 @@
 #include "UI/MainHUDWidget.h"
 #include "UI/RadarWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
+#include "UI/CrosshairWidget.h"
 
 static FVector2D WorldToRadar(const FVector& PlayerLocation, const float RefYawDeg, const FVector& TargetLocation,
                               const float RadarRadiusPx, const float RadarRangeWorld)
@@ -35,6 +37,12 @@ void AStealthPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetupInputMappings();
+	CreateHUDWidgets();
+}
+
+void AStealthPlayerController::SetupInputMappings()
+{
 	if (!DefaultMappingContext)
 	{
 		UE_LOG(LogTemp, Error, TEXT("DefaultMappingContext is not set on %s"), *GetName());
@@ -58,6 +66,20 @@ void AStealthPlayerController::BeginPlay()
 			}
 		}
 	}
+}
+
+void AStealthPlayerController::CreateHUDWidgets()
+{
+	if (CrosshairWidgetClass)
+	{
+		CrosshairWidget = CreateWidget<UCrosshairWidget>(this, CrosshairWidgetClass);
+		if (CrosshairWidget)
+		{
+			CrosshairWidget->AddToViewport();
+			CrosshairWidget->SetVisible(false);
+			CrosshairWidget->SetSpread(0.f);
+		}
+	}
 
 	if (MainHUDWidgetClass)
 	{
@@ -69,10 +91,58 @@ void AStealthPlayerController::BeginPlay()
 	}
 }
 
-void AStealthPlayerController::Tick(float DeltaSeconds)
+void AStealthPlayerController::OnWeaponFired()
 {
-	Super::Tick(DeltaSeconds);
+	SpreadCurrent = FMath::Clamp(SpreadCurrent + CrosshairSpread.ShootKick, CrosshairSpread.Min, CrosshairSpread.Max);
+	if (CrosshairWidget)
+	{
+		CrosshairWidget->SetSpread(SpreadCurrent);
+	}
+}
 
+void AStealthPlayerController::SetCrosshairVisible(bool bVisible)
+{
+	if (CrosshairWidget)
+	{
+		CrosshairWidget->SetVisible(bVisible);
+	}
+}
+
+void AStealthPlayerController::UpdateCrosshairWidget(float DeltaSeconds)
+{
+	if (!CrosshairWidget)
+	{
+		return;
+	}
+
+	auto Player = Cast<AStealthPlayerCharacter>(GetPawn());
+	if (!Player)
+	{
+		return;
+	}
+
+	const float Speed2D = Player->GetVelocity().Size2D();
+	const float MaxSpeed = Player->GetMaxSpeed();
+	const float MoveAlpha = MaxSpeed > KINDA_SMALL_NUMBER ? FMath::Clamp(Speed2D / MaxSpeed, 0.f, 1.f) : 0.f;
+
+	SpreadTarget = CrosshairSpread.Min + MoveAlpha * CrosshairSpread.FromMove;
+
+	const bool bAiming = Player->IsAiming();
+
+	SetCrosshairVisible(bAiming);
+
+	if (bAiming)
+	{
+		SpreadTarget *= CrosshairSpread.FromAimMultiplier;
+	}
+
+	SpreadTarget = FMath::Clamp(SpreadTarget, CrosshairSpread.Min, CrosshairSpread.Max);
+	SpreadCurrent = FMath::FInterpTo(SpreadCurrent, SpreadTarget, DeltaSeconds, CrosshairSpread.InterpolationSpeed);
+	CrosshairWidget->SetSpread(SpreadCurrent);
+}
+
+void AStealthPlayerController::UpdateRadarWidget()
+{
 	if (!MainHUDWidget)
 	{
 		return;
@@ -84,13 +154,13 @@ void AStealthPlayerController::Tick(float DeltaSeconds)
 		return;
 	}
 
-	auto P = GetPawn();
-	if (!P)
+	auto Pawn = GetPawn();
+	if (!Pawn)
 	{
 		return;
 	}
 
-	auto PlayerLocation = P->GetActorLocation();
+	auto PlayerLocation = Pawn->GetActorLocation();
 	FVector ViewLoc;
 	FRotator ViewRot;
 	GetPlayerViewPoint(ViewLoc, ViewRot);
@@ -122,10 +192,10 @@ void AStealthPlayerController::Tick(float DeltaSeconds)
 		}
 
 		FRadarContact C;
-		C.Awareness = G->Awareness;
-		C.VisionRange = G->VisionRange;
-		C.HearingRange = G->HearingRange;
-		C.bHasLOS = G->bHasLineOfSight;
+		C.Awareness = G->GetAwareness();
+		C.VisionRange = G->GetVisionRange();
+		C.HearingRange = G->GetHearingRange();
+		C.bHasLOS = G->HasLineOfSight();
 
 		C.RadarPos = WorldToRadar(PlayerLocation, RefYaw, G->GetActorLocation(), RadarWidget->RadarRadiusPx,
 		                          RadarWidget->RadarRangeWorld);
@@ -136,4 +206,20 @@ void AStealthPlayerController::Tick(float DeltaSeconds)
 	RadarWidget->WorldNorthYawDeg = RefYaw;
 	RadarWidget->SetContacts(Contacts);
 	RadarWidget->InvalidateLayoutAndVolatility();
+}
+
+void AStealthPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	UpdateRadarWidget();
+	UpdateCrosshairWidget(DeltaSeconds);
+}
+
+void AStealthPlayerController::NotifyHitMarker()
+{
+	if (CrosshairWidget)
+	{
+		CrosshairWidget->ShowHitMarker();
+	}
 }

@@ -4,19 +4,22 @@
 #include "AI/GuardAIController.h"
 #include "AI/GuardManagerSubsystem.h"
 #include "AI/PatrolPath.h"
+#include "Components/AI/GuardAwarenessComponent.h"
+#include "Components/AI/GuardPatrolComponent.h"
 #include "Data/GuardArchetypeData.h"
 #include "DrawDebugHelpers.h"
 #include "GAS/HealthAttributeSet.h"
-#include "Kismet/GameplayStatics.h"
 #include "Radar/RadarRegistrySubsystem.h"
-#include "UI/EventLogSubsystem.h"
 
 AGuardCharacter::AGuardCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	AIControllerClass = AGuardAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+	AwarenessComponent = CreateDefaultSubobject<UGuardAwarenessComponent>(TEXT("AwarenessComponent"));
+	PatrolComponent = CreateDefaultSubobject<UGuardPatrolComponent>(TEXT("PatrolComponent"));
 }
 
 void AGuardCharacter::BeginPlay()
@@ -38,7 +41,10 @@ void AGuardCharacter::BeginPlay()
 		return;
 	}
 
-	ApplyArchetypeData();
+	if (AwarenessComponent)
+	{
+		AwarenessComponent->InitializeFromArchetype(ArchetypeData);
+	}
 
 	if (HasAuthority() && Controller == nullptr)
 	{
@@ -57,19 +63,10 @@ void AGuardCharacter::BeginPlay()
 		}
 	}
 
-	if (!TargetActor)
+	if (PatrolComponent)
 	{
-		auto PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-		TargetActor = PlayerPawn;
+		PatrolComponent->ApplyToController(GetController());
 	}
-
-	if (auto Aic = Cast<AGuardAIController>(GetController()))
-	{
-		Aic->SetPatrolPath(PatrolPath);
-		Aic->MovetoNextPoint();
-	}
-
-	AwarenessState = ResolveAwarenessState(Awareness);
 
 	InitGAS();
 	BindHealthDeath();
@@ -80,33 +77,12 @@ void AGuardCharacter::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	if (!bShowPatrolPathInEditor || !PatrolPath || PatrolPath->Num() <= 0)
+	if (!PatrolComponent)
 	{
 		return;
 	}
 
-	const uint32 Hash = GetTypeHash(GetFName());
-	const FColor PathColor(
-		64 + (Hash & 0x7F),
-		64 + ((Hash >> 8) & 0x7F),
-		64 + ((Hash >> 16) & 0x7F));
-
-	const FVector GuardHead = GetActorLocation() + FVector(0.f, 0.f, 70.f);
-	DrawDebugLine(GetWorld(), GuardHead, PatrolPath->GetWorldPoint(0), PathColor, false, PatrolPathPreviewDuration, 0,
-	              2.f);
-
-	for (int32 Index = 0; Index < PatrolPath->Num(); ++Index)
-	{
-		const FVector Point = PatrolPath->GetWorldPoint(Index);
-		const FColor PointColor = PatrolPath->GetWaypointAction(Index) ? FColor::Cyan : PathColor;
-		DrawDebugSphere(GetWorld(), Point, 30.f, 12, PointColor, false, PatrolPathPreviewDuration, 0, 2.f);
-
-		if (Index + 1 < PatrolPath->Num())
-		{
-			DrawDebugLine(GetWorld(), Point, PatrolPath->GetWorldPoint(Index + 1), PointColor, false,
-			              PatrolPathPreviewDuration, 0, 2.f);
-		}
-	}
+	PatrolComponent->DrawEditorPreview();
 }
 #endif
 
@@ -129,159 +105,51 @@ void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AGuardCharacter::SetTargetActor(AActor* NewTarget)
 {
-	TargetActor = NewTarget;
+	if (AwarenessComponent)
+	{
+		AwarenessComponent->SetTargetActor(NewTarget);
+	}
 }
 
 void AGuardCharacter::SetPatrolPath(APatrolPath* NewPatrolPath)
 {
-	PatrolPath = NewPatrolPath;
-
-	if (auto* Aic = Cast<AGuardAIController>(GetController()))
+	if (PatrolComponent)
 	{
-		Aic->SetPatrolPath(PatrolPath);
-		Aic->MovetoNextPoint();
+		PatrolComponent->SetPatrolPath(NewPatrolPath);
 	}
 }
 
 void AGuardCharacter::AddAwareness(float DeltaAwareness)
 {
-	Awareness = FMath::Clamp(Awareness + DeltaAwareness, 0.f, 1.f);
-	UpdateAwarenessStateAndEmitEvent();
-}
-
-void AGuardCharacter::ApplyArchetypeData()
-{
-	if (!ArchetypeData)
+	if (AwarenessComponent)
 	{
-		return;
-	}
-
-	Awareness = FMath::Clamp(ArchetypeData->InitialAwareness, 0.f, 1.f);
-	VisionRange = ArchetypeData->VisionRange;
-	VisionHalfAngleDeg = ArchetypeData->VisionHalfAngleDeg;
-	HearingRange = ArchetypeData->HearingRange;
-	AwarenessGainPerSecond = ArchetypeData->AwarenessGainPerSecond;
-	AwarenessDecayPerSecond = ArchetypeData->AwarenessDecayPerSecond;
-}
-
-EGuardAwarenessState AGuardCharacter::ResolveAwarenessState(float InAwareness) const
-{
-	if (InAwareness >= 0.75f)
-	{
-		return EGuardAwarenessState::Alerted;
-	}
-
-	if (InAwareness >= 0.33f)
-	{
-		return EGuardAwarenessState::Suspicious;
-	}
-
-	return EGuardAwarenessState::Calm;
-}
-
-void AGuardCharacter::UpdateAwarenessStateAndEmitEvent()
-{
-	const EGuardAwarenessState NewState = ResolveAwarenessState(Awareness);
-	if (NewState == AwarenessState)
-	{
-		return;
-	}
-
-	AwarenessState = NewState;
-
-	FText StateLabel = NSLOCTEXT("SneakGear", "AwarenessCalm", "Calm");
-	if (AwarenessState == EGuardAwarenessState::Suspicious)
-	{
-		StateLabel = NSLOCTEXT("SneakGear", "AwarenessSuspicious", "Suspicious");
-	}
-	else if (AwarenessState == EGuardAwarenessState::Alerted)
-	{
-		StateLabel = NSLOCTEXT("SneakGear", "AwarenessAlerted", "Alerted");
-	}
-
-	if (auto* EventLog = GetWorld() ? GetWorld()->GetSubsystem<UEventLogSubsystem>() : nullptr)
-	{
-		EventLog->ReportGuardAwarenessChanged(this, StateLabel);
+		AwarenessComponent->AddAwareness(DeltaAwareness);
 	}
 }
 
-bool AGuardCharacter::CanSeeTarget(const AActor* Target, float& OutVisionScore) const
+float AGuardCharacter::GetAwareness() const
 {
-	OutVisionScore = 0.f;
-	if (!Target)
-	{
-		return false;
-	}
-
-	auto Eyes = GetActorLocation() + FVector(0.f, 0.f, 70.f);
-	auto TargetPoint = Target->GetActorLocation() + FVector(0.f, 0.f, 60.f);
-
-	auto ToTarget = TargetPoint - Eyes;
-	auto Dist = ToTarget.Length();
-
-	if (Dist > VisionRange)
-	{
-		return false;
-	}
-
-	auto Forward = GetActorForwardVector();
-	auto Dir = ToTarget / FMath::Max(Dist, 1.f);
-
-	// Cone check
-	auto CosHalfAngle = FMath::Cos(FMath::DegreesToRadians(VisionHalfAngleDeg));
-	auto Dot = FVector::DotProduct(Forward, Dir);
-	if (Dot < CosHalfAngle)
-	{
-		return false;
-	}
-
-	FHitResult Hit;
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(StealthVision), true);
-	Params.AddIgnoredActor(this);
-
-	auto bHit = GetWorld()->LineTraceSingleByChannel(Hit, Eyes, TargetPoint, ECC_Visibility, Params);
-
-	if (bHit && Hit.GetActor() != Target)
-	{
-		return false;
-	}
-
-	auto DistFactor = 1.f - FMath::Clamp(Dist / VisionRange, 0.f, 1.f);
-	auto Dot01 = FMath::Clamp((Dot - CosHalfAngle) / (1.f - CosHalfAngle), 0.f, 1.f);
-
-	OutVisionScore = DistFactor * Dot01;
-	return true;
+	return AwarenessComponent ? AwarenessComponent->GetAwareness() : 0.f;
 }
 
-void AGuardCharacter::DrawDebugVision(const AActor* Target, bool bCanSee, float VisionScore) const
+float AGuardCharacter::GetVisionRange() const
 {
-	if (!Target)
-	{
-		return;
-	}
+	return AwarenessComponent ? AwarenessComponent->GetVisionRange() : 0.f;
+}
 
-	auto Eyes = GetActorLocation() + FVector(0.f, 0.f, 70.f);
-	auto Forward = GetActorForwardVector();
+float AGuardCharacter::GetHearingRange() const
+{
+	return AwarenessComponent ? AwarenessComponent->GetHearingRange() : 0.f;
+}
 
-	auto BaseRot = Forward.Rotation();
-	auto LeftRot = BaseRot + FRotator(0.f, -VisionHalfAngleDeg, 0.f);
-	auto RightRot = BaseRot + FRotator(0.f, VisionHalfAngleDeg, 0.f);
+bool AGuardCharacter::HasLineOfSight() const
+{
+	return AwarenessComponent && AwarenessComponent->HasLineOfSight();
+}
 
-	auto LeftDir = LeftRot.Vector();
-	auto RightDir = RightRot.Vector();
-
-	auto ConeColor = bCanSee ? FColor::Green : FColor::Red;
-
-	DrawDebugLine(GetWorld(), Eyes, Eyes + LeftDir * VisionRange, ConeColor, false, 0.f, 0, 1.5f);
-	DrawDebugLine(GetWorld(), Eyes, Eyes + RightDir * VisionRange, ConeColor, false, 0.f, 0, 1.5f);
-	DrawDebugLine(GetWorld(), Eyes, Eyes + Forward * VisionRange, ConeColor, false, 0.f, 0, 1.5f);
-
-	// auto TargetPoint = Target->GetActorLocation() + FVector(0.f, 0.f, 60.f);
-	// DrawDebugLine(GetWorld(), Eyes, TargetPoint, ConeColor, false, 0.f, 0, 2.f);
-	//
-	// auto TextLoc = GetActorLocation() + FVector(0.f, 0.f, 120.f);
-	// auto Txt = FString::Printf(TEXT("H: %.2f, A: %.2f, V: %.2f"), HealthSet.Get()->GetHealth(), Awareness, VisionScore);
-	// DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::White, 0.f, false);
+EGuardAwarenessState AGuardCharacter::GetAwarenessState() const
+{
+	return AwarenessComponent ? AwarenessComponent->GetAwarenessState() : EGuardAwarenessState::Calm;
 }
 
 void AGuardCharacter::InitGAS()
@@ -335,37 +203,4 @@ void AGuardCharacter::BindHealthDeath()
 				DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::Red, 0.f, false);
 			}
 		});
-}
-
-void AGuardCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (!TargetActor)
-	{
-		return;
-	}
-
-	auto VisionScore = 0.f;
-	auto bCanSee = CanSeeTarget(TargetActor, VisionScore);
-	bHasLineOfSight = bCanSee;
-
-	if (bCanSee)
-	{
-		Awareness = FMath::Clamp(Awareness + VisionScore * AwarenessGainPerSecond * DeltaTime, 0.f, 1.f);
-	}
-	else
-	{
-		Awareness = FMath::Clamp(Awareness - AwarenessDecayPerSecond * DeltaTime, 0.f, 1.f);
-	}
-
-	UpdateAwarenessStateAndEmitEvent();
-
-	DrawDebugVision(TargetActor, bCanSee, VisionScore);
-
-	// if (GEngine)
-	// {
-	// 	auto Msg = FString::Printf(TEXT("Awareness: %.2f    LOS:"), Awareness, bCanSee ? TEXT("YES") : TEXT("NO"));
-	// 	GEngine->AddOnScreenDebugMessage((uint64)(PTRINT)this, 0.f, FColor::Cyan, Msg);
-	// }
 }

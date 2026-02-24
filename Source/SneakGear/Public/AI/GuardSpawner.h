@@ -40,12 +40,13 @@ protected:
 	float SpawnRadius = 250.f;
 
 	UPROPERTY(EditInstanceOnly, Category="Patrol")
-	TObjectPtr<APatrolPath> PatrolPath;
+	TArray<TObjectPtr<APatrolPath>> PatrolPaths;
 
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<AGuardCharacter>> SpawnedGuards;
 
 	void CompactSpawnedGuards();
-	FTransform BuildSpawnTransform(int32 Index) const;
+	FTransform BuildSpawnTransform(int32 Index, const APatrolPath* AssignedPatrolPath) const;
+	APatrolPath* ResolvePatrolPathForGuard(int32 SpawnIndex) const;
 };

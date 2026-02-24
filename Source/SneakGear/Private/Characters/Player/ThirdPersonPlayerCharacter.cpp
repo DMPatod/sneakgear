@@ -4,8 +4,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PlayerAimComponent.h"
+#include "Components/PlayerLocomotionComponent.h"
 #include "Components/PlayerWeaponComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
@@ -17,20 +17,50 @@ AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	auto MoveComponent = GetCharacterMovement();
-	MoveComponent->bOrientRotationToMovement = true;
-	MoveComponent->RotationRate = FRotator(0.f, 540.f, 0.f);
-	MoveComponent->JumpZVelocity = 600.f;
-	MoveComponent->AirControl = 0.35f;
-	MoveComponent->MaxWalkSpeed = 450.f;
+	SetupViewComponents();
+	SetupGameplayComponents();
 
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->SetupMovementDefaults();
+	}
+}
+
+bool AThirdPersonPlayerCharacter::IsAiming() const
+{
+	return AimComponent ? AimComponent->IsAiming() : false;
+}
+
+AWeaponBase* AThirdPersonPlayerCharacter::GetCurrentWeapon() const
+{
+	return WeaponComponent ? WeaponComponent->GetCurrentWeapon() : nullptr;
+}
+
+float AThirdPersonPlayerCharacter::GetAmmo() const
+{
+	return Ammo;
+}
+
+float AThirdPersonPlayerCharacter::ConsumeAmmo(float Amount)
+{
+	const float UsedArmor = FMath::Clamp(Amount, 0.f, Ammo);
+	Ammo -= UsedArmor;
+	return UsedArmor;
+}
+
+float AThirdPersonPlayerCharacter::GetMaxSpeed() const
+{
+	return LocomotionComponent ? LocomotionComponent->GetMaxSpeed() : 0.f;
+}
+
+void AThirdPersonPlayerCharacter::SetupViewComponents()
+{
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 350.f;
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 12.f;
-
 	CameraBoom->SetRelativeLocation(FVector(0.f, 0.f, 60.f));
 
 	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
@@ -41,24 +71,22 @@ AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 	FirstPersonCamera->SetupAttachment(GetMesh(), TEXT("first_person_camera_attachment"));
 	FirstPersonCamera->bUsePawnControlRotation = true;
 	FirstPersonCamera->SetRelativeLocation(FVector(0.f, 8.f, 4.f));
-
 	FirstPersonCamera->SetActive(false);
 	ThirdPersonCamera->SetActive(true);
-
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-
-	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
-	AimComponent = CreateDefaultSubobject<UPlayerAimComponent>(TEXT("AimComponent"));
 }
 
-void AThirdPersonPlayerCharacter::BeginPlay()
+void AThirdPersonPlayerCharacter::SetupGameplayComponents()
 {
-	Super::BeginPlay();
+	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
+	AimComponent = CreateDefaultSubobject<UPlayerAimComponent>(TEXT("AimComponent"));
+	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
+}
 
-	BaseWalkSpeed = GetCharacterMovement() ? GetCharacterMovement()->MaxWalkSpeed : BaseWalkSpeed;
-	if (bIsSprinting && GetCharacterMovement())
+void AThirdPersonPlayerCharacter::InitializeGameplayState()
+{
+	if (LocomotionComponent)
 	{
-		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * SprintSpeedMultiplier;
+		LocomotionComponent->Initialize(CameraBoom);
 	}
 
 	if (AimComponent)
@@ -70,6 +98,26 @@ void AThirdPersonPlayerCharacter::BeginPlay()
 	{
 		WeaponComponent->ToggleEquip();
 	}
+
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->UpdateRotationMode(IsAiming());
+	}
+}
+
+void AThirdPersonPlayerCharacter::SetStance(EStance NewStance)
+{
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->SetStance(NewStance);
+	}
+}
+
+void AThirdPersonPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitializeGameplayState();
 }
 
 void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -83,6 +131,11 @@ void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 		return;
 	}
 
+	BindInputActions(Eic);
+}
+
+void AThirdPersonPlayerCharacter::BindInputActions(UEnhancedInputComponent* Eic)
+{
 	if (MoveAction)
 	{
 		Eic->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AThirdPersonPlayerCharacter::Move);
@@ -138,24 +191,32 @@ void AThirdPersonPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Pla
 	{
 		Eic->BindAction(EquipAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::ToggleEquip);
 	}
+
+	if (StanceAction)
+	{
+		Eic->BindAction(StanceAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::OnStancePressed);
+		Eic->BindAction(StanceAction, ETriggerEvent::Completed, this, &AThirdPersonPlayerCharacter::OnStanceReleased);
+	}
+}
+
+void AThirdPersonPlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->TickLocomotion(DeltaSeconds);
+	}
 }
 
 void AThirdPersonPlayerCharacter::Move(const FInputActionValue& Value)
 {
-	auto Axis = Value.Get<FVector2D>();
-	if (!Controller)
+	if (!LocomotionComponent)
 	{
 		return;
 	}
 
-	auto ControlRot = Controller->GetControlRotation();
-	FRotator YawRot(0.f, ControlRot.Yaw, 0.f);
-
-	auto Forward = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
-	auto Right = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
-
-	AddMovementInput(Forward, Axis.X);
-	AddMovementInput(Right, Axis.Y);
+	LocomotionComponent->Move(Value);
 }
 
 void AThirdPersonPlayerCharacter::Look(const FInputActionValue& Value)
@@ -171,6 +232,8 @@ void AThirdPersonPlayerCharacter::StartAim()
 	if (AimComponent)
 	{
 		AimComponent->StartAim();
+
+		ApplyAimRotationMode(true);
 	}
 }
 
@@ -179,6 +242,24 @@ void AThirdPersonPlayerCharacter::StopAim()
 	if (AimComponent)
 	{
 		AimComponent->StopAim();
+
+		ApplyAimRotationMode(false);
+	}
+}
+
+void AThirdPersonPlayerCharacter::ApplyAimRotationMode(bool bEnableAimRotation)
+{
+	bUseControllerRotationYaw = bEnableAimRotation;
+
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->UpdateRotationMode(IsAiming());
+	}
+
+	if (bEnableAimRotation && Controller)
+	{
+		const FRotator ControlYaw(0.f, Controller->GetControlRotation().Yaw, 0.f);
+		SetActorRotation(ControlYaw);
 	}
 }
 
@@ -202,14 +283,10 @@ void AThirdPersonPlayerCharacter::ToggleEquip()
 
 void AThirdPersonPlayerCharacter::ToggleSprint()
 {
-	auto* MoveComponent = GetCharacterMovement();
-	if (!MoveComponent)
+	if (LocomotionComponent)
 	{
-		return;
+		LocomotionComponent->ToggleSprint();
 	}
-
-	bIsSprinting = !bIsSprinting;
-	MoveComponent->MaxWalkSpeed = bIsSprinting ? BaseWalkSpeed * SprintSpeedMultiplier : BaseWalkSpeed;
 }
 
 void AThirdPersonPlayerCharacter::ReloadWeapon()
@@ -220,9 +297,25 @@ void AThirdPersonPlayerCharacter::ReloadWeapon()
 	}
 }
 
+void AThirdPersonPlayerCharacter::OnStancePressed()
+{
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->OnStancePressed();
+	}
+}
+
+void AThirdPersonPlayerCharacter::OnStanceReleased()
+{
+	if (LocomotionComponent)
+	{
+		LocomotionComponent->OnStanceReleased();
+	}
+}
+
 void AThirdPersonPlayerCharacter::StartFire()
 {
-	if (WeaponComponent)
+	if (WeaponComponent && IsAiming())
 	{
 		WeaponComponent->StartFire();
 	}

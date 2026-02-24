@@ -49,7 +49,11 @@ void UThirdPersonPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		Direction = 0.f;
 	}
-
+	
+	Stance = ThirdPersonCharacter->Stance;
+	bIsProne = ThirdPersonCharacter->Stance == EStance::Prone;
+	bIsCrouching = ThirdPersonCharacter->Stance == EStance::Crouching;
+	
 	auto CurrentWeapon = ThirdPersonCharacter->GetCurrentWeapon();
 	if (CurrentWeapon && CurrentWeapon->AnimationSetBP)
 	{

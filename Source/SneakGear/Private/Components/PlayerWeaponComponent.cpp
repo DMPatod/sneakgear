@@ -15,7 +15,7 @@ void UPlayerWeaponComponent::Reload()
 		return;
 	}
 
-	const int32 MissingAmmo = FMath::Max(ClipSize - InClip, 0);
+	const int32 MissingAmmo = FMath::Max(GetClipSize() - InClip, 0);
 	if (MissingAmmo <= 0)
 	{
 		return;
@@ -30,7 +30,7 @@ void UPlayerWeaponComponent::Reload()
 
 	const float ConsumedArmor = PlayerCharacter->ConsumeAmmo(static_cast<float>(AmmoToLoad));
 	const int32 LoadedAmmo = FMath::Clamp(FMath::FloorToInt(ConsumedArmor), 0, AmmoToLoad);
-	InClip = FMath::Clamp(InClip + LoadedAmmo, 0, ClipSize);
+	InClip = FMath::Clamp(InClip + LoadedAmmo, 0, GetClipSize());
 }
 
 float UPlayerWeaponComponent::GetPlayerArmor() const

@@ -2,17 +2,25 @@
 
 #include "CoreMinimal.h"
 #include "Characters/BaseCharacter.h"
-#include "Components/PlayerAimComponent.h"
-#include "Components/PlayerWeaponComponent.h"
 #include "ThirdPersonPlayerCharacter.generated.h"
 
 class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
+class UEnhancedInputComponent;
 class UPlayerAimComponent;
 class UPlayerWeaponComponent;
+class UPlayerLocomotionComponent;
 class AWeaponBase;
 struct FInputActionValue;
+
+UENUM(BlueprintType)
+enum class EStance : uint8
+{
+	Standing UMETA(DisplayName="Standing"),
+	Crouching UMETA(DisplayName="Crouching"),
+	Prone UMETA(DisplayName="Prone")
+};
 
 UCLASS()
 class SNEAKGEAR_API AThirdPersonPlayerCharacter : public ABaseCharacter
@@ -22,31 +30,22 @@ class SNEAKGEAR_API AThirdPersonPlayerCharacter : public ABaseCharacter
 public:
 	AThirdPersonPlayerCharacter();
 
-	bool IsAiming() const
-	{
-		return AimComponent ? AimComponent->IsAiming() : false;
-	}
+	bool IsAiming() const;
+	AWeaponBase* GetCurrentWeapon() const;
+	float GetAmmo() const;
+	float ConsumeAmmo(float Amount);
+	float GetMaxSpeed() const;
 
-	AWeaponBase* GetCurrentWeapon() const
-	{
-		return WeaponComponent ? WeaponComponent->GetCurrentWeapon() : nullptr;
-	}
+	UFUNCTION(BlueprintCallable, Category="Movement")
+	void SetStance(EStance NewStance);
 
-	float GetAmmo() const
-	{
-		return Armor;
-	}
-
-	float ConsumeAmmo(float Amount)
-	{
-		const float UsedArmor = FMath::Clamp(Amount, 0.f, Armor);
-		Armor -= UsedArmor;
-		return UsedArmor;
-	}
+	UPROPERTY(BlueprintReadOnly, Category="Movement")
+	EStance Stance = EStance::Standing;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void Move(const FInputActionValue& Value);
 	virtual void Look(const FInputActionValue& Value);
@@ -87,11 +86,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> ReloadAction;
 
-	UPROPERTY(EditDefaultsOnly, Category="Movement")
-	float SprintSpeedMultiplier = 1.5f;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> StanceAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ammo")
-	float Armor = 0.f;
+	float Ammo = 10000.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
@@ -99,16 +98,25 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerAimComponent> AimComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UPlayerLocomotionComponent> LocomotionComponent;
+
 private:
+	void SetupViewComponents();
+	void SetupGameplayComponents();
+	void InitializeGameplayState();
+	void BindInputActions(UEnhancedInputComponent* EnhancedInput);
+
 	void StartFire();
 	void StopFire();
 	void StartAim();
 	void StopAim();
+	void ApplyAimRotationMode(bool bEnableAimRotation);
 	void ToggleAimView();
 	void ToggleEquip();
 	void ToggleSprint();
 	void ReloadWeapon();
-
-	bool bIsSprinting = false;
-	float BaseWalkSpeed = 450.f;
+	
+	void OnStancePressed();
+	void OnStanceReleased();
 };

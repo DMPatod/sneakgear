@@ -1,0 +1,71 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "Characters/Player/ThirdPersonPlayerCharacter.h"
+#include "PlayerLocomotionComponent.generated.h"
+
+class USpringArmComponent;
+struct FInputActionValue;
+
+UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
+class SNEAKGEAR_API UPlayerLocomotionComponent : public UActorComponent
+{
+	GENERATED_BODY()
+
+public:
+	UPlayerLocomotionComponent();
+
+	void Initialize(USpringArmComponent* InCameraBoom);
+	void SetupMovementDefaults();
+	void TickLocomotion(float DeltaSeconds);
+
+	void Move(const FInputActionValue& Value);
+	void SetStance(EStance NewStance);
+	void ToggleSprint();
+	void OnStancePressed();
+	void OnStanceReleased();
+	void UpdateRotationMode(bool bIsAiming);
+
+	float GetMaxSpeed() const;
+
+private:
+	UPROPERTY()
+	TObjectPtr<USpringArmComponent> CameraBoom;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stance|Input")
+	float ProneHoldTime = 0.35f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Movement")
+	float SprintSpeedMultiplier = 1.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stance|Capsule")
+	float StandingHalfHeight = 88.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stance|Capsule")
+	float CrouchHalfHeight = 58.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stance|Capsule")
+	float ProneHalfHeight = 35.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stance|Speed")
+	float WalkSpeed = 220.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stance|Speed")
+	float CrouchSpeed = 140.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stance|Speed")
+	float ProneSpeed = 80.f;
+
+	bool bIsSprinting = false;
+	FTimerHandle StanceHoldTimer;
+	bool bStanceHoldTriggered = false;
+	bool bStanceButtonDown = false;
+
+	void HandleStanceHold();
+	void UpdateCameraSocketOffset(float DeltaSeconds);
+	void UpdateMovementSpeed();
+	float GetStanceBaseSpeed() const;
+	bool CanResizeCapsuleTo(float TargetHalfHeight) const;
+	class AThirdPersonPlayerCharacter* GetPlayerCharacter() const;
+};

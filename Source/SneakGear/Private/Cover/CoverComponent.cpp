@@ -62,7 +62,7 @@ FCoverHit UCoverComponent::FindCover() const
 	auto Velocity2D = FVector(Velocity.X, Velocity.Y, 0.f);
 	auto Speed2D = Velocity2D.Size();
 
-	if (Speed2D < 10.f)
+	if (Speed2D < 7.5f)
 	{
 		return Out;
 	}

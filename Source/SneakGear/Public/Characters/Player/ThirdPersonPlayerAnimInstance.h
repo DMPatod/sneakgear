@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ThirdPersonPlayerCharacter.h"
 #include "Animation/AnimInstance.h"
 #include "ThirdPersonPlayerAnimInstance.generated.h"
 
@@ -32,7 +33,7 @@ public:
 	bool bIsRunning = false;
 
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
-	bool bIsProning = false;
+	bool bIsProne = false;
 
 	UPROPERTY(BlueprintReadOnly, Category="Aim")
 	bool bIsAiming = false;
@@ -45,6 +46,15 @@ public:
 
 	UPROPERTY(Transient)
 	TSubclassOf<UAnimInstance> LinkedWeaponSet;
+
+	UPROPERTY(BlueprintReadOnly, Category="Stance")
+	EStance Stance = EStance::Standing;
+
+	UPROPERTY(BlueprintReadOnly, Category="Stance")
+	float Speed2D = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	float AimPitch;
 
 private:
 	UPROPERTY(Transient)

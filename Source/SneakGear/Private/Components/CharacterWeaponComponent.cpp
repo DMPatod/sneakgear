@@ -12,8 +12,6 @@ void UCharacterWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InClip = FMath::Max(ClipSize, 0);
-
 	if (!StartedWeaponClass)
 	{
 		return;
@@ -40,6 +38,8 @@ void UCharacterWeaponComponent::BeginPlay()
 	CurrentWeapon->SetOwner(OwnerCharacter);
 	AttachWeaponToSocket(HolsterSocketName);
 	CurrentWeapon->OnWeaponFiredEvent().AddUObject(this, &UCharacterWeaponComponent::HandleWeaponFired);
+	
+	InClip = FMath::Max(GetClipSize(), 0);
 }
 
 void UCharacterWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -95,7 +95,17 @@ void UCharacterWeaponComponent::AttachWeaponToSocket(FName SocketName) const
 
 void UCharacterWeaponComponent::Reload()
 {
-	InClip = FMath::Max(ClipSize, 0);
+	InClip = FMath::Max(GetClipSize(), 0);
+}
+
+int32 UCharacterWeaponComponent::GetClipSize() const
+{
+	if (!StartedWeaponClass || !CurrentWeapon)
+	{
+		return -1;
+	}
+
+	return CurrentWeapon->ClipSize;
 }
 
 void UCharacterWeaponComponent::HandleWeaponFired()

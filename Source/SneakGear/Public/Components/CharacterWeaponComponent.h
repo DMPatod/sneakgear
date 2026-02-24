@@ -36,10 +36,7 @@ public:
 	}
 
 	UFUNCTION(BlueprintCallable, Category="Weapon|Ammo")
-	int32 GetClipSize() const
-	{
-		return ClipSize;
-	}
+	int32 GetClipSize() const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon", meta=(AllowPrivateAccess="true"))
@@ -51,11 +48,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName HolsterSocketName = "spine_socket";
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ammo", meta=(ClampMin="1"))
-	int32 ClipSize = 8;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon|Ammo")
-	int32 InClip = 0;
+	int32 InClip = -1;
 
 private:
 	UPROPERTY()

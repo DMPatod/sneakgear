@@ -5,7 +5,6 @@
 #include "Cover/CoverStateComponent.h"
 #include "StealthPlayerCharacter.generated.h"
 
-class UInputAction;
 class UCoverComponent;
 class UCoverStateComponent;
 struct FInputActionValue;
@@ -31,18 +30,9 @@ public:
 protected:
 	virtual void Move(const FInputActionValue& Value) override;
 
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputAction> CrouchAction;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cover")
 	TObjectPtr<UCoverComponent> CoverComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cover")
 	TObjectPtr<UCoverStateComponent> CoverStateComponent;
-
-private:
-	void StartCrouch();
-	void StopCrouch();
 };

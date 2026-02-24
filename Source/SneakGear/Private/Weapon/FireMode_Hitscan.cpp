@@ -1,5 +1,7 @@
 #include "Weapon/FireMode_Hitscan.h"
 
+#include "Characters/Player/StealthPlayerCharacter.h"
+#include "Game/StealthPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 void UFireMode_Hitscan::FireOnce(const FWeaponFireContext& Context)
@@ -37,6 +39,11 @@ void UFireMode_Hitscan::FireOnce(const FWeaponFireContext& Context)
 	{
 		UGameplayStatics::ApplyPointDamage(FireHit.GetActor(), Damage, ShotDirection, FireHit,
 		                                   Context.InstigatorPawn->GetController(), Context.WeaponActor, DamageType);
+
+		if (auto Controller = Cast<AStealthPlayerController>(Context.InstigatorPawn->GetController()))
+		{
+			Controller->NotifyHitMarker();
+		}
 
 		if (bDrawDebug)
 		{

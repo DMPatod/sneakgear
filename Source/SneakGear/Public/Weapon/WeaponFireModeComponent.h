@@ -45,5 +45,5 @@ public:
 	float NoiseRadius = 1800.f;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Debug")
-	bool bDrawDebug = false;
+	bool bDrawDebug = true;
 };

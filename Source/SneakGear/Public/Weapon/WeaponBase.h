@@ -39,6 +39,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TSubclassOf<UAnimInstance> AnimationSetBP;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Details")
+	int32 ClipSize = 8;
 
 protected:
 	FTimerHandle FireTimer;
@@ -68,6 +71,4 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Details")
 	FName Name;
 
-	UPROPERTY(EditDefaultsOnly, Category="Details")
-	int8 ClipSize = 8;
 };
