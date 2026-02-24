@@ -1,4 +1,4 @@
-#include "Cover/CoverStateComponent.h"
+#include "Components/Cover/CoverStateComponent.h"
 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"

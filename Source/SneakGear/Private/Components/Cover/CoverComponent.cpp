@@ -1,4 +1,4 @@
-#include "Cover/CoverComponent.h"
+#include "Components/Cover/CoverComponent.h"
 
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"

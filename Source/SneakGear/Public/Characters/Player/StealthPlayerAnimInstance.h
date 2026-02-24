@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/PlayerItemComponent.h"
 #include "Characters/Player/ThirdPersonPlayerAnimInstance.h"
 #include "StealthPlayerAnimInstance.generated.h"
 
@@ -17,6 +18,12 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Cover")
 	float CoverMove = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	bool bWeaponFiredRecently = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	EPlayerItemSlot ActiveWeaponSlot = EPlayerItemSlot::PrimaryWeapon;
 
 protected:
 	virtual void NativeInitializeAnimation() override;

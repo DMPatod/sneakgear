@@ -1,7 +1,8 @@
 #include "UI/WeaponStatusWidget.h"
 
-#include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "Blueprint/WidgetTree.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
+#include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "Components/PlayerWeaponComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
@@ -97,10 +98,22 @@ void UWeaponStatusWidget::UpdateFromPlayer()
 		                                    FText::AsNumber(Weapon->GetFireRate())));
 	}
 
-	const auto* PlayerWeaponComponent = Player->FindComponentByClass<UPlayerWeaponComponent>();
-	const int32 InClip = PlayerWeaponComponent ? PlayerWeaponComponent->GetInClip() : 0;
-	const int32 ClipSize = PlayerWeaponComponent ? PlayerWeaponComponent->GetClipSize() : 0;
-	const int32 ReserveAmmo = FMath::Max(FMath::FloorToInt(Player->GetAmmo()), 0);
+	int32 InClip = 0;
+	int32 ClipSize = 0;
+	int32 ReserveAmmo = FMath::Max(FMath::FloorToInt(Player->GetAmmo()), 0);
+
+	if (const auto* StealthPlayer = Cast<AStealthPlayerCharacter>(Player))
+	{
+		InClip = StealthPlayer->GetActiveWeaponInClip();
+		ClipSize = StealthPlayer->GetActiveWeaponClipSize();
+		ReserveAmmo = StealthPlayer->GetReserveAmmoCount();
+	}
+	else
+	{
+		const auto* PlayerWeaponComponent = Player->FindComponentByClass<UPlayerWeaponComponent>();
+		InClip = PlayerWeaponComponent ? FMath::Max(PlayerWeaponComponent->GetInClip(), 0) : 0;
+		ClipSize = PlayerWeaponComponent ? FMath::Max(PlayerWeaponComponent->GetClipSize(), 0) : 0;
+	}
 
 	if (AmmoText)
 	{

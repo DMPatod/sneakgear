@@ -31,7 +31,7 @@ public:
 	AThirdPersonPlayerCharacter();
 
 	bool IsAiming() const;
-	AWeaponBase* GetCurrentWeapon() const;
+	virtual AWeaponBase* GetCurrentWeapon() const;
 	float GetAmmo() const;
 	float ConsumeAmmo(float Amount);
 	float GetMaxSpeed() const;
@@ -49,6 +49,9 @@ protected:
 
 	virtual void Move(const FInputActionValue& Value);
 	virtual void Look(const FInputActionValue& Value);
+	virtual void StartFire();
+	virtual void StopFire();
+	virtual void ReloadWeapon();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -107,15 +110,12 @@ private:
 	void InitializeGameplayState();
 	void BindInputActions(UEnhancedInputComponent* EnhancedInput);
 
-	void StartFire();
-	void StopFire();
 	void StartAim();
 	void StopAim();
 	void ApplyAimRotationMode(bool bEnableAimRotation);
 	void ToggleAimView();
 	void ToggleEquip();
 	void ToggleSprint();
-	void ReloadWeapon();
 	
 	void OnStancePressed();
 	void OnStanceReleased();

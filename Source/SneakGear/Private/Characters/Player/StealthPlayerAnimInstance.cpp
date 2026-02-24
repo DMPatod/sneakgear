@@ -23,4 +23,6 @@ void UStealthPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	bInCover = StealthCharacter->IsInCover();
 	CoverMove = StealthCharacter->GetCoverMoveAxis();
+	ActiveWeaponSlot = StealthCharacter->GetActiveWeaponSlot();
+	bWeaponFiredRecently = StealthCharacter->WasWeaponFiredRecently();
 }

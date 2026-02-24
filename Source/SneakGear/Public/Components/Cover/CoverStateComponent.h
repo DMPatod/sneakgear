@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Cover/CoverComponent.h"
+#include "Components/Cover/CoverComponent.h"
 #include "CoverStateComponent.generated.h"
 
 struct FInputActionValue;
