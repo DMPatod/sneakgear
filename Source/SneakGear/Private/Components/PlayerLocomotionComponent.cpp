@@ -2,6 +2,7 @@
 
 #include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/Cover/CoverStateComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputActionValue.h"
@@ -35,7 +36,7 @@ void UPlayerLocomotionComponent::SetupMovementDefaults()
 	MoveComponent->RotationRate = FRotator(0.f, 540.f, 0.f);
 	MoveComponent->JumpZVelocity = 600.f;
 	MoveComponent->AirControl = 0.35f;
-	MoveComponent->NavAgentProps.bCanCrouch = true;
+	MoveComponent->NavAgentProps.bCanCrouch = false;
 }
 
 void UPlayerLocomotionComponent::TickLocomotion(float DeltaSeconds)
@@ -70,40 +71,51 @@ void UPlayerLocomotionComponent::SetStance(EStance NewStance)
 		return;
 	}
 
-	PlayerCharacter->Stance = NewStance;
+	// Prone is not compatible with cover state; transition by exiting cover first.
+	if (IsCoverActive() && NewStance == EStance::Prone)
+	{
+		if (UCoverStateComponent* CoverState = PlayerCharacter->FindComponentByClass<UCoverStateComponent>())
+		{
+			CoverState->RequestExitCover();
+		}
+	}
 
-	UCharacterMovementComponent* Move = PlayerCharacter->GetCharacterMovement();
 	UCapsuleComponent* Capsule = PlayerCharacter->GetCapsuleComponent();
-	if (!Move || !Capsule)
+	if (!Capsule)
 	{
 		return;
 	}
 
-	switch (PlayerCharacter->Stance)
+	float TargetHalfHeight = StandingHalfHeight;
+	switch (NewStance)
 	{
 	case EStance::Standing:
-		PlayerCharacter->UnCrouch();
-		if (CanResizeCapsuleTo(StandingHalfHeight))
-		{
-			Capsule->SetCapsuleHalfHeight(StandingHalfHeight, true);
-		}
+		TargetHalfHeight = StandingHalfHeight;
 		break;
 	case EStance::Crouching:
-		PlayerCharacter->Crouch();
-		if (CanResizeCapsuleTo(CrouchHalfHeight))
-		{
-			Capsule->SetCapsuleHalfHeight(CrouchHalfHeight, true);
-		}
+		TargetHalfHeight = CrouchHalfHeight;
 		break;
 	case EStance::Prone:
-		PlayerCharacter->UnCrouch();
-		if (CanResizeCapsuleTo(ProneHalfHeight))
-		{
-			Capsule->SetCapsuleHalfHeight(ProneHalfHeight, true);
-		}
+		TargetHalfHeight = ProneHalfHeight;
 		break;
 	}
 
+	if (!CanResizeCapsuleTo(TargetHalfHeight))
+	{
+		return;
+	}
+
+	const float PreviousHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight();
+	Capsule->SetCapsuleHalfHeight(TargetHalfHeight, true);
+
+	// Keep capsule base at same world height after center-based half-height resize.
+	const float HeightDelta = TargetHalfHeight - PreviousHalfHeight;
+	if (!FMath::IsNearlyZero(HeightDelta))
+	{
+		PlayerCharacter->AddActorWorldOffset(FVector(0.f, 0.f, HeightDelta), true);
+	}
+
+	PlayerCharacter->Stance = NewStance;
 	UpdateMovementSpeed();
 	UpdateRotationMode(PlayerCharacter->IsAiming());
 }
@@ -125,7 +137,8 @@ void UPlayerLocomotionComponent::OnStancePressed()
 	bStanceButtonDown = true;
 	bStanceHoldTriggered = false;
 
-	PlayerCharacter->GetWorldTimerManager().SetTimer(StanceHoldTimer, this, &UPlayerLocomotionComponent::HandleStanceHold,
+	PlayerCharacter->GetWorldTimerManager().SetTimer(StanceHoldTimer, this,
+	                                                 &UPlayerLocomotionComponent::HandleStanceHold,
 	                                                 ProneHoldTime, false);
 }
 
@@ -156,7 +169,7 @@ void UPlayerLocomotionComponent::OnStanceReleased()
 	}
 	else
 	{
-		SetStance(EStance::Prone);
+		SetStance(EStance::Crouching);
 	}
 }
 
@@ -171,6 +184,12 @@ void UPlayerLocomotionComponent::UpdateRotationMode(bool bIsAiming)
 	UCharacterMovementComponent* MoveComponent = PlayerCharacter->GetCharacterMovement();
 	if (!MoveComponent)
 	{
+		return;
+	}
+
+	if (IsCoverActive())
+	{
+		MoveComponent->bOrientRotationToMovement = false;
 		return;
 	}
 
@@ -192,12 +211,13 @@ void UPlayerLocomotionComponent::HandleStanceHold()
 
 	bStanceHoldTriggered = true;
 
-	if (PlayerCharacter->Stance != EStance::Prone)
+	if (PlayerCharacter->Stance == EStance::Prone)
 	{
-		if (PlayerCharacter->GetCharacterMovement() && PlayerCharacter->GetCharacterMovement()->IsMovingOnGround())
-		{
-			SetStance(EStance::Prone);
-		}
+		SetStance(EStance::Standing);
+	}
+	else
+	{
+		SetStance(EStance::Prone);
 	}
 }
 
@@ -237,7 +257,17 @@ void UPlayerLocomotionComponent::UpdateMovementSpeed()
 	}
 
 	const float BaseSpeed = GetStanceBaseSpeed();
-	Move->MaxWalkSpeed = bIsSprinting ? BaseSpeed * SprintSpeedMultiplier : BaseSpeed;
+	float TargetSpeed = bIsSprinting ? BaseSpeed * SprintSpeedMultiplier : BaseSpeed;
+
+	if (const UCoverStateComponent* CoverState = PlayerCharacter->FindComponentByClass<UCoverStateComponent>())
+	{
+		if (CoverState->IsCoverActive())
+		{
+			TargetSpeed = FMath::Min(TargetSpeed, CoverState->GetCoverMaxSpeed());
+		}
+	}
+
+	Move->MaxWalkSpeed = TargetSpeed;
 }
 
 float UPlayerLocomotionComponent::GetStanceBaseSpeed() const
@@ -261,6 +291,30 @@ float UPlayerLocomotionComponent::GetStanceBaseSpeed() const
 	return WalkSpeed;
 }
 
+void UPlayerLocomotionComponent::RefreshMovementState()
+{
+	const AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	if (!PlayerCharacter)
+	{
+		return;
+	}
+
+	UpdateMovementSpeed();
+	UpdateRotationMode(PlayerCharacter->IsAiming());
+}
+
+bool UPlayerLocomotionComponent::IsCoverActive() const
+{
+	const AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	if (!PlayerCharacter)
+	{
+		return false;
+	}
+
+	const UCoverStateComponent* CoverState = PlayerCharacter->FindComponentByClass<UCoverStateComponent>();
+	return CoverState && CoverState->IsCoverActive();
+}
+
 bool UPlayerLocomotionComponent::CanResizeCapsuleTo(float TargetHalfHeight) const
 {
 	const AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
@@ -277,20 +331,19 @@ bool UPlayerLocomotionComponent::CanResizeCapsuleTo(float TargetHalfHeight) cons
 	}
 
 	const float Radius = Capsule->GetUnscaledCapsuleRadius();
-	const float CurrentHalfHeight = Capsule->GetScaledCapsuleHalfHeight();
-	const float Grow = TargetHalfHeight - CurrentHalfHeight;
-	if (Grow <= 0.f)
+	const float CurrentHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight();
+	if (TargetHalfHeight <= CurrentHalfHeight)
 	{
 		return true;
 	}
 
-	const FVector Start = PlayerCharacter->GetActorLocation();
-	const FVector End = Start + FVector(0.f, 0.f, Grow * 2.f);
+	// We keep capsule base fixed when resizing, so the capsule center rises by this amount.
+	const float CenterOffsetZ = TargetHalfHeight - CurrentHalfHeight;
+	const FVector TargetCenter = PlayerCharacter->GetActorLocation() + FVector(0.f, 0.f, CenterOffsetZ);
 
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(StanceStandCheck), false, PlayerCharacter);
-	FHitResult Hit;
-	return !World->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Pawn,
-	                                    FCollisionShape::MakeCapsule(Radius, TargetHalfHeight), Params);
+	return !World->OverlapBlockingTestByChannel(TargetCenter, FQuat::Identity, ECC_Pawn,
+	                                            FCollisionShape::MakeCapsule(Radius, TargetHalfHeight), Params);
 }
 
 AThirdPersonPlayerCharacter* UPlayerLocomotionComponent::GetPlayerCharacter() const

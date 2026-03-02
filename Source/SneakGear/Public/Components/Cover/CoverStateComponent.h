@@ -28,12 +28,23 @@ public:
 		return CoverState == ECoverState::Locked;
 	}
 
+	bool IsCoverActive() const
+	{
+		return CoverState != ECoverState::None;
+	}
+
 	float GetCoverMoveAxis() const
 	{
 		return CoverMoveAxis;
 	}
 
+	float GetCoverMaxSpeed() const
+	{
+		return CoverMaxSpeed;
+	}
+
 	bool HandleMoveInput(ACharacter* OwnerCharacter, const FInputActionValue& Value);
+	void RequestExitCover();
 
 protected:
 	virtual void BeginPlay() override;
@@ -53,7 +64,7 @@ protected:
 	float CoverTurnSpeed = 18.f; // 12-20
 
 	UPROPERTY(EditAnywhere, Category="Cover|Tuning")
-	float CoverAssistStrength = 8.f; // 8-12
+	float CoverAssistStrength = 10.f; // 8-12
 
 	UPROPERTY(EditAnywhere, Category="Cover|Tuning")
 	float CoverLockDistance = 12.f; // 10-18

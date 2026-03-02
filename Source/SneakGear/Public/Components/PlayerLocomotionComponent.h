@@ -26,6 +26,7 @@ public:
 	void OnStancePressed();
 	void OnStanceReleased();
 	void UpdateRotationMode(bool bIsAiming);
+	void RefreshMovementState();
 
 	float GetMaxSpeed() const;
 
@@ -49,7 +50,7 @@ private:
 	float ProneHalfHeight = 35.f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Stance|Speed")
-	float WalkSpeed = 220.f;
+	float WalkSpeed = 480.f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Stance|Speed")
 	float CrouchSpeed = 140.f;
@@ -66,6 +67,7 @@ private:
 	void UpdateCameraSocketOffset(float DeltaSeconds);
 	void UpdateMovementSpeed();
 	float GetStanceBaseSpeed() const;
+	bool IsCoverActive() const;
 	bool CanResizeCapsuleTo(float TargetHalfHeight) const;
-	class AThirdPersonPlayerCharacter* GetPlayerCharacter() const;
+	AThirdPersonPlayerCharacter* GetPlayerCharacter() const;
 };

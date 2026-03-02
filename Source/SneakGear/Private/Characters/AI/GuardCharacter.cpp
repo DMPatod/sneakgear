@@ -6,6 +6,7 @@
 #include "AI/PatrolPath.h"
 #include "Components/AI/GuardAwarenessComponent.h"
 #include "Components/AI/GuardPatrolComponent.h"
+#include "Components/CharacterWeaponComponent.h"
 #include "Data/GuardArchetypeData.h"
 #include "DrawDebugHelpers.h"
 #include "GAS/HealthAttributeSet.h"
@@ -13,13 +14,14 @@
 
 AGuardCharacter::AGuardCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	AIControllerClass = AGuardAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	AwarenessComponent = CreateDefaultSubobject<UGuardAwarenessComponent>(TEXT("AwarenessComponent"));
 	PatrolComponent = CreateDefaultSubobject<UGuardPatrolComponent>(TEXT("PatrolComponent"));
+	WeaponComponent = CreateDefaultSubobject<UCharacterWeaponComponent>(TEXT("WeaponComponent"));
 }
 
 void AGuardCharacter::BeginPlay()
@@ -68,8 +70,20 @@ void AGuardCharacter::BeginPlay()
 		PatrolComponent->ApplyToController(GetController());
 	}
 
+	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
+	{
+		WeaponComponent->ToggleEquip();
+	}
+
 	InitGAS();
 	BindHealthDeath();
+}
+
+void AGuardCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	UpdateCombatFromAwareness();
 }
 
 #if WITH_EDITOR
@@ -88,6 +102,11 @@ void AGuardCharacter::OnConstruction(const FTransform& Transform)
 
 void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (WeaponComponent)
+	{
+		WeaponComponent->StopFire();
+	}
+
 	if (auto W = GetWorld())
 	{
 		if (auto Radar = W->GetSubsystem<URadarRegistrySubsystem>())
@@ -101,6 +120,30 @@ void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void AGuardCharacter::UpdateCombatFromAwareness()
+{
+	if (!AwarenessComponent || !WeaponComponent)
+	{
+		return;
+	}
+
+	const bool bCanShootTarget = AwarenessComponent->HasLineOfSight();
+
+	if (bCanShootTarget)
+	{
+		if (!bIsFiringAtTarget)
+		{
+			WeaponComponent->StartFire();
+			bIsFiringAtTarget = true;
+		}
+	}
+	else if (bIsFiringAtTarget)
+	{
+		WeaponComponent->StopFire();
+		bIsFiringAtTarget = false;
+	}
 }
 
 void AGuardCharacter::SetTargetActor(AActor* NewTarget)

@@ -16,7 +16,8 @@ public:
 	UPlayerAimComponent();
 
 	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	void Initialize(USpringArmComponent* InCameraBoom, UCameraComponent* InThirdPersonCamera,
 	                UCameraComponent* InFirstPersonCamera);
@@ -67,7 +68,7 @@ private:
 	FVector OverTheShoulderOffsetNormal = FVector(0.f, 50.f, 75.f);
 
 	UPROPERTY(EditDefaultsOnly, Category="Aim")
-	FVector OverTheShoulderOffsetAim = FVector(0.f, 70.f, 60.f);
+	FVector OverTheShoulderOffsetAim = FVector(75, 55, 25);
 
 	bool bIsAiming = false;
 	bool bAimFirstPerson = false;

@@ -1,7 +1,9 @@
 #include "Components/Cover/CoverStateComponent.h"
 
+#include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/PlayerLocomotionComponent.h"
 #include "InputActionValue.h"
 
 UCoverStateComponent::UCoverStateComponent()
@@ -27,8 +29,22 @@ void UCoverStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		return;
 	}
 
+	const AThirdPersonPlayerCharacter* ThirdPersonCharacter = Cast<AThirdPersonPlayerCharacter>(OwnerCharacter);
+	const bool bIsProne = ThirdPersonCharacter && ThirdPersonCharacter->Stance == EStance::Prone;
+
+	if (bIsProne && CoverState != ECoverState::None)
+	{
+		ExitCover(OwnerCharacter);
+		return;
+	}
+
 	if (CoverState == ECoverState::None)
 	{
+		if (bIsProne)
+		{
+			return;
+		}
+
 		auto Hit = CoverComponent->FindCover();
 		if (Hit.bValid)
 		{
@@ -111,17 +127,17 @@ void UCoverStateComponent::EnterCover(ACharacter* OwnerCharacter, const FCoverHi
 	CoverState = ECoverState::Approaching;
 
 	auto* Move = OwnerCharacter->GetCharacterMovement();
-	Move->MaxWalkSpeed = CoverMaxSpeed;
-
 	Move->SetPlaneConstraintEnabled(true);
 	Move->SetPlaneConstraintNormal(CurrentCover.Normal);
 	Move->SetPlaneConstraintOrigin(CurrentCover.SnapLocation);
 	Move->bConstrainToPlane = true;
 
-	Move->bOrientRotationToMovement = false;
 	OwnerCharacter->bUseControllerRotationYaw = false;
 
-	Move->MaxWalkSpeed = 300.f;
+	if (auto* Locomotion = OwnerCharacter->FindComponentByClass<UPlayerLocomotionComponent>())
+	{
+		Locomotion->RefreshMovementState();
+	}
 }
 
 void UCoverStateComponent::LockCover(ACharacter* OwnerCharacter)
@@ -135,15 +151,25 @@ void UCoverStateComponent::LockCover(ACharacter* OwnerCharacter)
 	CoverState = ECoverState::Locked;
 
 	auto* Move = OwnerCharacter->GetCharacterMovement();
-	Move->MaxWalkSpeed = CoverMaxSpeed;
-
 	Move->SetPlaneConstraintEnabled(true);
 	Move->SetPlaneConstraintNormal(CurrentCover.Normal);
 	Move->SetPlaneConstraintOrigin(CurrentCover.SnapLocation);
 	Move->bConstrainToPlane = true;
 
-	Move->bOrientRotationToMovement = false;
 	OwnerCharacter->bUseControllerRotationYaw = false;
+
+	if (auto* Locomotion = OwnerCharacter->FindComponentByClass<UPlayerLocomotionComponent>())
+	{
+		Locomotion->RefreshMovementState();
+	}
+}
+
+void UCoverStateComponent::RequestExitCover()
+{
+	if (ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner()))
+	{
+		ExitCover(OwnerCharacter);
+	}
 }
 
 void UCoverStateComponent::ExitCover(ACharacter* OwnerCharacter)
@@ -159,8 +185,11 @@ void UCoverStateComponent::ExitCover(ACharacter* OwnerCharacter)
 	auto* Move = OwnerCharacter->GetCharacterMovement();
 	Move->SetPlaneConstraintEnabled(false);
 	Move->bConstrainToPlane = false;
-	Move->bOrientRotationToMovement = true;
-	Move->MaxWalkSpeed = 450.f;
+
+	if (auto* Locomotion = OwnerCharacter->FindComponentByClass<UPlayerLocomotionComponent>())
+	{
+		Locomotion->RefreshMovementState();
+	}
 }
 
 void UCoverStateComponent::UpdateCoverApproach(ACharacter* OwnerCharacter, float DeltaTime)

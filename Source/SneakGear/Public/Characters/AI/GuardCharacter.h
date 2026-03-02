@@ -11,6 +11,7 @@ class APatrolPath;
 class UGuardArchetypeData;
 class UGuardAwarenessComponent;
 class UGuardPatrolComponent;
+class UCharacterWeaponComponent;
 
 UCLASS()
 class SNEAKGEAR_API AGuardCharacter : public ABaseCharacter
@@ -52,6 +53,7 @@ protected:
 	TObjectPtr<UGuardArchetypeData> ArchetypeData;
 	
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 #if WITH_EDITOR
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -66,4 +68,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UGuardPatrolComponent> PatrolComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	TObjectPtr<UCharacterWeaponComponent> WeaponComponent;
+
+	bool bIsFiringAtTarget = false;
+
+	void UpdateCombatFromAwareness();
 };

@@ -29,6 +29,7 @@ void UGuardAwarenessComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 	if (!TargetActor)
 	{
+		bHasLineOfSight = false;
 		return;
 	}
 

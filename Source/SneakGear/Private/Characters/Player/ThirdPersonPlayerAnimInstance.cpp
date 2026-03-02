@@ -36,7 +36,6 @@ void UThirdPersonPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	Speed = Vel2D.Size();
 	bIsInAir = MovementComponent->IsFalling();
-	bIsCrouching = ThirdPersonCharacter->bIsCrouched;
 	bIsAiming = ThirdPersonCharacter->IsAiming();
 
 	bIsRunning = Speed > 300.f;
