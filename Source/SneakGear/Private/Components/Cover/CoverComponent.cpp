@@ -69,6 +69,8 @@ FCoverHit UCoverComponent::FindCover() const
 
 	auto MoveDir = Velocity2D / Speed2D;
 	auto TowardWallDot = FVector::DotProduct(MoveDir, -Normal);
+	
+	UE_LOG(LogTemp, Warning, TEXT("TowardWallDot: %f"), TowardWallDot);
 	if (TowardWallDot < EnterDotThreshold)
 	{
 		return Out;

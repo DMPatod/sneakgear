@@ -12,7 +12,7 @@ void UStealthPlayerDebugWidget::NativeConstruct()
 
 	if (!DebugText && WidgetTree)
 	{
-		auto* RootWidget = WidgetTree->RootWidget;
+		auto RootWidget = WidgetTree->RootWidget;
 		if (!RootWidget)
 		{
 			RootWidget = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("DebugRoot"));

@@ -73,7 +73,7 @@ protected:
 	float CoverApproachTimeout = 0.5f; // 0.35-0.6
 
 	UPROPERTY(EditAnywhere, Category="Cover|Tuning")
-	float CoverExitBackDotThreshold = 0.2; // 0.15-0.3
+	float CoverExitBackDotThreshold = 0.8;
 
 	UPROPERTY(EditAnywhere, Category="Cover|Tuning")
 	float CoverFaceTurnSpeed = 12.f;

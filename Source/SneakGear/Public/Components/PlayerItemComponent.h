@@ -128,7 +128,10 @@ protected:
 	FName WeaponHandSocketName = "hand_r_socket";
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory|Weapons")
-	FName WeaponHolsterSocketName = "spine_socket";
+	FName PrimaryWeaponHolsterSocketName = "back_w_socket";
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory|Weapons")
+	FName SecondaryWeaponHolsterSocketName = "spine_r_socket";
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	FPlayerInventoryItem EquippedItem;
@@ -159,6 +162,7 @@ private:
 	const FWeaponSlotRuntime* ResolveWeaponRuntime(EPlayerItemSlot Slot) const;
 	AWeaponBase* SpawnWeapon(TSubclassOf<AWeaponBase> WeaponClass) const;
 	void AttachWeapon(AWeaponBase* Weapon, FName SocketName) const;
+	FName GetHolsterSocketForSlot(EPlayerItemSlot WeaponSlot) const;
 	void SyncWeaponAttachments() const;
 	void HandleWeaponFired(EPlayerItemSlot Slot);
 	void OnPrimaryWeaponFired();

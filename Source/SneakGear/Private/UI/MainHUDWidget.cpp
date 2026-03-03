@@ -1,6 +1,7 @@
 #include "UI/MainHUDWidget.h"
 
 #include "Components/CanvasPanelSlot.h"
+#include "Components/Widget.h"
 #include "UI/EventFeedWidget.h"
 #include "UI/PlayerVitalsWidget.h"
 #include "UI/RadarWidget.h"
@@ -41,18 +42,8 @@ void UMainHUDWidget::NativeConstruct()
 	{
 		DebugSlot->SetZOrder(StealthDebugZOrder);
 	}
-	else if (!RuntimeStealthDebugWidget && GetOwningPlayer())
-	{
-		RuntimeStealthDebugWidget = CreateWidget<UStealthPlayerDebugWidget>(
-			GetOwningPlayer(),
-			UStealthPlayerDebugWidget::StaticClass()
-		);
 
-		if (RuntimeStealthDebugWidget)
-		{
-			RuntimeStealthDebugWidget->AddToViewport(StealthDebugZOrder);
-		}
-	}
+	ApplyDisplaySettings();
 }
 
 void UMainHUDWidget::NativeDestruct()
@@ -64,4 +55,55 @@ void UMainHUDWidget::NativeDestruct()
 	}
 
 	Super::NativeDestruct();
+}
+
+void UMainHUDWidget::ApplyDisplaySettings()
+{
+	SetWidgetVisible(RadarWidget, DisplaySettings.bShowRadar);
+	SetWidgetVisible(PlayerVitalsWidget, DisplaySettings.bShowPlayerVitals);
+	SetWidgetVisible(WeaponStatusWidget, DisplaySettings.bShowWeaponStatus);
+	SetWidgetVisible(EventFeedWidget, DisplaySettings.bShowEventFeed);
+	SetWidgetVisible(StanceWidget, DisplaySettings.bShowStance);
+	SetWidgetVisible(StealthDebugWidget, DisplaySettings.bShowStealthDebug);
+
+	if (StealthDebugWidget)
+	{
+		if (RuntimeStealthDebugWidget)
+		{
+			RuntimeStealthDebugWidget->RemoveFromParent();
+			RuntimeStealthDebugWidget = nullptr;
+		}
+		return;
+	}
+
+	if (DisplaySettings.bShowStealthDebug)
+	{
+		if (!RuntimeStealthDebugWidget && GetOwningPlayer())
+		{
+			RuntimeStealthDebugWidget = CreateWidget<UStealthPlayerDebugWidget>(
+				GetOwningPlayer(),
+				UStealthPlayerDebugWidget::StaticClass()
+			);
+
+			if (RuntimeStealthDebugWidget)
+			{
+				RuntimeStealthDebugWidget->AddToViewport(StealthDebugZOrder);
+			}
+		}
+	}
+	else if (RuntimeStealthDebugWidget)
+	{
+		RuntimeStealthDebugWidget->RemoveFromParent();
+		RuntimeStealthDebugWidget = nullptr;
+	}
+}
+
+void UMainHUDWidget::SetWidgetVisible(UWidget* Widget, bool bVisible) const
+{
+	if (!Widget)
+	{
+		return;
+	}
+
+	Widget->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }

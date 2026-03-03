@@ -53,31 +53,20 @@ void UCoverStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 	else
 	{
-		if (!CoverComponent->ValidateCover(CurrentCover.Normal, 90.f))
-		{
-			ExitCover(OwnerCharacter);
-			return;
-		}
-
 		if (CoverState == ECoverState::Approaching)
 		{
 			UpdateCoverApproach(OwnerCharacter, DeltaTime);
 		}
 		else if (CoverState == ECoverState::Locked)
 		{
+			OwnerCharacter->bUseControllerRotationYaw = false;
 			UpdateCoverRotation(OwnerCharacter, DeltaTime);
-		}
-	}
-
-	const auto Velocity = OwnerCharacter->GetVelocity();
-	FVector Velocity2D(Velocity.X, Velocity.Y, 0.f);
-	if (Velocity2D.Size() > 10.f)
-	{
-		const FVector MoveDirection = Velocity2D.GetSafeNormal();
-		const float AwayDot = FVector::DotProduct(MoveDirection, CurrentCover.Normal);
-		if (AwayDot > CoverExitBackDotThreshold)
-		{
-			ExitCover(OwnerCharacter);
+			
+			if (!CoverComponent->ValidateCover(CurrentCover.Normal, 90.f))
+			{
+				ExitCover(OwnerCharacter);
+				return;
+			}
 		}
 	}
 }
@@ -95,20 +84,28 @@ bool UCoverStateComponent::HandleMoveInput(ACharacter* OwnerCharacter, const FIn
 	}
 
 	const auto Axis = Value.Get<FVector2D>();
+	auto ControlRot = OwnerCharacter->Controller->GetControlRotation();
+	auto YawRot = FRotator(0.f, ControlRot.Yaw, 0.f);
 
-	auto Tangent = CurrentCover.Tangent;
-	Tangent.Z = 0.f;
-	Tangent = Tangent.GetSafeNormal();
+	auto Forward = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
+	auto Right = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
 
-	CoverMoveAxis = Axis.Y;
-	OwnerCharacter->AddMovementInput(Tangent, CoverMoveAxis);
+	OwnerCharacter->AddMovementInput(Forward, Axis.X);
+	OwnerCharacter->AddMovementInput(Right, Axis.Y);
+
+	const FVector InputDir2D = (Forward * Axis.X + Right * Axis.Y).GetSafeNormal2D();
+	const FVector CoverTangent2D = CurrentCover.Tangent.GetSafeNormal2D();
+	const FVector CoverNormal2D = CurrentCover.Normal.GetSafeNormal2D();
+	CoverMoveAxis = FVector::DotProduct(InputDir2D, CoverTangent2D);
 
 	if (FMath::Abs(CoverMoveAxis) > 0.1f)
 	{
 		CoverFacingSign = CoverMoveAxis >= 0.f ? 1.f : -1.f;
 	}
 
-	if (Axis.X < -0.4f)
+	const float AwayDot = FVector::DotProduct(InputDir2D, CoverNormal2D);
+
+	if (!InputDir2D.IsNearlyZero() && AwayDot > CoverExitBackDotThreshold)
 	{
 		ExitCover(OwnerCharacter);
 	}
@@ -236,7 +233,7 @@ void UCoverStateComponent::UpdateCoverRotation(ACharacter* OwnerCharacter, float
 
 	const auto TargetRotation = FaceDir.Rotation();
 	const auto NewRotation = FMath::RInterpTo(OwnerCharacter->GetActorRotation(), TargetRotation, DeltaTime,
-	                                          CoverTurnSpeed);
+	                                          CoverFaceTurnSpeed);
 	OwnerCharacter->SetActorRotation(NewRotation);
 }
 

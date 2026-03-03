@@ -10,6 +10,31 @@ class UPlayerVitalsWidget;
 class UWeaponStatusWidget;
 class UEventFeedWidget;
 class UStealthPlayerDebugWidget;
+class UWidget;
+
+USTRUCT(BlueprintType)
+struct FMainHUDDisplaySettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	bool bShowRadar = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	bool bShowPlayerVitals = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	bool bShowWeaponStatus = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	bool bShowEventFeed = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	bool bShowStance = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	bool bShowStealthDebug = true;
+};
 
 UCLASS()
 class SNEAKGEAR_API UMainHUDWidget : public UUserWidget
@@ -19,6 +44,9 @@ class SNEAKGEAR_API UMainHUDWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+
+	UFUNCTION(BlueprintCallable, Category="UI")
+	void ApplyDisplaySettings();
 
 	URadarWidget* GetRadarWidget() const
 	{
@@ -44,6 +72,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category="UI")
 	int32 StealthDebugZOrder = 5;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	FMainHUDDisplaySettings DisplaySettings;
+
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<URadarWidget> RadarWidget;
 
@@ -64,4 +95,6 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UStealthPlayerDebugWidget> RuntimeStealthDebugWidget;
+
+	void SetWidgetVisible(UWidget* Widget, bool bVisible) const;
 };
