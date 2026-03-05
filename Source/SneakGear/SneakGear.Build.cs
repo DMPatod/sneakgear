@@ -11,7 +11,7 @@ public class SneakGear : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "NavigationSystem", "UMG",
-			"GameplayAbilities", "GameplayTags", "GameplayTasks"
+			"GameplayAbilities", "GameplayTags", "GameplayTasks", "SneakGearCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

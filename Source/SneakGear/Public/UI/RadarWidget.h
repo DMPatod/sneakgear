@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Radar/RadarTypes.h"
+#include "Types/RadarTypes.h"
 #include "RadarWidget.generated.h"
 
 UCLASS()

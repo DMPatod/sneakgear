@@ -52,6 +52,8 @@ protected:
 	virtual void StartFire();
 	virtual void StopFire();
 	virtual void ReloadWeapon();
+	virtual void OnJumpPressed();
+	virtual void OnJumpReleased();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;

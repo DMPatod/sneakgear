@@ -80,6 +80,33 @@ FCoverHit UCoverComponent::FindCover() const
 
 	auto Snap = Hit.ImpactPoint + Normal * (CapsuleRadius + 2.f);
 
+	const float CapsuleHalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 96.f;
+	const float FeetZ = ActorLocation.Z - CapsuleHalfHeight;
+	float ObstacleHeight = 0.f;
+	bool bIsCrouchHeightCover = false;
+
+	{
+		FCollisionQueryParams TopParams(SCENE_QUERY_STAT(CoverTopScan), false);
+		TopParams.AddIgnoredActor(Character);
+
+		FHitResult TopHit;
+		const FVector TopTraceBase = Hit.ImpactPoint - Normal * 10.f;
+		const FVector TopStart = TopTraceBase + FVector(0.f, 0.f, ScanHeight + 120.f);
+		const FVector TopEnd = TopTraceBase - FVector(0.f, 0.f, 40.f);
+		const bool bTopHit = World->LineTraceSingleByChannel(TopHit, TopStart, TopEnd, TraceChannel, TopParams);
+
+		if (bDrawDebug)
+		{
+			DrawDebugLine(World, TopStart, TopEnd, bTopHit ? FColor::Blue : FColor::Silver, false, 0.f, 0, 1.f);
+		}
+
+		if (bTopHit)
+		{
+			ObstacleHeight = FMath::Max(0.f, TopHit.ImpactPoint.Z - FeetZ);
+			bIsCrouchHeightCover = ObstacleHeight >= CrouchCoverMinHeight && ObstacleHeight <= CrouchCoverMaxHeight;
+		}
+	}
+
 	Out.bValid = true;
 	Out.ImpactPoint = Hit.ImpactPoint;
 	Out.Normal = Normal;
@@ -87,6 +114,8 @@ FCoverHit UCoverComponent::FindCover() const
 	Out.SnapLocation = Snap;
 	Out.SnapRotation = Tangent.Rotation();
 	Out.DistanceToWall = FVector::Dist(Hit.ImpactPoint, Start);
+	Out.ObstacleHeight = ObstacleHeight;
+	Out.bIsCrouchHeightCover = bIsCrouchHeightCover;
 
 	if (bDrawDebug)
 	{

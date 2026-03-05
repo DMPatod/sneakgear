@@ -178,8 +178,8 @@ void AThirdPersonPlayerCharacter::BindInputActions(UEnhancedInputComponent* Eic)
 
 	if (JumpAction)
 	{
-		Eic->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		Eic->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		Eic->BindAction(JumpAction, ETriggerEvent::Started, this, &AThirdPersonPlayerCharacter::OnJumpPressed);
+		Eic->BindAction(JumpAction, ETriggerEvent::Completed, this, &AThirdPersonPlayerCharacter::OnJumpReleased);
 	}
 
 	if (ReloadAction)
@@ -295,6 +295,16 @@ void AThirdPersonPlayerCharacter::ReloadWeapon()
 	{
 		WeaponComponent->Reload();
 	}
+}
+
+void AThirdPersonPlayerCharacter::OnJumpPressed()
+{
+	Jump();
+}
+
+void AThirdPersonPlayerCharacter::OnJumpReleased()
+{
+	StopJumping();
 }
 
 void AThirdPersonPlayerCharacter::OnStancePressed()

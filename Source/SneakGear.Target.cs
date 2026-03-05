@@ -11,5 +11,11 @@ public class SneakGearTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V6;
 
 		ExtraModuleNames.AddRange(new string[] { "SneakGear" });
+		RegisterModulesCreatedByRider();
+	}
+
+	private void RegisterModulesCreatedByRider()
+	{
+		ExtraModuleNames.AddRange(new string[] { "SneakGearCore" });
 	}
 }

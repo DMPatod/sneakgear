@@ -11,6 +11,11 @@
 			"AdditionalDependencies": [
 				"Engine"
 			]
+		},
+		{
+			"Name": "SneakGearCore",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -23,6 +28,10 @@
 		},
 		{
 			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "SneakGearUI",
 			"Enabled": true
 		}
 	],

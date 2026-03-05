@@ -66,6 +66,8 @@ protected:
 	virtual void StartFire() override;
 	virtual void StopFire() override;
 	virtual void ReloadWeapon() override;
+	virtual void OnJumpPressed() override;
+	virtual void OnJumpReleased() override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> SelectPrimaryWeaponAction;
@@ -83,11 +85,25 @@ protected:
 	TObjectPtr<UPlayerItemComponent> ItemComponent;
 
 private:
-	void HandlePrimaryWeaponSelected();
-	void HandleSecondaryWeaponSelected();
+	void HandlePrimaryWeaponPressed();
+	void HandlePrimaryWeaponReleased();
+	void HandleSecondaryWeaponPressed();
+	void HandleSecondaryWeaponReleased();
+	void HandleWeaponSlotPressed(EPlayerItemSlot Slot);
+	void HandleWeaponSlotReleased(EPlayerItemSlot Slot);
+	void OnWeaponSelectHoldTriggered();
+
 	void HandleWeaponSlotSelect(EPlayerItemSlot Slot);
 	void HandleActiveWeaponFired(EPlayerItemSlot FiredSlot);
 
 	UPROPERTY(Transient)
 	float LastWeaponFireTimestamp = -1000.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Input|Weapons")
+	float WeaponSelectionHoldTime = 0.35f;
+
+	FTimerHandle WeaponSelectionHoldTimer;
+	EPlayerItemSlot PendingWeaponSelectionSlot = EPlayerItemSlot::PrimaryWeapon;
+	bool bWeaponSelectionButtonDown = false;
+	bool bWeaponSelectionHoldTriggered = false;
 };

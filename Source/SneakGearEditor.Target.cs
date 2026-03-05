@@ -12,5 +12,11 @@ public class SneakGearEditorTarget : TargetRules
 		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 
 		ExtraModuleNames.AddRange( new string[] { "SneakGear" } );
+		RegisterModulesCreatedByRider();
+	}
+
+	private void RegisterModulesCreatedByRider()
+	{
+		ExtraModuleNames.AddRange(new string[] { "SneakGearCore" });
 	}
 }

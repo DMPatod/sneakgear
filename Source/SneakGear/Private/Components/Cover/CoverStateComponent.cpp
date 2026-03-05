@@ -1,6 +1,7 @@
 #include "Components/Cover/CoverStateComponent.h"
 
 #include "Characters/Player/ThirdPersonPlayerCharacter.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/PlayerLocomotionComponent.h"
@@ -110,6 +111,76 @@ bool UCoverStateComponent::HandleMoveInput(ACharacter* OwnerCharacter, const FIn
 		ExitCover(OwnerCharacter);
 	}
 
+	return true;
+}
+
+bool UCoverStateComponent::TryVault(ACharacter* OwnerCharacter)
+{
+	if (!OwnerCharacter || CoverState != ECoverState::Locked || !CurrentCover.bValid || !CurrentCover.bIsCrouchHeightCover)
+	{
+		return false;
+	}
+
+	const AThirdPersonPlayerCharacter* ThirdPersonCharacter = Cast<AThirdPersonPlayerCharacter>(OwnerCharacter);
+	if (!ThirdPersonCharacter || ThirdPersonCharacter->Stance != EStance::Crouching)
+	{
+		return false;
+	}
+
+	UCharacterMovementComponent* Move = OwnerCharacter->GetCharacterMovement();
+	UWorld* World = GetWorld();
+	UCapsuleComponent* Capsule = OwnerCharacter->GetCapsuleComponent();
+	if (!Move || !World || !Capsule)
+	{
+		return false;
+	}
+
+	if (!Move->IsMovingOnGround())
+	{
+		return false;
+	}
+
+	FVector VaultDir = -CurrentCover.Normal;
+	VaultDir.Z = 0.f;
+	VaultDir.Normalize();
+	if (VaultDir.IsNearlyZero())
+	{
+		return false;
+	}
+
+	const FVector LandingProbeXY = CurrentCover.ImpactPoint + VaultDir * VaultForwardDistance;
+	const FVector LandingProbeStart = LandingProbeXY + FVector(0.f, 0.f, VaultLandingProbeHeight);
+	const FVector LandingProbeEnd = LandingProbeXY - FVector(0.f, 0.f, VaultLandingProbeDepth);
+
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(VaultLandingProbe), false);
+	Params.AddIgnoredActor(OwnerCharacter);
+
+	FHitResult LandingHit;
+	const bool bFoundLanding = World->LineTraceSingleByChannel(LandingHit, LandingProbeStart, LandingProbeEnd,
+	                                                            ECC_Visibility, Params);
+	if (!bFoundLanding)
+	{
+		return false;
+	}
+
+	const float Radius = Capsule->GetScaledCapsuleRadius();
+	const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+	const FVector LandingLocation = LandingHit.ImpactPoint + FVector(0.f, 0.f, HalfHeight + 2.f);
+
+	const bool bLandingBlocked = World->OverlapBlockingTestByChannel(
+		LandingLocation,
+		FQuat::Identity,
+		ECC_Pawn,
+		FCollisionShape::MakeCapsule(Radius, HalfHeight),
+		Params
+	);
+	if (bLandingBlocked)
+	{
+		return false;
+	}
+
+	ExitCover(OwnerCharacter);
+	OwnerCharacter->LaunchCharacter(VaultDir * VaultLaunchForward + FVector(0.f, 0.f, VaultLaunchUp), true, true);
 	return true;
 }
 

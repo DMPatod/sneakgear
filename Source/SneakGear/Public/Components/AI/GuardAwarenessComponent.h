@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AI/GuardAwarenessTypes.h"
+#include "Types/GuardAwarenessTypes.h"
 #include "Components/ActorComponent.h"
 #include "GuardAwarenessComponent.generated.h"
 

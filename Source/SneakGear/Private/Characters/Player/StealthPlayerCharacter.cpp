@@ -9,6 +9,7 @@
 #include "Engine/OverlapResult.h"
 #include "Game/StealthPlayerController.h"
 #include "Items/WorldItemPickup.h"
+#include "TimerManager.h"
 #include "Weapon/WeaponBase.h"
 
 AStealthPlayerCharacter::AStealthPlayerCharacter()
@@ -31,6 +32,8 @@ void AStealthPlayerCharacter::BeginPlay()
 
 void AStealthPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	GetWorldTimerManager().ClearTimer(WeaponSelectionHoldTimer);
+
 	if (ItemComponent)
 	{
 		ItemComponent->OnActiveWeaponFiredEvent().RemoveAll(this);
@@ -52,13 +55,17 @@ void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 	if (SelectPrimaryWeaponAction)
 	{
 		EnhancedInput->BindAction(SelectPrimaryWeaponAction, ETriggerEvent::Started, this,
-		                          &AStealthPlayerCharacter::HandlePrimaryWeaponSelected);
+		                          &AStealthPlayerCharacter::HandlePrimaryWeaponPressed);
+		EnhancedInput->BindAction(SelectPrimaryWeaponAction, ETriggerEvent::Completed, this,
+		                          &AStealthPlayerCharacter::HandlePrimaryWeaponReleased);
 	}
 
 	if (SelectSecondaryWeaponAction)
 	{
 		EnhancedInput->BindAction(SelectSecondaryWeaponAction, ETriggerEvent::Started, this,
-		                          &AStealthPlayerCharacter::HandleSecondaryWeaponSelected);
+		                          &AStealthPlayerCharacter::HandleSecondaryWeaponPressed);
+		EnhancedInput->BindAction(SelectSecondaryWeaponAction, ETriggerEvent::Completed, this,
+		                          &AStealthPlayerCharacter::HandleSecondaryWeaponReleased);
 	}
 }
 
@@ -224,6 +231,21 @@ void AStealthPlayerCharacter::ReloadWeapon()
 	Super::ReloadWeapon();
 }
 
+void AStealthPlayerCharacter::OnJumpPressed()
+{
+	if (CoverStateComponent && CoverStateComponent->TryVault(this))
+	{
+		return;
+	}
+
+	Super::OnJumpPressed();
+}
+
+void AStealthPlayerCharacter::OnJumpReleased()
+{
+	Super::OnJumpReleased();
+}
+
 void AStealthPlayerCharacter::HandleActiveWeaponFired(EPlayerItemSlot FiredSlot)
 {
 	(void)FiredSlot;
@@ -237,16 +259,6 @@ void AStealthPlayerCharacter::HandleActiveWeaponFired(EPlayerItemSlot FiredSlot)
 }
 
 // Weapon Selection
-void AStealthPlayerCharacter::HandlePrimaryWeaponSelected()
-{
-	HandleWeaponSlotSelect(EPlayerItemSlot::PrimaryWeapon);
-}
-
-void AStealthPlayerCharacter::HandleSecondaryWeaponSelected()
-{
-	HandleWeaponSlotSelect(EPlayerItemSlot::SecondaryWeapon);
-}
-
 void AStealthPlayerCharacter::HandleWeaponSlotSelect(EPlayerItemSlot Slot)
 {
 	if (!ItemComponent)
@@ -265,4 +277,81 @@ void AStealthPlayerCharacter::HandleWeaponSlotSelect(EPlayerItemSlot Slot)
 	}
 
 	ItemComponent->SetActiveWeaponSlot(Slot, true);
+}
+
+void AStealthPlayerCharacter::HandlePrimaryWeaponPressed()
+{
+	HandleWeaponSlotPressed(EPlayerItemSlot::PrimaryWeapon);
+}
+
+void AStealthPlayerCharacter::HandlePrimaryWeaponReleased()
+{
+	HandleWeaponSlotReleased(EPlayerItemSlot::PrimaryWeapon);
+}
+
+void AStealthPlayerCharacter::HandleSecondaryWeaponPressed()
+{
+	HandleWeaponSlotPressed(EPlayerItemSlot::SecondaryWeapon);
+}
+
+void AStealthPlayerCharacter::HandleSecondaryWeaponReleased()
+{
+	HandleWeaponSlotReleased(EPlayerItemSlot::SecondaryWeapon);
+}
+
+void AStealthPlayerCharacter::HandleWeaponSlotPressed(EPlayerItemSlot Slot)
+{
+	bWeaponSelectionButtonDown = true;
+	bWeaponSelectionHoldTriggered = false;
+	PendingWeaponSelectionSlot = Slot;
+
+	GetWorldTimerManager().SetTimer(
+		WeaponSelectionHoldTimer,
+		this,
+		&AStealthPlayerCharacter::OnWeaponSelectHoldTriggered,
+		FMath::Max(WeaponSelectionHoldTime, 0.05f),
+		false
+	);
+}
+
+void AStealthPlayerCharacter::HandleWeaponSlotReleased(EPlayerItemSlot Slot)
+{
+	if (Slot != PendingWeaponSelectionSlot)
+	{
+		return;
+	}
+
+	bWeaponSelectionButtonDown = false;
+	GetWorldTimerManager().ClearTimer(WeaponSelectionHoldTimer);
+
+	if (bWeaponSelectionHoldTriggered)
+	{
+		if (AStealthPlayerController* Controller = Cast<AStealthPlayerController>(GetController()))
+		{
+			Controller->CloseWeaponSelectionWidget();
+		}
+		return;
+	}
+
+	HandleWeaponSlotSelect(Slot);
+
+	if (AStealthPlayerController* Controller = Cast<AStealthPlayerController>(GetController()))
+	{
+		Controller->ShowWeaponQuickSelectIndicator(Slot);
+	}
+}
+
+void AStealthPlayerCharacter::OnWeaponSelectHoldTriggered()
+{
+	if (!bWeaponSelectionButtonDown)
+	{
+		return;
+	}
+
+	bWeaponSelectionHoldTriggered = true;
+
+	if (AStealthPlayerController* Controller = Cast<AStealthPlayerController>(GetController()))
+	{
+		Controller->OpenWeaponSelectionWidget(PendingWeaponSelectionSlot);
+	}
 }

@@ -44,6 +44,7 @@ public:
 	}
 
 	bool HandleMoveInput(ACharacter* OwnerCharacter, const FInputActionValue& Value);
+	bool TryVault(ACharacter* OwnerCharacter);
 	void RequestExitCover();
 
 protected:
@@ -77,6 +78,21 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Cover|Tuning")
 	float CoverFaceTurnSpeed = 12.f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float VaultForwardDistance = 130.f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float VaultLandingProbeHeight = 120.f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float VaultLandingProbeDepth = 220.f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float VaultLaunchForward = 320.f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float VaultLaunchUp = 240.f;
 
 private:
 	void EnterCover(ACharacter* OwnerCharacter, const FCoverHit& Hit);

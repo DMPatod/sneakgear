@@ -6,7 +6,7 @@
 
 
 USTRUCT(BlueprintType)
-struct SNEAKGEAR_API FRadarContact
+struct SNEAKGEARCORE_API FRadarContact
 {
 	GENERATED_BODY()
 

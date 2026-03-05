@@ -29,6 +29,12 @@ struct FCoverHit
 
 	UPROPERTY(BlueprintReadOnly)
 	float DistanceToWall = 99999.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	float ObstacleHeight = 0.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsCrouchHeightCover = false;
 };
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -56,6 +62,12 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Cover")
 	float ValidateCoverNormalThreshold = 0.85f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float CrouchCoverMinHeight = 40.f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float CrouchCoverMaxHeight = 90.f;
 
 	UPROPERTY(EditAnywhere, Category="Cover")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;

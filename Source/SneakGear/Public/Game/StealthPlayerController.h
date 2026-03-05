@@ -2,12 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/PlayerItemComponent.h"
 #include "StealthPlayerController.generated.h"
 
 class UCrosshairWidget;
 class UMainHUDWidget;
 class UInputMappingContext;
 class URadarWidget;
+class UUserWidget;
 
 USTRUCT()
 struct FCrosshairSpreadConfig
@@ -51,6 +53,30 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void NotifyHitMarker();
 
+	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
+	void ShowWeaponQuickSelectIndicator(EPlayerItemSlot Slot);
+
+	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
+	void OpenWeaponSelectionWidget(EPlayerItemSlot InitialSlot);
+
+	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
+	void CloseWeaponSelectionWidget();
+
+	UFUNCTION(BlueprintPure, Category="UI|Weapons")
+	bool IsWeaponSelectionWidgetOpen() const
+	{
+		return bWeaponSelectionOpen;
+	}
+
+	UFUNCTION(BlueprintImplementableEvent, Category="UI|Weapons")
+	void BP_OnWeaponQuickSelectIndicator(EPlayerItemSlot Slot);
+
+	UFUNCTION(BlueprintImplementableEvent, Category="UI|Weapons")
+	void BP_OnWeaponSelectionOpened(EPlayerItemSlot InitialSlot);
+
+	UFUNCTION(BlueprintImplementableEvent, Category="UI|Weapons")
+	void BP_OnWeaponSelectionClosed();
+
 protected:
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -66,11 +92,26 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UCrosshairWidget> CrosshairWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category="UI|Weapons")
+	TSubclassOf<UUserWidget> WeaponQuickIndicatorWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="UI|Weapons")
+	TSubclassOf<UUserWidget> WeaponSelectionWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="UI|Weapons")
+	float WeaponQuickIndicatorDuration = 0.9f;
+
 	UPROPERTY()
 	TObjectPtr<UMainHUDWidget> MainHUDWidget;
 
 	UPROPERTY()
 	TObjectPtr<UCrosshairWidget> CrosshairWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UUserWidget> WeaponQuickIndicatorWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UUserWidget> WeaponSelectionWidget;
 
 	UPROPERTY(EditDefaultsOnly, Category="Crosshair")
 	FCrosshairSpreadConfig CrosshairSpread;
@@ -86,4 +127,7 @@ private:
 
 	float SpreadCurrent = 0.f;
 	float SpreadTarget = 0.f;
+	bool bWeaponSelectionOpen = false;
+	bool bWasGamePausedBeforeWeaponSelection = false;
+	FTimerHandle WeaponQuickIndicatorTimer;
 };

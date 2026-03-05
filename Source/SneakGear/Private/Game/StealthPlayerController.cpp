@@ -8,6 +8,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "UI/CrosshairWidget.h"
+#include "TimerManager.h"
 
 static FVector2D WorldToRadar(const FVector& PlayerLocation, const float RefYawDeg, const FVector& TargetLocation,
                               const float RadarRadiusPx, const float RadarRangeWorld)
@@ -222,4 +223,93 @@ void AStealthPlayerController::NotifyHitMarker()
 	{
 		CrosshairWidget->ShowHitMarker();
 	}
+}
+
+void AStealthPlayerController::ShowWeaponQuickSelectIndicator(EPlayerItemSlot Slot)
+{
+	BP_OnWeaponQuickSelectIndicator(Slot);
+
+	if (!WeaponQuickIndicatorWidget && WeaponQuickIndicatorWidgetClass)
+	{
+		WeaponQuickIndicatorWidget = CreateWidget<UUserWidget>(this, WeaponQuickIndicatorWidgetClass);
+	}
+
+	if (WeaponQuickIndicatorWidget)
+	{
+		WeaponQuickIndicatorWidget->AddToViewport();
+	}
+
+	GetWorldTimerManager().ClearTimer(WeaponQuickIndicatorTimer);
+	GetWorldTimerManager().SetTimer(
+		WeaponQuickIndicatorTimer,
+		[this]()
+		{
+			if (WeaponQuickIndicatorWidget)
+			{
+				WeaponQuickIndicatorWidget->RemoveFromParent();
+			}
+		},
+		FMath::Max(WeaponQuickIndicatorDuration, 0.05f),
+		false
+	);
+}
+
+void AStealthPlayerController::OpenWeaponSelectionWidget(EPlayerItemSlot InitialSlot)
+{
+	if (bWeaponSelectionOpen)
+	{
+		return;
+	}
+
+	GetWorldTimerManager().ClearTimer(WeaponQuickIndicatorTimer);
+	if (WeaponQuickIndicatorWidget)
+	{
+		WeaponQuickIndicatorWidget->RemoveFromParent();
+	}
+
+	bWeaponSelectionOpen = true;
+	bWasGamePausedBeforeWeaponSelection = IsPaused();
+	SetPause(true);
+
+	if (!WeaponSelectionWidget && WeaponSelectionWidgetClass)
+	{
+		WeaponSelectionWidget = CreateWidget<UUserWidget>(this, WeaponSelectionWidgetClass);
+	}
+
+	if (WeaponSelectionWidget)
+	{
+		WeaponSelectionWidget->AddToViewport(100);
+	}
+
+	FInputModeGameAndUI InputMode;
+	SetInputMode(InputMode);
+	bShowMouseCursor = true;
+
+	BP_OnWeaponSelectionOpened(InitialSlot);
+}
+
+void AStealthPlayerController::CloseWeaponSelectionWidget()
+{
+	if (!bWeaponSelectionOpen)
+	{
+		return;
+	}
+
+	bWeaponSelectionOpen = false;
+
+	if (WeaponSelectionWidget)
+	{
+		WeaponSelectionWidget->RemoveFromParent();
+	}
+
+	if (!bWasGamePausedBeforeWeaponSelection)
+	{
+		SetPause(false);
+	}
+
+	FInputModeGameOnly InputMode;
+	SetInputMode(InputMode);
+	bShowMouseCursor = false;
+
+	BP_OnWeaponSelectionClosed();
 }
