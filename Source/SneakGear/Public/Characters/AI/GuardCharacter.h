@@ -12,6 +12,8 @@ class UGuardArchetypeData;
 class UGuardAwarenessComponent;
 class UGuardPatrolComponent;
 class UCharacterWeaponComponent;
+class UBehaviorTree;
+class UBlackboardData;
 
 UCLASS()
 class SNEAKGEAR_API AGuardCharacter : public ABaseCharacter
@@ -45,12 +47,30 @@ public:
 	UFUNCTION(BlueprintPure, Category="Stealth|Awareness")
 	EGuardAwarenessState GetAwarenessState() const;
 
+	UFUNCTION(BlueprintPure, Category="AI|BehaviorTree")
+	UBehaviorTree* GetBehaviorTreeAsset() const
+	{
+		return BehaviorTreeAsset;
+	}
+
+	UFUNCTION(BlueprintPure, Category="AI|BehaviorTree")
+	UBlackboardData* GetBlackboardAsset() const
+	{
+		return BlackboardAsset;
+	}
+
 protected:
 	UPROPERTY(EditInstanceOnly, Category="Spawn")
 	bool bSpawnAtLevelStart = true;
 
 	UPROPERTY(EditDefaultsOnly, Category="Stealth|Archetype")
 	TObjectPtr<UGuardArchetypeData> ArchetypeData;
+
+	UPROPERTY(EditDefaultsOnly, Category="AI|BehaviorTree")
+	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
+
+	UPROPERTY(EditDefaultsOnly, Category="AI|BehaviorTree")
+	TObjectPtr<UBlackboardData> BlackboardAsset;
 	
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;

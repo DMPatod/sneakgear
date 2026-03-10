@@ -17,7 +17,6 @@ public:
 
 	void SetPatrolPath(APatrolPath* NewPatrolPath);
 	APatrolPath* GetPatrolPath() const;
-	void ApplyToController(AController* InController) const;
 
 #if WITH_EDITOR
 	void DrawEditorPreview() const;

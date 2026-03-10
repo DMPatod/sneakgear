@@ -71,9 +71,11 @@ void UStealthPlayerDebugWidget::UpdateDebugText()
 	}
 
 	const bool bInCover = Player->IsInCover();
+	const bool bVaulting = Player->IsVaulting();
 	const float CoverMoveAxis = Player->GetCoverMoveAxis();
 	const bool bAiming = Player->IsAiming();
 	const bool bFiredRecently = Player->WasWeaponFiredRecently();
+	const EStance CurrentStance = Player->Stance;
 	const EPlayerItemSlot ActiveSlot = Player->GetActiveWeaponSlot();
 	const int32 InClip = Player->GetActiveWeaponInClip();
 	const int32 ClipSize = Player->GetActiveWeaponClipSize();
@@ -81,9 +83,13 @@ void UStealthPlayerDebugWidget::UpdateDebugText()
 	const float Speed2D = Player->GetVelocity().Size2D();
 
 	const UEnum* SlotEnum = StaticEnum<EPlayerItemSlot>();
+	const UEnum* StanceEnum = StaticEnum<EStance>();
 	const FString SlotLabel = SlotEnum
 		                          ? SlotEnum->GetDisplayNameTextByValue(static_cast<int64>(ActiveSlot)).ToString()
 		                          : TEXT("Unknown");
+	const FString StanceLabel = StanceEnum
+		                            ? StanceEnum->GetDisplayNameTextByValue(static_cast<int64>(CurrentStance)).ToString()
+		                            : TEXT("Unknown");
 
 	FString WeaponName = TEXT("None");
 	if (const AWeaponBase* Weapon = Player->GetCurrentWeapon())
@@ -94,7 +100,9 @@ void UStealthPlayerDebugWidget::UpdateDebugText()
 	const FString DebugString = FString::Printf(
 		TEXT("Stealth Debug\n")
 		TEXT("Aiming: %s\n")
+		TEXT("Stance: %s\n")
 		TEXT("InCover: %s\n")
+		TEXT("Vaulting: %s\n")
 		TEXT("CoverMoveAxis: %.2f\n")
 		TEXT("WeaponSlot: %s\n")
 		TEXT("Weapon: %s\n")
@@ -102,7 +110,9 @@ void UStealthPlayerDebugWidget::UpdateDebugText()
 		TEXT("FiredRecently: %s\n")
 		TEXT("Speed2D: %.1f"),
 		bAiming ? TEXT("true") : TEXT("false"),
+		*StanceLabel,
 		bInCover ? TEXT("true") : TEXT("false"),
+		bVaulting ? TEXT("true") : TEXT("false"),
 		CoverMoveAxis,
 		*SlotLabel,
 		*WeaponName,

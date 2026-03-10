@@ -10,6 +10,7 @@
 #include "Game/StealthPlayerController.h"
 #include "Items/WorldItemPickup.h"
 #include "TimerManager.h"
+#include "Components/PlayerWeaponComponent.h"
 #include "Weapon/WeaponBase.h"
 
 AStealthPlayerCharacter::AStealthPlayerCharacter()
@@ -23,6 +24,15 @@ AStealthPlayerCharacter::AStealthPlayerCharacter()
 void AStealthPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	InitializeActiveWeaponFromInventory();
+
+	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
+	{
+		WeaponComponent->StopFire();
+		WeaponComponent->GetCurrentWeapon()->SetActorHiddenInGame(true);
+		WeaponComponent->GetCurrentWeapon()->SetActorEnableCollision(false);
+	}
 
 	if (ItemComponent)
 	{
@@ -235,6 +245,9 @@ void AStealthPlayerCharacter::OnJumpPressed()
 {
 	if (CoverStateComponent && CoverStateComponent->TryVault(this))
 	{
+		// Match regular jump behavior: leave crouch stance when taking off.
+		SetStance(EStance::Standing);
+		bIsVaulting = true;
 		return;
 	}
 
@@ -244,6 +257,45 @@ void AStealthPlayerCharacter::OnJumpPressed()
 void AStealthPlayerCharacter::OnJumpReleased()
 {
 	Super::OnJumpReleased();
+}
+
+void AStealthPlayerCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if (bIsVaulting && Stance == EStance::Crouching)
+	{
+		SetStance(EStance::Standing);
+	}
+
+	bIsVaulting = false;
+}
+
+void AStealthPlayerCharacter::InitializeActiveWeaponFromInventory()
+{
+	if (!ItemComponent)
+	{
+		return;
+	}
+
+	EPlayerItemSlot StartupWeaponSlot = ItemComponent->GetActiveWeaponSlot();
+	if (!ItemComponent->GetWeaponInSlot(StartupWeaponSlot))
+	{
+		if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon))
+		{
+			StartupWeaponSlot = EPlayerItemSlot::PrimaryWeapon;
+		}
+		else if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::SecondaryWeapon))
+		{
+			StartupWeaponSlot = EPlayerItemSlot::SecondaryWeapon;
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	ItemComponent->SetActiveWeaponSlot(StartupWeaponSlot, true);
 }
 
 void AStealthPlayerCharacter::HandleActiveWeaponFired(EPlayerItemSlot FiredSlot)
@@ -326,10 +378,8 @@ void AStealthPlayerCharacter::HandleWeaponSlotReleased(EPlayerItemSlot Slot)
 
 	if (bWeaponSelectionHoldTriggered)
 	{
-		if (AStealthPlayerController* Controller = Cast<AStealthPlayerController>(GetController()))
-		{
-			Controller->CloseWeaponSelectionWidget();
-		}
+		// Keep the selection menu open after hold-trigger release.
+		// It now closes only when the user confirms a selection or cancels from the menu.
 		return;
 	}
 

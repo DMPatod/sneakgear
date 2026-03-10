@@ -7,6 +7,7 @@
 
 class UAbilitySystemComponent;
 class UGameplayEffect;
+class UAmmoAttributeSet;
 class UHealthAttributeSet;
 class UStaminaAttributeSet;
 
@@ -30,6 +31,11 @@ public:
 		return StaminaSet;
 	}
 
+	const UAmmoAttributeSet* GetAmmoSet() const
+	{
+		return AmmoSet;
+	}
+
 protected:
 	virtual void BeginPlay() override;
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
@@ -49,9 +55,15 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UStaminaAttributeSet> StaminaSet;
 
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<UAmmoAttributeSet> AmmoSet;
+
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
 	TSubclassOf<UGameplayEffect> GE_DefaultHealth;
 
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
 	TSubclassOf<UGameplayEffect> GE_DefaultStamina;
+
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<UGameplayEffect> GE_DefaultAmmo;
 };

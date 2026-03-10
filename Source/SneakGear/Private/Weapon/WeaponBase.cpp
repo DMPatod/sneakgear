@@ -12,7 +12,7 @@ AWeaponBase::AWeaponBase()
 	SetRootComponent(WeaponMesh);
 }
 
-void AWeaponBase::AttachToCharacter(USkeletalMeshComponent* CharacterMesh, FName SocketName)
+void AWeaponBase::AttachToCharacter(USkeletalMeshComponent* CharacterMesh, FName SocketName, bool bUseHolsterOffset)
 {
 	if (!CharacterMesh)
 	{
@@ -21,6 +21,7 @@ void AWeaponBase::AttachToCharacter(USkeletalMeshComponent* CharacterMesh, FName
 
 	auto Rules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true);
 	AttachToComponent(CharacterMesh, Rules, SocketName);
+	SetActorRelativeTransform(bUseHolsterOffset ? HolsterOffset : GripOffset);
 }
 
 void AWeaponBase::StartFire()

@@ -3,8 +3,9 @@
 #include "AbilitySystemComponent.h"
 #include "DrawDebugHelpers.h"
 #include "GameplayEffectTypes.h"
-#include "GAS/HealthAttributeSet.h"
-#include "GAS/StaminaAttributeSet.h"
+#include "Game/GAS/AmmoAttributeSet.h"
+#include "Game/GAS/HealthAttributeSet.h"
+#include "Game/GAS/StaminaAttributeSet.h"
 #include "UI/EventLogSubsystem.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -15,6 +16,7 @@ ABaseCharacter::ABaseCharacter()
 
 	HealthSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthSet"));
 	StaminaSet = CreateDefaultSubobject<UStaminaAttributeSet>(TEXT("StaminaSet"));
+	AmmoSet = CreateDefaultSubobject<UAmmoAttributeSet>(TEXT("AmmoSet"));
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
@@ -63,6 +65,7 @@ void ABaseCharacter::InitGAS()
 
 	ApplyGE(GE_DefaultHealth);
 	ApplyGE(GE_DefaultStamina);
+	ApplyGE(GE_DefaultAmmo);
 }
 
 void ABaseCharacter::BindHealthDeath()

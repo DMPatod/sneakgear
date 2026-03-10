@@ -5,9 +5,10 @@
 #include "Radar/RadarRegistrySubsystem.h"
 #include "UI/MainHUDWidget.h"
 #include "UI/RadarWidget.h"
-#include "Blueprint/UserWidget.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "UI/CrosshairWidget.h"
+#include "UI/WeaponQuickIndicatorWidget.h"
+#include "UI/WeaponSelectionMenuWidget.h"
 #include "TimerManager.h"
 
 static FVector2D WorldToRadar(const FVector& PlayerLocation, const float RefYawDeg, const FVector& TargetLocation,
@@ -197,6 +198,7 @@ void AStealthPlayerController::UpdateRadarWidget()
 		C.VisionRange = G->GetVisionRange();
 		C.HearingRange = G->GetHearingRange();
 		C.bHasLOS = G->HasLineOfSight();
+		C.LookYawOnRadarDeg = FMath::FindDeltaAngleDegrees(RefYaw, G->GetActorRotation().Yaw);
 
 		C.RadarPos = WorldToRadar(PlayerLocation, RefYaw, G->GetActorLocation(), RadarWidget->RadarRadiusPx,
 		                          RadarWidget->RadarRangeWorld);
@@ -231,11 +233,12 @@ void AStealthPlayerController::ShowWeaponQuickSelectIndicator(EPlayerItemSlot Sl
 
 	if (!WeaponQuickIndicatorWidget && WeaponQuickIndicatorWidgetClass)
 	{
-		WeaponQuickIndicatorWidget = CreateWidget<UUserWidget>(this, WeaponQuickIndicatorWidgetClass);
+		WeaponQuickIndicatorWidget = CreateWidget<UWeaponQuickIndicatorWidget>(this, WeaponQuickIndicatorWidgetClass);
 	}
 
 	if (WeaponQuickIndicatorWidget)
 	{
+		WeaponQuickIndicatorWidget->UpdateForSlot(Slot);
 		WeaponQuickIndicatorWidget->AddToViewport();
 	}
 
@@ -273,15 +276,20 @@ void AStealthPlayerController::OpenWeaponSelectionWidget(EPlayerItemSlot Initial
 
 	if (!WeaponSelectionWidget && WeaponSelectionWidgetClass)
 	{
-		WeaponSelectionWidget = CreateWidget<UUserWidget>(this, WeaponSelectionWidgetClass);
+		WeaponSelectionWidget = CreateWidget<UWeaponSelectionMenuWidget>(this, WeaponSelectionWidgetClass);
 	}
 
 	if (WeaponSelectionWidget)
 	{
 		WeaponSelectionWidget->AddToViewport(100);
+		WeaponSelectionWidget->InitializeMenu(InitialSlot);
 	}
 
 	FInputModeGameAndUI InputMode;
+	if (WeaponSelectionWidget)
+	{
+		InputMode.SetWidgetToFocus(WeaponSelectionWidget->TakeWidget());
+	}
 	SetInputMode(InputMode);
 	bShowMouseCursor = true;
 
@@ -312,4 +320,25 @@ void AStealthPlayerController::CloseWeaponSelectionWidget()
 	bShowMouseCursor = false;
 
 	BP_OnWeaponSelectionClosed();
+}
+
+void AStealthPlayerController::SelectWeaponFromSelectionMenu(EPlayerItemSlot Slot)
+{
+	if (Slot != EPlayerItemSlot::PrimaryWeapon && Slot != EPlayerItemSlot::SecondaryWeapon)
+	{
+		return;
+	}
+
+	if (AStealthPlayerCharacter* PlayerCharacter = Cast<AStealthPlayerCharacter>(GetPawn()))
+	{
+		PlayerCharacter->SetActiveWeaponSlot(Slot, true);
+	}
+
+	ShowWeaponQuickSelectIndicator(Slot);
+	CloseWeaponSelectionWidget();
+}
+
+void AStealthPlayerController::CancelWeaponSelectionMenu()
+{
+	CloseWeaponSelectionWidget();
 }

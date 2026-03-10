@@ -56,6 +56,12 @@ public:
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	int32 GetReserveAmmoCount() const;
 
+	UFUNCTION(BlueprintPure, Category="Cover")
+	bool IsVaulting() const
+	{
+		return bIsVaulting;
+	}
+
 	virtual AWeaponBase* GetCurrentWeapon() const override;
 
 protected:
@@ -68,6 +74,7 @@ protected:
 	virtual void ReloadWeapon() override;
 	virtual void OnJumpPressed() override;
 	virtual void OnJumpReleased() override;
+	virtual void Landed(const FHitResult& Hit) override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> SelectPrimaryWeaponAction;
@@ -85,6 +92,7 @@ protected:
 	TObjectPtr<UPlayerItemComponent> ItemComponent;
 
 private:
+	void InitializeActiveWeaponFromInventory();
 	void HandlePrimaryWeaponPressed();
 	void HandlePrimaryWeaponReleased();
 	void HandleSecondaryWeaponPressed();
@@ -106,4 +114,5 @@ private:
 	EPlayerItemSlot PendingWeaponSelectionSlot = EPlayerItemSlot::PrimaryWeapon;
 	bool bWeaponSelectionButtonDown = false;
 	bool bWeaponSelectionHoldTriggered = false;
+	bool bIsVaulting = false;
 };

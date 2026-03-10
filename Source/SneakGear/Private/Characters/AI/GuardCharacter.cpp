@@ -9,7 +9,7 @@
 #include "Components/CharacterWeaponComponent.h"
 #include "Data/GuardArchetypeData.h"
 #include "DrawDebugHelpers.h"
-#include "GAS/HealthAttributeSet.h"
+#include "Game/GAS/HealthAttributeSet.h"
 #include "Radar/RadarRegistrySubsystem.h"
 
 AGuardCharacter::AGuardCharacter()
@@ -48,6 +48,11 @@ void AGuardCharacter::BeginPlay()
 		AwarenessComponent->InitializeFromArchetype(ArchetypeData);
 	}
 
+	if (!ensureAlwaysMsgf(BehaviorTreeAsset, TEXT("Guard '%s' must have a BehaviorTreeAsset assigned."), *GetName()))
+	{
+		return;
+	}
+
 	if (HasAuthority() && Controller == nullptr)
 	{
 		SpawnDefaultController();
@@ -63,11 +68,6 @@ void AGuardCharacter::BeginPlay()
 		{
 			GuardManager->RegisterGuard(this);
 		}
-	}
-
-	if (PatrolComponent)
-	{
-		PatrolComponent->ApplyToController(GetController());
 	}
 
 	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())

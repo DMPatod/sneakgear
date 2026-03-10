@@ -1,5 +1,6 @@
 #include "Characters/Player/ThirdPersonPlayerCharacter.h"
 
+#include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -7,6 +8,7 @@
 #include "Components/PlayerLocomotionComponent.h"
 #include "Components/PlayerWeaponComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Game/GAS/AmmoAttributeSet.h"
 
 AThirdPersonPlayerCharacter::AThirdPersonPlayerCharacter()
 {
@@ -38,14 +40,32 @@ AWeaponBase* AThirdPersonPlayerCharacter::GetCurrentWeapon() const
 
 float AThirdPersonPlayerCharacter::GetAmmo() const
 {
-	return Ammo;
+	const UAmmoAttributeSet* AmmoSet = GetAmmoSet();
+	return AmmoSet ? AmmoSet->GetAmmo() : 0.f;
 }
 
 float AThirdPersonPlayerCharacter::ConsumeAmmo(float Amount)
 {
-	const float UsedArmor = FMath::Clamp(Amount, 0.f, Ammo);
-	Ammo -= UsedArmor;
-	return UsedArmor;
+	if (Amount <= 0.f)
+	{
+		return 0.f;
+	}
+
+	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
+	const UAmmoAttributeSet* AmmoSet = GetAmmoSet();
+	if (!AbilitySystemComponent || !AmmoSet)
+	{
+		return 0.f;
+	}
+
+	const float UsedAmmo = FMath::Clamp(Amount, 0.f, AmmoSet->GetAmmo());
+	if (UsedAmmo <= 0.f)
+	{
+		return 0.f;
+	}
+
+	AbilitySystemComponent->ApplyModToAttribute(UAmmoAttributeSet::GetAmmoAttribute(), EGameplayModOp::Additive, -UsedAmmo);
+	return UsedAmmo;
 }
 
 float AThirdPersonPlayerCharacter::GetMaxSpeed() const
@@ -116,6 +136,16 @@ void AThirdPersonPlayerCharacter::SetStance(EStance NewStance)
 void AThirdPersonPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->SetNumericAttributeBase(UAmmoAttributeSet::GetMaxAmmoAttribute(), FMath::Max(InitialMaxAmmo, 0.f));
+		AbilitySystemComponent->SetNumericAttributeBase(
+			UAmmoAttributeSet::GetAmmoAttribute(),
+			FMath::Clamp(InitialAmmo, 0.f, FMath::Max(InitialMaxAmmo, 0.f))
+		);
+	}
 
 	InitializeGameplayState();
 }

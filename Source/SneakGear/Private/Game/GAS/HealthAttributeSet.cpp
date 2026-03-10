@@ -1,4 +1,4 @@
-#include "GAS/HealthAttributeSet.h"
+#include "Game/GAS/HealthAttributeSet.h"
 #include "GameplayEffectExtension.h"
 
 void UHealthAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)

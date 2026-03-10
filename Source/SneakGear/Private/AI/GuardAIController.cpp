@@ -1,92 +1,98 @@
 #include "AI/GuardAIController.h"
 
-#include "AI/PatrolPath.h"
-#include "AI/WaypointAction.h"
-#include "Navigation/PathFollowingComponent.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Characters/AI/GuardCharacter.h"
+#include "Kismet/GameplayStatics.h"
+
+AGuardAIController::AGuardAIController()
+{
+	PrimaryActorTick.bCanEverTick = true;
+}
 
 void AGuardAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	MovetoNextPoint();
-}
+	bBehaviorTreeActive = false;
 
-void AGuardAIController::MovetoNextPoint()
-{
-	GetWorldTimerManager().ClearTimer(WaypointActionTimer);
-
-	if (!PatrolPath || PatrolPath->Num() <= 0)
+	const AGuardCharacter* GuardCharacter = Cast<AGuardCharacter>(InPawn);
+	if (!GuardCharacter)
 	{
 		return;
 	}
 
-	if (bLoop)
-	{
-		PatrolIndex = PatrolIndex % PatrolPath->Num();
-	}
-	else if (PatrolIndex >= PatrolPath->Num())
+	if (!ensureAlwaysMsgf(GuardCharacter->GetBehaviorTreeAsset(),
+		TEXT("Guard '%s' must define a BehaviorTreeAsset."), *GetNameSafe(GuardCharacter)))
 	{
 		return;
 	}
 
-	auto Target = PatrolPath->GetWorldPoint(PatrolIndex);
-
-	MoveToLocation(Target, AcceptanceRadius);
-}
-
-void AGuardAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
-{
-	Super::OnMoveCompleted(RequestID, Result);
-
-	if (!PatrolPath || PatrolPath->Num() <= 0)
+	if (GuardCharacter->GetBehaviorTreeAsset())
 	{
-		return;
-	}
+		UBlackboardData* BlackboardAsset = GuardCharacter->GetBlackboardAsset();
+		if (!BlackboardAsset)
+		{
+			BlackboardAsset = GuardCharacter->GetBehaviorTreeAsset()->BlackboardAsset;
+		}
 
-	if (Result.IsSuccess())
-	{
-		const auto ReachedIndex = bLoop ? PatrolIndex % PatrolPath->Num() : PatrolIndex;
-		ExecuteWaypointAction(ReachedIndex);
-		return;
-	}
+		if (!ensureAlwaysMsgf(BlackboardAsset,
+			TEXT("Guard '%s' must define a blackboard, either explicitly or through its behavior tree."),
+			*GetNameSafe(GuardCharacter)))
+		{
+			return;
+		}
 
-	MovetoNextPoint();
-}
-
-void AGuardAIController::ExecuteWaypointAction(int32 ReachedIndex)
-{
-	if (!PatrolPath)
-	{
-		return;
-	}
-
-	float ActionDuration = 0.f;
-	if (auto* WaypointAction = PatrolPath->GetWaypointAction(ReachedIndex);
-		WaypointAction && WaypointAction->GetClass()->ImplementsInterface(UWaypointAction::StaticClass()))
-	{
-		ActionDuration = IWaypointAction::Execute_ExecuteAtWaypoint(WaypointAction, GetPawn(), this);
-	}
-	ActionDuration = FMath::Max(0.f, ActionDuration);
-
-	PatrolIndex++;
-
-	if (!bLoop && PatrolIndex >= PatrolPath->Num())
-	{
-		return;
-	}
-
-	if (ActionDuration > 0.f)
-	{
-		GetWorldTimerManager().SetTimer(WaypointActionTimer, this, &AGuardAIController::FinishWaypointAction,
-		                                ActionDuration, false);
-	}
-	else
-	{
-		FinishWaypointAction();
+		if (BlackboardAsset)
+		{
+			UBlackboardComponent* InitializedBlackboard = nullptr;
+			const bool bBlackboardReady = UseBlackboard(BlackboardAsset, InitializedBlackboard);
+			if (bBlackboardReady && RunBehaviorTree(GuardCharacter->GetBehaviorTreeAsset()))
+			{
+				bBehaviorTreeActive = true;
+				UpdateBlackboardFromGuard();
+			}
+			else
+			{
+				ensureAlwaysMsgf(false, TEXT("Guard '%s' failed to initialize its behavior tree."), *GetNameSafe(GuardCharacter));
+			}
+		}
 	}
 }
 
-void AGuardAIController::FinishWaypointAction()
+void AGuardAIController::UpdateBlackboardFromGuard()
 {
-	MovetoNextPoint();
+	UBlackboardComponent* Blackboard = GetBlackboardComponent();
+	const AGuardCharacter* GuardCharacter = Cast<AGuardCharacter>(GetPawn());
+	if (!Blackboard || !GuardCharacter)
+	{
+		return;
+	}
+
+	if (!TargetActorKey.IsNone())
+	{
+		Blackboard->SetValueAsObject(TargetActorKey, UGameplayStatics::GetPlayerPawn(this, 0));
+	}
+	if (!AwarenessKey.IsNone())
+	{
+		Blackboard->SetValueAsFloat(AwarenessKey, GuardCharacter->GetAwareness());
+	}
+	if (!HasLineOfSightKey.IsNone())
+	{
+		Blackboard->SetValueAsBool(HasLineOfSightKey, GuardCharacter->HasLineOfSight());
+	}
+	if (!AwarenessStateKey.IsNone())
+	{
+		Blackboard->SetValueAsInt(AwarenessStateKey, static_cast<int32>(GuardCharacter->GetAwarenessState()));
+	}
+}
+
+void AGuardAIController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (bBehaviorTreeActive)
+	{
+		UpdateBlackboardFromGuard();
+	}
 }

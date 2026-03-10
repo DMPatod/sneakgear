@@ -24,4 +24,7 @@ struct SNEAKGEARCORE_API FRadarContact
 
 	UPROPERTY(BlueprintReadOnly)
 	bool bHasLOS = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	float LookYawOnRadarDeg = 0.f;
 };

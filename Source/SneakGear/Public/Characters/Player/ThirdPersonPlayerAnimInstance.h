@@ -35,6 +35,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
 	bool bIsProne = false;
 
+	UPROPERTY(BlueprintReadOnly, Category="Locomotion")
+	bool bIsVaulting = false;
+
 	UPROPERTY(BlueprintReadOnly, Category="Aim")
 	bool bIsAiming = false;
 

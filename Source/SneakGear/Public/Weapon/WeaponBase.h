@@ -15,7 +15,7 @@ class SNEAKGEAR_API AWeaponBase : public AActor
 public:
 	AWeaponBase();
 
-	void AttachToCharacter(USkeletalMeshComponent* CharacterMesh, FName SocketName);
+	void AttachToCharacter(USkeletalMeshComponent* CharacterMesh, FName SocketName, bool bUseHolsterOffset = false);
 
 	virtual void StartFire();
 	virtual void StopFire();
@@ -60,6 +60,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	FName MuzzleSocketName = "muzzle_socket_name";
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Attachment")
+	FTransform GripOffset = FTransform::Identity;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Attachment")
+	FTransform HolsterOffset = FTransform::Identity;
 
 	virtual void BeginPlay() override;
 

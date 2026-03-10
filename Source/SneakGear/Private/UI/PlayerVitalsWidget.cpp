@@ -5,8 +5,8 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
-#include "GAS/HealthAttributeSet.h"
-#include "GAS/StaminaAttributeSet.h"
+#include "Game/GAS/HealthAttributeSet.h"
+#include "Game/GAS/StaminaAttributeSet.h"
 
 void UPlayerVitalsWidget::NativeConstruct()
 {

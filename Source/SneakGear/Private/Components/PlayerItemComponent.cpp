@@ -317,7 +317,7 @@ AWeaponBase* UPlayerItemComponent::SpawnWeapon(TSubclassOf<AWeaponBase> WeaponCl
 	return SpawnedWeapon;
 }
 
-void UPlayerItemComponent::AttachWeapon(AWeaponBase* Weapon, FName SocketName) const
+void UPlayerItemComponent::AttachWeapon(AWeaponBase* Weapon, FName SocketName, bool bUseHolsterOffset) const
 {
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 	if (!Weapon || !OwnerCharacter || !OwnerCharacter->GetMesh())
@@ -325,7 +325,7 @@ void UPlayerItemComponent::AttachWeapon(AWeaponBase* Weapon, FName SocketName) c
 		return;
 	}
 
-	Weapon->AttachToCharacter(OwnerCharacter->GetMesh(), SocketName);
+	Weapon->AttachToCharacter(OwnerCharacter->GetMesh(), SocketName, bUseHolsterOffset);
 }
 
 FName UPlayerItemComponent::GetHolsterSocketForSlot(EPlayerItemSlot WeaponSlot) const
@@ -348,14 +348,14 @@ void UPlayerItemComponent::SyncWeaponAttachments() const
 
 	if (!bWeaponEquipped)
 	{
-		AttachWeapon(PrimaryWeaponRuntime.WeaponActor, PrimaryHolsterSocket);
-		AttachWeapon(SecondaryWeaponRuntime.WeaponActor, SecondaryHolsterSocket);
+		AttachWeapon(PrimaryWeaponRuntime.WeaponActor, PrimaryHolsterSocket, true);
+		AttachWeapon(SecondaryWeaponRuntime.WeaponActor, SecondaryHolsterSocket, true);
 		return;
 	}
 
 	const bool bPrimaryActive = ActiveWeaponSlot == EPlayerItemSlot::PrimaryWeapon;
-	AttachWeapon(PrimaryWeaponRuntime.WeaponActor, bPrimaryActive ? WeaponHandSocketName : PrimaryHolsterSocket);
-	AttachWeapon(SecondaryWeaponRuntime.WeaponActor, bPrimaryActive ? SecondaryHolsterSocket : WeaponHandSocketName);
+	AttachWeapon(PrimaryWeaponRuntime.WeaponActor, bPrimaryActive ? WeaponHandSocketName : PrimaryHolsterSocket, !bPrimaryActive);
+	AttachWeapon(SecondaryWeaponRuntime.WeaponActor, bPrimaryActive ? SecondaryHolsterSocket : WeaponHandSocketName, bPrimaryActive);
 }
 
 void UPlayerItemComponent::HandleWeaponFired(EPlayerItemSlot Slot)

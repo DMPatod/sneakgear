@@ -4,40 +4,31 @@
 #include "AIController.h"
 #include "GuardAIController.generated.h"
 
-class APatrolPath;
-struct FPathFollowingResult;
-
 UCLASS()
 class SNEAKGEAR_API AGuardAIController : public AAIController
 {
 	GENERATED_BODY()
 
 public:
-	virtual void OnPossess(APawn* InPawn) override;
+	AGuardAIController();
 
-	void SetPatrolPath(APatrolPath* Path)
-	{
-		PatrolPath = Path;
-	}
-	
-	void MovetoNextPoint();
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 protected:
-	FTimerHandle WaypointActionTimer;
+	bool bBehaviorTreeActive = false;
 
-	int32 PatrolIndex = 0;
+	UPROPERTY(EditDefaultsOnly, Category="BehaviorTree|Blackboard")
+	FName TargetActorKey = TEXT("TargetActor");
 
-	UPROPERTY(EditAnywhere, Category="Patrol")
-	TObjectPtr<APatrolPath> PatrolPath;
+	UPROPERTY(EditDefaultsOnly, Category="BehaviorTree|Blackboard")
+	FName AwarenessKey = TEXT("Awareness");
 
-	UPROPERTY(EditAnywhere, Category="Patrol")
-	float AcceptanceRadius = 40.f;
+	UPROPERTY(EditDefaultsOnly, Category="BehaviorTree|Blackboard")
+	FName HasLineOfSightKey = TEXT("HasLineOfSight");
 
-	UPROPERTY(EditAnywhere, Category="Patrol")
-	bool bLoop = true;
+	UPROPERTY(EditDefaultsOnly, Category="BehaviorTree|Blackboard")
+	FName AwarenessStateKey = TEXT("AwarenessState");
 
-	void ExecuteWaypointAction(int32 ReachedIndex);
-	void FinishWaypointAction();
-	
-	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
+	void UpdateBlackboardFromGuard();
 };

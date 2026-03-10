@@ -1,5 +1,6 @@
 #include "Characters/Player/ThirdPersonPlayerAnimInstance.h"
 
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Characters/Player/ThirdPersonPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Weapon/WeaponBase.h"
@@ -52,6 +53,14 @@ void UThirdPersonPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Stance = ThirdPersonCharacter->Stance;
 	bIsProne = ThirdPersonCharacter->Stance == EStance::Prone;
 	bIsCrouching = ThirdPersonCharacter->Stance == EStance::Crouching;
+	if (const AStealthPlayerCharacter* StealthCharacter = Cast<AStealthPlayerCharacter>(ThirdPersonCharacter))
+	{
+		bIsVaulting = StealthCharacter->IsVaulting();
+	}
+	else
+	{
+		bIsVaulting = false;
+	}
 	
 	auto CurrentWeapon = ThirdPersonCharacter->GetCurrentWeapon();
 	if (CurrentWeapon && CurrentWeapon->AnimationSetBP)

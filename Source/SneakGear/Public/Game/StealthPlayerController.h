@@ -9,7 +9,8 @@ class UCrosshairWidget;
 class UMainHUDWidget;
 class UInputMappingContext;
 class URadarWidget;
-class UUserWidget;
+class UWeaponQuickIndicatorWidget;
+class UWeaponSelectionMenuWidget;
 
 USTRUCT()
 struct FCrosshairSpreadConfig
@@ -62,6 +63,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
 	void CloseWeaponSelectionWidget();
 
+	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
+	void SelectWeaponFromSelectionMenu(EPlayerItemSlot Slot);
+
+	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
+	void CancelWeaponSelectionMenu();
+
 	UFUNCTION(BlueprintPure, Category="UI|Weapons")
 	bool IsWeaponSelectionWidgetOpen() const
 	{
@@ -93,10 +100,10 @@ protected:
 	TSubclassOf<UCrosshairWidget> CrosshairWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI|Weapons")
-	TSubclassOf<UUserWidget> WeaponQuickIndicatorWidgetClass;
+	TSubclassOf<UWeaponQuickIndicatorWidget> WeaponQuickIndicatorWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI|Weapons")
-	TSubclassOf<UUserWidget> WeaponSelectionWidgetClass;
+	TSubclassOf<UWeaponSelectionMenuWidget> WeaponSelectionWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI|Weapons")
 	float WeaponQuickIndicatorDuration = 0.9f;
@@ -108,10 +115,10 @@ protected:
 	TObjectPtr<UCrosshairWidget> CrosshairWidget;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UUserWidget> WeaponQuickIndicatorWidget;
+	TObjectPtr<UWeaponQuickIndicatorWidget> WeaponQuickIndicatorWidget;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UUserWidget> WeaponSelectionWidget;
+	TObjectPtr<UWeaponSelectionMenuWidget> WeaponSelectionWidget;
 
 	UPROPERTY(EditDefaultsOnly, Category="Crosshair")
 	FCrosshairSpreadConfig CrosshairSpread;

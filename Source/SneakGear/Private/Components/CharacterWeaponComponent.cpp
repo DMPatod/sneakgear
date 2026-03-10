@@ -90,7 +90,8 @@ void UCharacterWeaponComponent::AttachWeaponToSocket(FName SocketName) const
 		return;
 	}
 
-	CurrentWeapon->AttachToCharacter(OwnerCharacter->GetMesh(), SocketName);
+	const bool bUseHolsterOffset = SocketName == HolsterSocketName;
+	CurrentWeapon->AttachToCharacter(OwnerCharacter->GetMesh(), SocketName, bUseHolsterOffset);
 }
 
 void UCharacterWeaponComponent::Reload()
