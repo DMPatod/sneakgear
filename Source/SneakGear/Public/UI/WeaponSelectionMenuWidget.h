@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/PlayerItemComponent.h"
+#include "Player/Components/PlayerItemComponent.h"
 #include "WeaponSelectionMenuWidget.generated.h"
 
 class UButton;

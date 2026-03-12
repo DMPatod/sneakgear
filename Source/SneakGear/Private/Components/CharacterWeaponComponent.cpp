@@ -1,6 +1,7 @@
 #include "Components/CharacterWeaponComponent.h"
 
 #include "GameFramework/Character.h"
+#include "Misc/DataValidation.h"
 #include "Weapon/WeaponBase.h"
 
 UCharacterWeaponComponent::UCharacterWeaponComponent()
@@ -14,6 +15,7 @@ void UCharacterWeaponComponent::BeginPlay()
 
 	if (!StartedWeaponClass)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("CharacterWeaponComponent '%s' has no StartedWeaponClass configured."), *GetName());
 		return;
 	}
 
@@ -32,6 +34,8 @@ void UCharacterWeaponComponent::BeginPlay()
 	CurrentWeapon = World->SpawnActor<AWeaponBase>(StartedWeaponClass);
 	if (!CurrentWeapon)
 	{
+		UE_LOG(LogTemp, Error, TEXT("CharacterWeaponComponent '%s' failed to spawn weapon of class '%s'."),
+			*GetName(), *GetNameSafe(StartedWeaponClass));
 		return;
 	}
 
@@ -50,6 +54,28 @@ void UCharacterWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+EDataValidationResult UCharacterWeaponComponent::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (!StartedWeaponClass)
+	{
+		Context.AddWarning(FText::FromString(TEXT("StartedWeaponClass is not configured.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
+	if ((StartedWeaponClass != nullptr) && (HandSocketName.IsNone() || HolsterSocketName.IsNone()))
+	{
+		Context.AddError(FText::FromString(TEXT("Weapon socket names must be configured when StartedWeaponClass is set.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	return Result;
 }
 
 void UCharacterWeaponComponent::StartFire()

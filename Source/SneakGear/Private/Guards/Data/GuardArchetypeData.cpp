@@ -1,0 +1,28 @@
+#include "Guards/Data/GuardArchetypeData.h"
+
+#include "Misc/DataValidation.h"
+
+EDataValidationResult UGuardArchetypeData::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (VisionRange <= 0.f)
+	{
+		Context.AddError(FText::FromString(TEXT("VisionRange must be greater than 0.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (HearingRange <= 0.f)
+	{
+		Context.AddError(FText::FromString(TEXT("HearingRange must be greater than 0.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (VisionHalfAngleDeg <= 0.f || VisionHalfAngleDeg > 180.f)
+	{
+		Context.AddError(FText::FromString(TEXT("VisionHalfAngleDeg must be in the range (0, 180].")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	return Result;
+}

@@ -13,8 +13,8 @@ class SNEAKGEAR_API UWeaponStatusWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 protected:
 	UPROPERTY(meta=(BindWidgetOptional))
@@ -29,5 +29,7 @@ protected:
 private:
 	TWeakObjectPtr<AThirdPersonPlayerCharacter> CachedPlayer;
 
+	void HandleInventoryStateChanged();
+	void HandleAmmoChanged(const struct FOnAttributeChangeData& Data);
 	void UpdateFromPlayer();
 };

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Characters/Player/ThirdPersonPlayerCharacter.h"
+#include "Player/ThirdPersonPlayerCharacter.h"
 #include "StanceWidget.generated.h"
 
 class AThirdPersonPlayerCharacter;
@@ -16,7 +16,6 @@ class SNEAKGEAR_API UStanceWidget : public UUserWidget
 	GENERATED_BODY()
 
 protected:
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 
@@ -36,5 +35,6 @@ private:
 	bool bHasInitializedUI = false;
 
 	bool TryCachePlayer();
+	void HandleStanceChanged(EStance NewStance);
 	void UpdateFromPlayer();
 };

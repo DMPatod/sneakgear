@@ -1,6 +1,7 @@
 #include "UI/PlayerVitalsWidget.h"
 
-#include "Characters/Player/ThirdPersonPlayerCharacter.h"
+#include "AbilitySystemComponent.h"
+#include "Player/ThirdPersonPlayerCharacter.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -12,52 +13,78 @@ void UPlayerVitalsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (HealthBar || StaminaBar || HealthText || StaminaText)
+	if (!HealthBar && !StaminaBar && !HealthText && !StaminaText)
 	{
-		return;
+		if (!WidgetTree)
+		{
+			return;
+		}
+
+		auto Root = WidgetTree->RootWidget;
+		if (!Root)
+		{
+			Root = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VitalsRoot"));
+			WidgetTree->RootWidget = Root;
+		}
+
+		auto* VBox = Cast<UVerticalBox>(Root);
+		if (!VBox)
+		{
+			VBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VitalsRoot"));
+			WidgetTree->RootWidget = VBox;
+		}
+
+		HealthText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("HealthText"));
+		VBox->AddChild(HealthText);
+
+		HealthBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("HealthBar"));
+		VBox->AddChild(HealthBar);
+
+		StaminaText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("StaminaText"));
+		VBox->AddChild(StaminaText);
+
+		StaminaBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("StaminaBar"));
+		VBox->AddChild(StaminaBar);
 	}
 
-	if (!WidgetTree)
+	CachedPlayer = Cast<AThirdPersonPlayerCharacter>(GetOwningPlayerPawn());
+	if (AThirdPersonPlayerCharacter* Player = CachedPlayer.Get())
 	{
-		return;
+		if (UAbilitySystemComponent* AbilitySystem = Player->GetAbilitySystemComponent())
+		{
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UHealthAttributeSet::GetHealthAttribute()).AddUObject(
+				this, &UPlayerVitalsWidget::HandleHealthChanged);
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UStaminaAttributeSet::GetStaminaAttribute()).AddUObject(
+				this, &UPlayerVitalsWidget::HandleStaminaChanged);
+		}
 	}
 
-	auto Root = WidgetTree->RootWidget;
-	if (!Root)
-	{
-		Root = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VitalsRoot"));
-		WidgetTree->RootWidget = Root;
-	}
-
-	auto* VBox = Cast<UVerticalBox>(Root);
-	if (!VBox)
-	{
-		VBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VitalsRoot"));
-		WidgetTree->RootWidget = VBox;
-	}
-
-	HealthText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("HealthText"));
-	VBox->AddChild(HealthText);
-
-	HealthBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("HealthBar"));
-	VBox->AddChild(HealthBar);
-
-	StaminaText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("StaminaText"));
-	VBox->AddChild(StaminaText);
-
-	StaminaBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("StaminaBar"));
-	VBox->AddChild(StaminaBar);
+	UpdateFromPlayer();
 }
 
-void UPlayerVitalsWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UPlayerVitalsWidget::NativeDestruct()
 {
-	Super::NativeTick(MyGeometry, InDeltaTime);
-
-	if (!CachedPlayer.IsValid())
+	if (AThirdPersonPlayerCharacter* Player = CachedPlayer.Get())
 	{
-		CachedPlayer = Cast<AThirdPersonPlayerCharacter>(GetOwningPlayerPawn());
+		if (UAbilitySystemComponent* AbilitySystem = Player->GetAbilitySystemComponent())
+		{
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UHealthAttributeSet::GetHealthAttribute()).RemoveAll(this);
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UStaminaAttributeSet::GetStaminaAttribute()).RemoveAll(this);
+		}
 	}
 
+	Super::NativeDestruct();
+}
+
+void UPlayerVitalsWidget::HandleHealthChanged(const FOnAttributeChangeData& Data)
+{
+	(void)Data;
+	UpdateFromPlayer();
+}
+
+void UPlayerVitalsWidget::HandleStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	(void)Data;
 	UpdateFromPlayer();
 }
 

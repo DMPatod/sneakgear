@@ -1,7 +1,7 @@
 #include "UI/WeaponQuickIndicatorWidget.h"
 
-#include "Characters/Player/StealthPlayerCharacter.h"
-#include "Components/PlayerItemComponent.h"
+#include "Player/StealthPlayerCharacter.h"
+#include "Player/Components/PlayerItemComponent.h"
 #include "Components/TextBlock.h"
 #include "Weapon/WeaponBase.h"
 
@@ -33,7 +33,7 @@ void UWeaponQuickIndicatorWidget::UpdateForSlot(EPlayerItemSlot ItemSlot)
 	{
 		const int32 InClip = ItemComponent ? FMath::Max(ItemComponent->GetInClip(ItemSlot), 0) : 0;
 		const int32 ClipSize = ItemComponent ? FMath::Max(ItemComponent->GetClipSize(ItemSlot), 0) : 0;
-		const int32 ReserveAmmo = PlayerCharacter ? PlayerCharacter->GetReserveAmmoCount() : 0;
+		const int32 ReserveAmmo = ItemComponent ? ItemComponent->GetReserveAmmoCount() : 0;
 
 		AmmoText->SetText(FText::Format(
 			NSLOCTEXT("SneakGear", "WeaponQuickIndicatorAmmo", "{0}/{1}  |  Reserve {2}"),

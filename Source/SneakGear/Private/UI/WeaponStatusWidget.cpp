@@ -1,60 +1,101 @@
 #include "UI/WeaponStatusWidget.h"
 
+#include "AbilitySystemComponent.h"
 #include "Blueprint/WidgetTree.h"
-#include "Characters/Player/StealthPlayerCharacter.h"
-#include "Characters/Player/ThirdPersonPlayerCharacter.h"
-#include "Components/PlayerWeaponComponent.h"
+#include "Player/Components/PlayerItemComponent.h"
+#include "Player/StealthPlayerCharacter.h"
+#include "Player/ThirdPersonPlayerCharacter.h"
+#include "Player/Components/PlayerWeaponComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
+#include "Game/GAS/AmmoAttributeSet.h"
 #include "Weapon/WeaponBase.h"
 
 void UWeaponStatusWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (WeaponNameText || FireRateText || AmmoText)
+	if (!WeaponNameText && !FireRateText && !AmmoText)
 	{
-		return;
+		if (!WidgetTree)
+		{
+			return;
+		}
+
+		auto Root = WidgetTree->RootWidget;
+		if (!Root)
+		{
+			Root = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("WeaponRoot"));
+			WidgetTree->RootWidget = Root;
+		}
+
+		auto* VBox = Cast<UVerticalBox>(Root);
+		if (!VBox)
+		{
+			VBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("WeaponRoot"));
+			WidgetTree->RootWidget = VBox;
+		}
+
+		WeaponNameText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("WeaponNameText"));
+		VBox->AddChild(WeaponNameText);
+
+		FireRateText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("FireRateText"));
+		VBox->AddChild(FireRateText);
+
+		AmmoText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("AmmoText"));
+		VBox->AddChild(AmmoText);
 	}
 
-	if (!WidgetTree)
+	CachedPlayer = Cast<AThirdPersonPlayerCharacter>(GetOwningPlayerPawn());
+	if (AThirdPersonPlayerCharacter* Player = CachedPlayer.Get())
 	{
-		return;
+		if (AStealthPlayerCharacter* StealthPlayer = Cast<AStealthPlayerCharacter>(Player))
+		{
+			if (UPlayerItemComponent* ItemComponent = StealthPlayer->GetItemComponent())
+			{
+				ItemComponent->OnInventoryStateChangedEvent().AddUObject(this, &UWeaponStatusWidget::HandleInventoryStateChanged);
+			}
+		}
+
+		if (UAbilitySystemComponent* AbilitySystem = Player->GetAbilitySystemComponent())
+		{
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetAmmoAttribute()).AddUObject(
+				this, &UWeaponStatusWidget::HandleAmmoChanged);
+		}
 	}
 
-	auto Root = WidgetTree->RootWidget;
-	if (!Root)
-	{
-		Root = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("WeaponRoot"));
-		WidgetTree->RootWidget = Root;
-	}
-
-	auto* VBox = Cast<UVerticalBox>(Root);
-	if (!VBox)
-	{
-		VBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("WeaponRoot"));
-		WidgetTree->RootWidget = VBox;
-	}
-
-	WeaponNameText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("WeaponNameText"));
-	VBox->AddChild(WeaponNameText);
-
-	FireRateText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("FireRateText"));
-	VBox->AddChild(FireRateText);
-
-	AmmoText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("AmmoText"));
-	VBox->AddChild(AmmoText);
+	UpdateFromPlayer();
 }
 
-void UWeaponStatusWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UWeaponStatusWidget::NativeDestruct()
 {
-	Super::NativeTick(MyGeometry, InDeltaTime);
-
-	if (!CachedPlayer.IsValid())
+	if (AThirdPersonPlayerCharacter* Player = CachedPlayer.Get())
 	{
-		CachedPlayer = Cast<AThirdPersonPlayerCharacter>(GetOwningPlayerPawn());
+		if (AStealthPlayerCharacter* StealthPlayer = Cast<AStealthPlayerCharacter>(Player))
+		{
+			if (UPlayerItemComponent* ItemComponent = StealthPlayer->GetItemComponent())
+			{
+				ItemComponent->OnInventoryStateChangedEvent().RemoveAll(this);
+			}
+		}
+
+		if (UAbilitySystemComponent* AbilitySystem = Player->GetAbilitySystemComponent())
+		{
+			AbilitySystem->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetAmmoAttribute()).RemoveAll(this);
+		}
 	}
 
+	Super::NativeDestruct();
+}
+
+void UWeaponStatusWidget::HandleInventoryStateChanged()
+{
+	UpdateFromPlayer();
+}
+
+void UWeaponStatusWidget::HandleAmmoChanged(const FOnAttributeChangeData& Data)
+{
+	(void)Data;
 	UpdateFromPlayer();
 }
 
@@ -104,9 +145,12 @@ void UWeaponStatusWidget::UpdateFromPlayer()
 
 	if (const auto* StealthPlayer = Cast<AStealthPlayerCharacter>(Player))
 	{
-		InClip = StealthPlayer->GetActiveWeaponInClip();
-		ClipSize = StealthPlayer->GetActiveWeaponClipSize();
-		ReserveAmmo = StealthPlayer->GetReserveAmmoCount();
+		if (const UPlayerItemComponent* ItemComponent = StealthPlayer->GetItemComponent())
+		{
+			InClip = ItemComponent->GetActiveWeaponInClip();
+			ClipSize = ItemComponent->GetActiveWeaponClipSize();
+			ReserveAmmo = ItemComponent->GetReserveAmmoCount();
+		}
 	}
 	else
 	{

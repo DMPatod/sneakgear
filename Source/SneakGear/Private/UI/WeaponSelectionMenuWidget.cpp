@@ -1,11 +1,11 @@
 #include "UI/WeaponSelectionMenuWidget.h"
 
-#include "Characters/Player/StealthPlayerCharacter.h"
+#include "Player/StealthPlayerCharacter.h"
 #include "UI/WeaponQuickIndicatorWidget.h"
 #include "Components/Button.h"
-#include "Components/PlayerItemComponent.h"
+#include "Player/Components/PlayerItemComponent.h"
 #include "Components/TextBlock.h"
-#include "Game/StealthPlayerController.h"
+#include "Player/StealthPlayerController.h"
 #include "Input/Events.h"
 #include "InputCoreTypes.h"
 

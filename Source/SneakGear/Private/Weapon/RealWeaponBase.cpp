@@ -1,10 +1,10 @@
 #include "Weapon/RealWeaponBase.h"
 
-#include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/DataValidation.h"
+#include "Weapon/WeaponFireModeComponent.h"
 
 ARealWeaponBase::ARealWeaponBase()
 {
@@ -31,6 +31,37 @@ void ARealWeaponBase::StopFire()
 	Super::StopFire();
 }
 
+EDataValidationResult ARealWeaponBase::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (BaseDamage <= 0.f)
+	{
+		Context.AddError(FText::FromString(TEXT("BaseDamage must be greater than 0.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (Range <= 0.f)
+	{
+		Context.AddError(FText::FromString(TEXT("Range must be greater than 0.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (MaxSpreadDegrees < MinSpreadDegrees)
+	{
+		Context.AddError(FText::FromString(TEXT("MaxSpreadDegrees must be greater than or equal to MinSpreadDegrees.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (PenetrationDamageMultiplier <= 0.f || PenetrationDamageMultiplier > 1.f)
+	{
+		Context.AddError(FText::FromString(TEXT("PenetrationDamageMultiplier must be in the range (0, 1].")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	return Result;
+}
+
 void ARealWeaponBase::FireOnce()
 {
 	if (!WeaponMesh)
@@ -38,20 +69,8 @@ void ARealWeaponBase::FireOnce()
 		return;
 	}
 
-	auto* OwnerPawn = Cast<APawn>(GetOwner());
-	if (!OwnerPawn)
-	{
-		return;
-	}
-
-	auto* OwnerCharacter = Cast<ACharacter>(OwnerPawn);
-	if (!OwnerCharacter)
-	{
-		return;
-	}
-
-	auto* CameraComponent = OwnerCharacter->FindComponentByClass<UCameraComponent>();
-	if (!CameraComponent)
+	FWeaponFireContext Context;
+	if (!BuildFireContext(Context))
 	{
 		return;
 	}
@@ -62,24 +81,22 @@ void ARealWeaponBase::FireOnce()
 		return;
 	}
 
-	const auto CameraLocation = CameraComponent->GetComponentLocation();
-	const auto CameraDirection = CameraComponent->GetForwardVector().GetSafeNormal();
-	const auto CameraEnd = CameraLocation + CameraDirection * Range;
+	const auto AimEnd = Context.AimOrigin + Context.AimDirection * Range;
 
 	auto CollisionParams = FCollisionQueryParams(SCENE_QUERY_STAT(RealWeaponCameraTrace), true);
 	CollisionParams.AddIgnoredActor(this);
-	CollisionParams.AddIgnoredActor(OwnerPawn);
+	CollisionParams.AddIgnoredActor(Context.InstigatorPawn);
 
 	auto CameraHit = FHitResult();
-	const auto bCameraHit = World->LineTraceSingleByChannel(
+	const auto bAimHit = World->LineTraceSingleByChannel(
 		CameraHit,
-		CameraLocation,
-		CameraEnd,
+		Context.AimOrigin,
+		AimEnd,
 		ECC_Visibility,
 		CollisionParams);
-	const auto AimPoint = bCameraHit ? CameraHit.ImpactPoint : CameraEnd;
+	const auto AimPoint = bAimHit ? CameraHit.ImpactPoint : AimEnd;
 
-	const auto MuzzleLocation = WeaponMesh->GetSocketLocation(MuzzleSocketName);
+	const auto MuzzleLocation = WeaponMesh->GetSocketLocation(Context.MuzzleSocket);
 	const auto ShotDirection = BuildShotDirection(MuzzleLocation, AimPoint);
 
 	auto TraceStart = MuzzleLocation;
@@ -120,7 +137,7 @@ void ARealWeaponBase::FireOnce()
 				Damage,
 				ShotDirection,
 				FireHit,
-				OwnerPawn->GetController(),
+				Context.InstigatorPawn->GetController(),
 				this,
 				DamageType);
 

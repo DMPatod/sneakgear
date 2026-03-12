@@ -1,9 +1,11 @@
 #include "UI/StealthPlayerDebugWidget.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Characters/Player/StealthPlayerCharacter.h"
+#include "Player/StealthPlayerCharacter.h"
+#include "Player/Components/PlayerItemComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
+#include "TimerManager.h"
 #include "Weapon/WeaponBase.h"
 
 void UStealthPlayerDebugWidget::NativeConstruct()
@@ -35,14 +37,21 @@ void UStealthPlayerDebugWidget::NativeConstruct()
 
 	TryCachePlayer();
 	UpdateDebugText();
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(RefreshTimer, this, &UStealthPlayerDebugWidget::UpdateDebugText, 0.1f, true);
+	}
 }
 
-void UStealthPlayerDebugWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UStealthPlayerDebugWidget::NativeDestruct()
 {
-	Super::NativeTick(MyGeometry, InDeltaTime);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(RefreshTimer);
+	}
 
-	TryCachePlayer();
-	UpdateDebugText();
+	Super::NativeDestruct();
 }
 
 bool UStealthPlayerDebugWidget::TryCachePlayer()
@@ -58,6 +67,8 @@ bool UStealthPlayerDebugWidget::TryCachePlayer()
 
 void UStealthPlayerDebugWidget::UpdateDebugText()
 {
+	TryCachePlayer();
+
 	if (!DebugText)
 	{
 		return;
@@ -74,12 +85,13 @@ void UStealthPlayerDebugWidget::UpdateDebugText()
 	const bool bVaulting = Player->IsVaulting();
 	const float CoverMoveAxis = Player->GetCoverMoveAxis();
 	const bool bAiming = Player->IsAiming();
-	const bool bFiredRecently = Player->WasWeaponFiredRecently();
+	const UPlayerItemComponent* ItemComponent = Player->GetItemComponent();
+	const bool bFiredRecently = ItemComponent && ItemComponent->WasActiveWeaponFiredRecently();
 	const EStance CurrentStance = Player->Stance;
-	const EPlayerItemSlot ActiveSlot = Player->GetActiveWeaponSlot();
-	const int32 InClip = Player->GetActiveWeaponInClip();
-	const int32 ClipSize = Player->GetActiveWeaponClipSize();
-	const int32 ReserveAmmo = Player->GetReserveAmmoCount();
+	const EPlayerItemSlot ActiveSlot = ItemComponent ? ItemComponent->GetActiveWeaponSlot() : EPlayerItemSlot::PrimaryWeapon;
+	const int32 InClip = ItemComponent ? ItemComponent->GetActiveWeaponInClip() : 0;
+	const int32 ClipSize = ItemComponent ? ItemComponent->GetActiveWeaponClipSize() : 0;
+	const int32 ReserveAmmo = ItemComponent ? ItemComponent->GetReserveAmmoCount() : 0;
 	const float Speed2D = Player->GetVelocity().Size2D();
 
 	const UEnum* SlotEnum = StaticEnum<EPlayerItemSlot>();

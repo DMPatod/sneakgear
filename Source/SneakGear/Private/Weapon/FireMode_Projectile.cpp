@@ -17,26 +17,26 @@ void UFireMode_Projectile::FireOnce(const FWeaponFireContext& Context)
 		return;
 	}
 
-	const auto CameraEnd = Context.CameraLocation + Context.CameraDirection * Range;
+	const auto AimEnd = Context.AimOrigin + Context.AimDirection * Range;
 
 	auto CollisionParams = FCollisionQueryParams(SCENE_QUERY_STAT(FireModeProjectile), true);
 	CollisionParams.AddIgnoredActor(Context.WeaponActor);
 	CollisionParams.AddIgnoredActor(Context.InstigatorPawn);
 
 	auto CameraHit = FHitResult();
-	const auto bCameraHit = World->LineTraceSingleByChannel(
+	const auto bAimHit = World->LineTraceSingleByChannel(
 		CameraHit,
-		Context.CameraLocation,
-		CameraEnd,
+		Context.AimOrigin,
+		AimEnd,
 		ECC_Visibility,
 		CollisionParams);
-	const auto AimPoint = bCameraHit ? CameraHit.ImpactPoint : CameraEnd;
+	const auto AimPoint = bAimHit ? CameraHit.ImpactPoint : AimEnd;
 
 	const auto MuzzleLocation = Context.WeaponMesh->GetSocketLocation(Context.MuzzleSocket);
 	auto ShotDirection = (AimPoint - MuzzleLocation).GetSafeNormal();
 	if (ShotDirection.IsNearlyZero())
 	{
-		ShotDirection = Context.CameraDirection.GetSafeNormal();
+		ShotDirection = Context.AimDirection.GetSafeNormal();
 	}
 
 	auto SpawnParams = FActorSpawnParameters();

@@ -10,6 +10,7 @@ class UGameplayEffect;
 class UAmmoAttributeSet;
 class UHealthAttributeSet;
 class UStaminaAttributeSet;
+class AWeaponBase;
 
 UCLASS(Abstract)
 class SNEAKGEAR_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
@@ -20,6 +21,7 @@ public:
 	ABaseCharacter();
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual AWeaponBase* GetCurrentWeapon() const;
 
 	const UHealthAttributeSet* GetHealthSet() const
 	{
@@ -45,6 +47,7 @@ protected:
 	
 	virtual void InitGAS();
 	virtual void BindHealthDeath();
+	virtual void OnCharacterDeath();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystem;
@@ -66,4 +69,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
 	TSubclassOf<UGameplayEffect> GE_DefaultAmmo;
+
+	UPROPERTY(Transient)
+	bool bHasDied = false;
 };

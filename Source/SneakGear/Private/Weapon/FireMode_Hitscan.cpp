@@ -1,7 +1,7 @@
 #include "Weapon/FireMode_Hitscan.h"
 
-#include "Characters/Player/StealthPlayerCharacter.h"
-#include "Game/StealthPlayerController.h"
+#include "Player/StealthPlayerCharacter.h"
+#include "Player/StealthPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 void UFireMode_Hitscan::FireOnce(const FWeaponFireContext& Context)
@@ -17,16 +17,16 @@ void UFireMode_Hitscan::FireOnce(const FWeaponFireContext& Context)
 		return;
 	}
 
-	auto CameraEnd = Context.CameraLocation + Context.CameraDirection * Range;
+	auto AimEnd = Context.AimOrigin + Context.AimDirection * Range;
 
 	auto CollisionParams = FCollisionQueryParams(SCENE_QUERY_STAT(FireModeHitscan), true);
 	CollisionParams.AddIgnoredActor(Context.WeaponActor);
 	CollisionParams.AddIgnoredActor(Context.InstigatorPawn);
 
 	auto CameraHit = FHitResult();
-	auto bCameraHit = World->LineTraceSingleByChannel(CameraHit, Context.CameraLocation, CameraEnd, ECC_Visibility,
+	auto bAimHit = World->LineTraceSingleByChannel(CameraHit, Context.AimOrigin, AimEnd, ECC_Visibility,
 	                                                  CollisionParams);
-	auto AimPoint = bCameraHit ? CameraHit.ImpactPoint : CameraEnd;
+	auto AimPoint = bAimHit ? CameraHit.ImpactPoint : AimEnd;
 
 	auto MuzzleLocation = Context.WeaponMesh->GetSocketLocation(Context.MuzzleSocket);
 	auto ShotDirection = (AimPoint - MuzzleLocation).GetSafeNormal();

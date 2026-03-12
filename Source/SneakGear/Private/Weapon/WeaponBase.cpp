@@ -1,7 +1,8 @@
 #include "Weapon/WeaponBase.h"
 
-#include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
+#include "Misc/DataValidation.h"
+#include "Weapon/WeaponAimProvider.h"
 #include "Weapon/WeaponFireModeComponent.h"
 
 AWeaponBase::AWeaponBase()
@@ -51,38 +52,80 @@ void AWeaponBase::BeginPlay()
 	}
 }
 
-void AWeaponBase::FireOnce()
+EDataValidationResult AWeaponBase::IsDataValid(FDataValidationContext& Context) const
 {
-	if (!PrimaryFireMode || !WeaponMesh)
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (ClipSize <= 0)
 	{
-		return;
+		Context.AddError(FText::FromString(TEXT("ClipSize must be greater than 0.")));
+		Result = EDataValidationResult::Invalid;
 	}
 
-	auto OwnerPawn = Cast<APawn>(GetOwner());
+	if (FireRate <= 0.f)
+	{
+		Context.AddError(FText::FromString(TEXT("FireRate must be greater than 0.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (MuzzleSocketName.IsNone())
+	{
+		Context.AddError(FText::FromString(TEXT("MuzzleSocketName must be set.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	return Result;
+}
+
+bool AWeaponBase::BuildFireContext(FWeaponFireContext& OutContext) const
+{
+	if (!WeaponMesh)
+	{
+		return false;
+	}
+
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 	if (!OwnerPawn)
 	{
-		return;
+		return false;
 	}
 
-	auto OwnerCharacter = Cast<ACharacter>(OwnerPawn);
-	if (!OwnerCharacter)
+	FVector AimOrigin = FVector::ZeroVector;
+	FVector AimDirection = FVector::ForwardVector;
+	if (const IWeaponAimProvider* AimProvider = Cast<IWeaponAimProvider>(GetOwner()))
+	{
+		if (!AimProvider->GetWeaponAimData(AimOrigin, AimDirection))
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	OutContext = FWeaponFireContext();
+	OutContext.InstigatorPawn = OwnerPawn;
+	OutContext.WeaponActor = const_cast<AWeaponBase*>(this);
+	OutContext.WeaponMesh = WeaponMesh;
+	OutContext.AimOrigin = AimOrigin;
+	OutContext.AimDirection = AimDirection.GetSafeNormal();
+	OutContext.MuzzleSocket = MuzzleSocketName;
+	return !OutContext.AimDirection.IsNearlyZero();
+}
+
+void AWeaponBase::FireOnce()
+{
+	if (!PrimaryFireMode)
 	{
 		return;
 	}
 
-	auto CameraComponent = OwnerCharacter->FindComponentByClass<UCameraComponent>();
-	if (!CameraComponent)
+	FWeaponFireContext Context;
+	if (!BuildFireContext(Context))
 	{
 		return;
 	}
-
-	auto Context = FWeaponFireContext();
-	Context.InstigatorPawn = OwnerPawn;
-	Context.WeaponActor = this;
-	Context.WeaponMesh = WeaponMesh;
-	Context.CameraLocation = CameraComponent->GetComponentLocation();
-	Context.CameraDirection = CameraComponent->GetForwardVector();
-	Context.MuzzleSocket = MuzzleSocketName;
 
 	PrimaryFireMode->FireOnce(Context);
 	OnWeaponFiredEvent().Broadcast();

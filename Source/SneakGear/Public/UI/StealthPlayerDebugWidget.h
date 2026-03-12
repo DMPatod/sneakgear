@@ -14,7 +14,7 @@ class SNEAKGEAR_API UStealthPlayerDebugWidget : public UUserWidget
 
 public:
 	virtual void NativeConstruct() override;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	virtual void NativeDestruct() override;
 
 protected:
 	UPROPERTY(meta=(BindWidgetOptional))
@@ -22,6 +22,7 @@ protected:
 
 private:
 	TWeakObjectPtr<AStealthPlayerCharacter> CachedPlayer;
+	FTimerHandle RefreshTimer;
 
 	void UpdateDebugText();
 	bool TryCachePlayer();

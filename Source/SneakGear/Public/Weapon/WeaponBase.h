@@ -5,6 +5,7 @@
 #include "WeaponBase.generated.h"
 
 class UWeaponFireModeComponent;
+struct FWeaponFireContext;
 DECLARE_MULTICAST_DELEGATE(FOnWeaponFired);
 
 UCLASS(Abstract)
@@ -68,7 +69,9 @@ protected:
 	FTransform HolsterOffset = FTransform::Identity;
 
 	virtual void BeginPlay() override;
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 
+	bool BuildFireContext(FWeaponFireContext& OutContext) const;
 	void FireOnce();
 
 private:

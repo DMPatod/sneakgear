@@ -15,6 +15,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void StartFire() override;
 	virtual void StopFire() override;
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 
 protected:
 	void FireOnce();

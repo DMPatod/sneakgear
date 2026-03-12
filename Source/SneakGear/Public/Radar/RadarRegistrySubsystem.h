@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "InterchangeTranslatorBase.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "Types/RadarTypes.h"
 #include "RadarRegistrySubsystem.generated.h"
 
 /**
@@ -20,6 +21,8 @@ public:
 
 	void RegisterActor(AActor* Actor);
 	void UnregisterActor(AActor* Actor);
+	void BuildGuardContacts(const APawn* ViewerPawn, float ReferenceYawDeg, float RadarRadiusPx, float RadarRangeWorld,
+	                       TArray<FRadarContact>& OutContacts);
 
 	const TArray<TWeakObjectPtr<AActor>>& GetActors() const
 	{

@@ -1,20 +1,11 @@
 #include "UI/StanceWidget.h"
 
 #include "Blueprint/WidgetTree.h"
-#include "Characters/Player/ThirdPersonPlayerCharacter.h"
+#include "Player/ThirdPersonPlayerCharacter.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "GameFramework/PlayerController.h"
-
-void UStanceWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
-{
-	Super::NativeTick(MyGeometry, InDeltaTime);
-
-	TryCachePlayer();
-
-	UpdateFromPlayer();
-}
 
 void UStanceWidget::NativeConstruct()
 {
@@ -60,6 +51,11 @@ void UStanceWidget::NativeConstruct()
 
 void UStanceWidget::NativeDestruct()
 {
+	if (AThirdPersonPlayerCharacter* Player = CachedPlayer.Get())
+	{
+		Player->OnStanceChangedEvent().RemoveAll(this);
+	}
+
 	CachedPlayer.Reset();
 	bHasInitializedUI = false;
 
@@ -70,12 +66,16 @@ bool UStanceWidget::TryCachePlayer()
 {
 	if (CachedPlayer.IsValid())
 	{
+		CachedPlayer->OnStanceChangedEvent().RemoveAll(this);
+		CachedPlayer->OnStanceChangedEvent().AddUObject(this, &UStanceWidget::HandleStanceChanged);
 		return true;
 	}
 
 	CachedPlayer = Cast<AThirdPersonPlayerCharacter>(GetOwningPlayerPawn());
 	if (CachedPlayer.IsValid())
 	{
+		CachedPlayer->OnStanceChangedEvent().RemoveAll(this);
+		CachedPlayer->OnStanceChangedEvent().AddUObject(this, &UStanceWidget::HandleStanceChanged);
 		return true;
 	}
 
@@ -84,7 +84,19 @@ bool UStanceWidget::TryCachePlayer()
 		CachedPlayer = Cast<AThirdPersonPlayerCharacter>(OwningController->GetPawn());
 	}
 
+	if (CachedPlayer.IsValid())
+	{
+		CachedPlayer->OnStanceChangedEvent().RemoveAll(this);
+		CachedPlayer->OnStanceChangedEvent().AddUObject(this, &UStanceWidget::HandleStanceChanged);
+	}
+
 	return CachedPlayer.IsValid();
+}
+
+void UStanceWidget::HandleStanceChanged(EStance NewStance)
+{
+	(void)NewStance;
+	UpdateFromPlayer();
 }
 
 void UStanceWidget::UpdateFromPlayer()

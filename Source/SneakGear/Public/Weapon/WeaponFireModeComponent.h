@@ -20,10 +20,10 @@ struct FWeaponFireContext
 	TObjectPtr<USkeletalMeshComponent> WeaponMesh = nullptr;
 
 	UPROPERTY()
-	FVector CameraLocation = FVector::ZeroVector;
+	FVector AimOrigin = FVector::ZeroVector;
 
 	UPROPERTY()
-	FVector CameraDirection = FVector::ForwardVector;
+	FVector AimDirection = FVector::ForwardVector;
 
 	UPROPERTY()
 	FName MuzzleSocket = "muzzle_socket";

@@ -24,10 +24,16 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 	return AbilitySystem;
 }
 
+AWeaponBase* ABaseCharacter::GetCurrentWeapon() const
+{
+	return nullptr;
+}
+
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	bHasDied = false;
 	InitGAS();
 	BindHealthDeath();
 }
@@ -78,13 +84,16 @@ void ABaseCharacter::BindHealthDeath()
 	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UHealthAttributeSet::GetHealthAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
-			if (Data.NewValue <= 0.f)
+			if (!bHasDied && Data.NewValue <= 0.f)
 			{
-				auto TextLoc = GetActorLocation() + FVector(0.f, 0.f, 120.f);
-				auto Txt = FString::Printf(TEXT("Player Died!"));
-				DrawDebugString(GetWorld(), TextLoc, Txt, nullptr, FColor::Red, 0.f, false);
+				bHasDied = true;
+				OnCharacterDeath();
 			}
 		});
+}
+
+void ABaseCharacter::OnCharacterDeath()
+{
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,

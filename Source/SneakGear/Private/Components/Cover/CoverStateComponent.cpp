@@ -1,10 +1,10 @@
 #include "Components/Cover/CoverStateComponent.h"
 
-#include "Characters/Player/ThirdPersonPlayerCharacter.h"
+#include "Player/ThirdPersonPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Components/PlayerLocomotionComponent.h"
+#include "Player/Components/PlayerLocomotionComponent.h"
 #include "InputActionValue.h"
 
 UCoverStateComponent::UCoverStateComponent()

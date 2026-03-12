@@ -14,8 +14,8 @@ class SNEAKGEAR_API UPlayerVitalsWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 protected:
 	UPROPERTY(meta=(BindWidgetOptional))
@@ -33,5 +33,7 @@ protected:
 private:
 	TWeakObjectPtr<AThirdPersonPlayerCharacter> CachedPlayer;
 
+	void HandleHealthChanged(const struct FOnAttributeChangeData& Data);
+	void HandleStaminaChanged(const struct FOnAttributeChangeData& Data);
 	void UpdateFromPlayer();
 };
