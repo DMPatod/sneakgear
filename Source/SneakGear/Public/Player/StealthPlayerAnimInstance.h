@@ -1,14 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Player/Components/PlayerItemComponent.h"
-#include "Player/ThirdPersonPlayerAnimInstance.h"
+#include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/PlayerAnimInstance.h"
 #include "StealthPlayerAnimInstance.generated.h"
 
-class AStealthPlayerCharacter;
+class ASneakGearPlayerCharacter;
 
 UCLASS()
-class SNEAKGEAR_API UStealthPlayerAnimInstance : public UThirdPersonPlayerAnimInstance
+class SNEAKGEAR_API UStealthPlayerAnimInstance : public UPlayerAnimInstance
 {
 	GENERATED_BODY()
 
@@ -31,5 +31,5 @@ protected:
 
 private:
 	UPROPERTY(Transient)
-	TObjectPtr<AStealthPlayerCharacter> StealthCharacter;
+	TObjectPtr<ASneakGearPlayerCharacter> StealthCharacter;
 };

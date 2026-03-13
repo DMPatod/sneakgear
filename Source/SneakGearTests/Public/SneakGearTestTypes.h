@@ -6,8 +6,8 @@
 #include "Guards/GuardAIController.h"
 #include "Guards/GuardCharacter.h"
 #include "Guards/Components/GuardPatrolComponent.h"
-#include "Player/Components/PlayerItemComponent.h"
-#include "Player/ThirdPersonPlayerCharacter.h"
+#include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/PlayerCharacterBase.h"
 #include "UI/EventFeedWidget.h"
 #include "UI/PlayerVitalsWidget.h"
 #include "UI/StanceWidget.h"
@@ -33,7 +33,7 @@ protected:
 };
 
 UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
-class SNEAKGEARTESTS_API UTestPlayerItemComponent : public UPlayerItemComponent
+class SNEAKGEARTESTS_API UTestPlayerInventoryComponent : public UPlayerInventoryComponent
 {
 	GENERATED_BODY()
 
@@ -66,20 +66,20 @@ public:
 };
 
 UCLASS()
-class SNEAKGEARTESTS_API ATestInventoryCharacter : public AThirdPersonPlayerCharacter
+class SNEAKGEARTESTS_API ATestInventoryCharacter : public APlayerCharacterBase
 {
 	GENERATED_BODY()
 
 public:
 	ATestInventoryCharacter();
 
-	UTestPlayerItemComponent* GetTestItemComponent() const;
+	UTestPlayerInventoryComponent* GetTestItemComponent() const;
 	void InitializeAbilitySystemForTest(float InitialAmmo, float MaxAmmo);
 	virtual AWeaponBase* GetCurrentWeapon() const override;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category="Tests")
-	TObjectPtr<UTestPlayerItemComponent> TestItemComponent;
+	TObjectPtr<UTestPlayerInventoryComponent> TestItemComponent;
 };
 
 UCLASS()

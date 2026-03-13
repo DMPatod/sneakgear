@@ -13,7 +13,7 @@
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 #include "Guards/Patrol/PatrolPath.h"
 #include "Kismet/GameplayStatics.h"
-#include "Player/Components/PlayerItemComponent.h"
+#include "Player/Components/PlayerInventoryComponent.h"
 #include "Game/GAS/HealthAttributeSet.h"
 #include "Game/GAS/StaminaAttributeSet.h"
 #include "Tests/AutomationEditorCommon.h"
@@ -81,14 +81,14 @@ bool FBaseCharacterDeathOnlyRunsOnceTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerItemComponentCannotSelectEmptyWeaponSlotTest,
-	"SneakGear.Inventory.PlayerItemComponent.CannotSelectEmptyWeaponSlot",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentCannotSelectEmptyWeaponSlotTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.CannotSelectEmptyWeaponSlot",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FPlayerItemComponentCannotSelectEmptyWeaponSlotTest::RunTest(const FString& Parameters)
+bool FPlayerInventoryComponentCannotSelectEmptyWeaponSlotTest::RunTest(const FString& Parameters)
 {
 	AActor* OwnerActor = NewObject<AActor>();
-	UPlayerItemComponent* ItemComponent = NewObject<UPlayerItemComponent>(OwnerActor);
+	UPlayerInventoryComponent* ItemComponent = NewObject<UPlayerInventoryComponent>(OwnerActor);
 
 	TestNotNull(TEXT("Item component should be created"), ItemComponent);
 	TestFalse(TEXT("Selecting an empty primary slot should fail"),
@@ -98,11 +98,11 @@ bool FPlayerItemComponentCannotSelectEmptyWeaponSlotTest::RunTest(const FString&
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerItemComponentReloadConsumesReserveAmmoTest,
-	"SneakGear.Inventory.PlayerItemComponent.ReloadConsumesReserveAmmo",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentReloadConsumesReserveAmmoTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.ReloadConsumesReserveAmmo",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FPlayerItemComponentReloadConsumesReserveAmmoTest::RunTest(const FString& Parameters)
+bool FPlayerInventoryComponentReloadConsumesReserveAmmoTest::RunTest(const FString& Parameters)
 {
 	UWorld* World = CreateTestWorld();
 	TestNotNull(TEXT("Test world should be created"), World);
@@ -112,7 +112,7 @@ bool FPlayerItemComponentReloadConsumesReserveAmmoTest::RunTest(const FString& P
 
 	Character->InitializeAbilitySystemForTest(1.f, 10.f);
 
-	UTestPlayerItemComponent* ItemComponent = Character->GetTestItemComponent();
+	UTestPlayerInventoryComponent* ItemComponent = Character->GetTestItemComponent();
 	TestNotNull(TEXT("Test item component should exist"), ItemComponent);
 
 	ItemComponent->ConfigureWeaponClasses(ATestWeapon::StaticClass());

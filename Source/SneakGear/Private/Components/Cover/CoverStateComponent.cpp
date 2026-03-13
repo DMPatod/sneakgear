@@ -1,6 +1,6 @@
 #include "Components/Cover/CoverStateComponent.h"
 
-#include "Player/ThirdPersonPlayerCharacter.h"
+#include "Player/PlayerCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -30,7 +30,7 @@ void UCoverStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		return;
 	}
 
-	const AThirdPersonPlayerCharacter* ThirdPersonCharacter = Cast<AThirdPersonPlayerCharacter>(OwnerCharacter);
+	const APlayerCharacterBase* ThirdPersonCharacter = Cast<APlayerCharacterBase>(OwnerCharacter);
 	const bool bIsProne = ThirdPersonCharacter && ThirdPersonCharacter->Stance == EStance::Prone;
 
 	if (bIsProne && CoverState != ECoverState::None)
@@ -121,7 +121,7 @@ bool UCoverStateComponent::TryVault(ACharacter* OwnerCharacter)
 		return false;
 	}
 
-	const AThirdPersonPlayerCharacter* ThirdPersonCharacter = Cast<AThirdPersonPlayerCharacter>(OwnerCharacter);
+	const APlayerCharacterBase* ThirdPersonCharacter = Cast<APlayerCharacterBase>(OwnerCharacter);
 	if (!ThirdPersonCharacter || ThirdPersonCharacter->Stance != EStance::Crouching)
 	{
 		return false;

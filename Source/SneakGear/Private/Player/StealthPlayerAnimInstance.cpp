@@ -1,12 +1,12 @@
 #include "Player/StealthPlayerAnimInstance.h"
 
-#include "Player/Components/PlayerItemComponent.h"
-#include "Player/StealthPlayerCharacter.h"
+#include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/SneakGearPlayerCharacter.h"
 
 void UStealthPlayerAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	StealthCharacter = Cast<AStealthPlayerCharacter>(TryGetPawnOwner());
+	StealthCharacter = Cast<ASneakGearPlayerCharacter>(TryGetPawnOwner());
 }
 
 void UStealthPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -24,7 +24,7 @@ void UStealthPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	bInCover = StealthCharacter->IsInCover();
 	CoverMove = StealthCharacter->GetCoverMoveAxis();
-	if (const UPlayerItemComponent* ItemComponent = StealthCharacter->GetItemComponent())
+	if (const UPlayerInventoryComponent* ItemComponent = StealthCharacter->GetItemComponent())
 	{
 		ActiveWeaponSlot = ItemComponent->GetActiveWeaponSlot();
 		bWeaponFiredRecently = ItemComponent->WasActiveWeaponFiredRecently();

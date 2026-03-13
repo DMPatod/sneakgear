@@ -1,11 +1,11 @@
 #include "Player/Components/PlayerHUDComponent.h"
 
 #include "Guards/GuardCharacter.h"
-#include "Player/StealthPlayerCharacter.h"
+#include "Player/SneakGearPlayerCharacter.h"
 #include "Player/StealthPlayerController.h"
 #include "Radar/RadarRegistrySubsystem.h"
 #include "UI/CrosshairWidget.h"
-#include "UI/MainHUDWidget.h"
+#include "UI/PlayerHUDWidget.h"
 #include "UI/RadarWidget.h"
 
 UPlayerHUDComponent::UPlayerHUDComponent()
@@ -13,11 +13,11 @@ UPlayerHUDComponent::UPlayerHUDComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UPlayerHUDComponent::Initialize(TSubclassOf<UMainHUDWidget> InMainHUDWidgetClass,
+void UPlayerHUDComponent::Initialize(TSubclassOf<UPlayerHUDWidget> InPlayerHUDWidgetClass,
                                      TSubclassOf<UCrosshairWidget> InCrosshairWidgetClass,
                                      const FCrosshairSpreadConfig& InCrosshairSpread)
 {
-	MainHUDWidgetClass = InMainHUDWidgetClass;
+	PlayerHUDWidgetClass = InPlayerHUDWidgetClass;
 	CrosshairWidgetClass = InCrosshairWidgetClass;
 	CrosshairSpread = InCrosshairSpread;
 	RadarRefreshCooldown = 0.f;
@@ -87,12 +87,12 @@ void UPlayerHUDComponent::CreateHUDWidgets()
 		}
 	}
 
-	if (!MainHUDWidget && MainHUDWidgetClass)
+	if (!PlayerHUDWidget && PlayerHUDWidgetClass)
 	{
-		MainHUDWidget = CreateWidget<UMainHUDWidget>(Controller, MainHUDWidgetClass);
-		if (MainHUDWidget)
+		PlayerHUDWidget = CreateWidget<UPlayerHUDWidget>(Controller, PlayerHUDWidgetClass);
+		if (PlayerHUDWidget)
 		{
-			MainHUDWidget->AddToViewport();
+			PlayerHUDWidget->AddToViewport();
 		}
 	}
 }
@@ -127,7 +127,7 @@ void UPlayerHUDComponent::UpdateRadarWidget()
 
 void UPlayerHUDComponent::UpdateCrosshairWidget(float DeltaSeconds)
 {
-	AStealthPlayerCharacter* Player = GetOwningStealthPlayerCharacter();
+	ASneakGearPlayerCharacter* Player = GetOwningSneakGearPlayerCharacter();
 	if (!CrosshairWidget || !Player)
 	{
 		return;
@@ -157,11 +157,11 @@ AStealthPlayerController* UPlayerHUDComponent::GetOwningStealthPlayerController(
 	return Cast<AStealthPlayerController>(GetOwner());
 }
 
-AStealthPlayerCharacter* UPlayerHUDComponent::GetOwningStealthPlayerCharacter() const
+ASneakGearPlayerCharacter* UPlayerHUDComponent::GetOwningSneakGearPlayerCharacter() const
 {
 	if (const AStealthPlayerController* Controller = GetOwningStealthPlayerController())
 	{
-		return Cast<AStealthPlayerCharacter>(Controller->GetPawn());
+		return Cast<ASneakGearPlayerCharacter>(Controller->GetPawn());
 	}
 
 	return nullptr;
@@ -169,5 +169,5 @@ AStealthPlayerCharacter* UPlayerHUDComponent::GetOwningStealthPlayerCharacter() 
 
 URadarWidget* UPlayerHUDComponent::GetRadarWidget() const
 {
-	return MainHUDWidget ? MainHUDWidget->GetRadarWidget() : nullptr;
+	return PlayerHUDWidget ? PlayerHUDWidget->GetRadarWidget() : nullptr;
 }

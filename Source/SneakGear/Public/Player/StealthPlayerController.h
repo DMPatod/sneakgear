@@ -3,18 +3,19 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Player/Components/PlayerHUDComponent.h"
-#include "Player/Components/PlayerItemComponent.h"
+#include "Player/Components/PlayerInventoryComponent.h"
+#include "UI/WeaponMenuActions.h"
 #include "StealthPlayerController.generated.h"
 
 class UInputMappingContext;
 class UPlayerHUDComponent;
-class UPlayerWeaponMenuComponent;
+class UPlayerWeaponSelectionComponent;
 class UUserWidget;
 class UWeaponQuickIndicatorWidget;
 class UWeaponSelectionMenuWidget;
 
 UCLASS()
-class SNEAKGEAR_API AStealthPlayerController : public APlayerController
+class SNEAKGEAR_API AStealthPlayerController : public APlayerController, public IWeaponMenuActions
 {
 	GENERATED_BODY()
 
@@ -42,10 +43,10 @@ public:
 	void CloseWeaponSelectionWidget();
 
 	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
-	void SelectWeaponFromSelectionMenu(EPlayerItemSlot Slot);
+	virtual void SelectWeaponFromSelectionMenu(EPlayerItemSlot Slot) override;
 
 	UFUNCTION(BlueprintCallable, Category="UI|Weapons")
-	void CancelWeaponSelectionMenu();
+	virtual void CancelWeaponSelectionMenu() override;
 
 	UFUNCTION(BlueprintPure, Category="UI|Weapons")
 	bool IsWeaponSelectionWidgetOpen() const;
@@ -70,7 +71,7 @@ protected:
 	TObjectPtr<UInputMappingContext> DebugMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
-	TSubclassOf<UMainHUDWidget> MainHUDWidgetClass;
+	TSubclassOf<UPlayerHUDWidget> PlayerHUDWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
 	TSubclassOf<UCrosshairWidget> CrosshairWidgetClass;
@@ -94,7 +95,7 @@ private:
 	TObjectPtr<UPlayerHUDComponent> PlayerHUDComponent;
 
 	UPROPERTY(VisibleAnywhere, Category="Components")
-	TObjectPtr<UPlayerWeaponMenuComponent> PlayerWeaponMenuComponent;
+	TObjectPtr<UPlayerWeaponSelectionComponent> PlayerWeaponSelectionComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Debug")
 	bool bDebug = false;

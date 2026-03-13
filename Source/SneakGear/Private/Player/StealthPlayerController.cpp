@@ -2,13 +2,13 @@
 
 #include "EnhancedInputSubsystems.h"
 #include "Player/Components/PlayerHUDComponent.h"
-#include "Player/Components/PlayerWeaponMenuComponent.h"
+#include "Player/Components/PlayerWeaponSelectionComponent.h"
 #include "Blueprint/UserWidget.h"
 
 AStealthPlayerController::AStealthPlayerController()
 {
 	PlayerHUDComponent = CreateDefaultSubobject<UPlayerHUDComponent>(TEXT("PlayerHUDComponent"));
-	PlayerWeaponMenuComponent = CreateDefaultSubobject<UPlayerWeaponMenuComponent>(TEXT("PlayerWeaponMenuComponent"));
+	PlayerWeaponSelectionComponent = CreateDefaultSubobject<UPlayerWeaponSelectionComponent>(TEXT("PlayerWeaponSelectionComponent"));
 }
 
 void AStealthPlayerController::BeginPlay()
@@ -18,11 +18,11 @@ void AStealthPlayerController::BeginPlay()
 	SetupInputMappings();
 	if (PlayerHUDComponent)
 	{
-		PlayerHUDComponent->Initialize(MainHUDWidgetClass, CrosshairWidgetClass, CrosshairSpread);
+		PlayerHUDComponent->Initialize(PlayerHUDWidgetClass, CrosshairWidgetClass, CrosshairSpread);
 	}
-	if (PlayerWeaponMenuComponent)
+	if (PlayerWeaponSelectionComponent)
 	{
-		PlayerWeaponMenuComponent->Initialize(WeaponQuickIndicatorWidgetClass, WeaponSelectionWidgetClass,
+		PlayerWeaponSelectionComponent->Initialize(WeaponQuickIndicatorWidgetClass, WeaponSelectionWidgetClass,
 		                                      WeaponQuickIndicatorDuration);
 	}
 }
@@ -58,47 +58,47 @@ void AStealthPlayerController::NotifyHitMarker()
 
 void AStealthPlayerController::ShowWeaponQuickSelectIndicator(EPlayerItemSlot Slot)
 {
-	if (PlayerWeaponMenuComponent)
+	if (PlayerWeaponSelectionComponent)
 	{
-		PlayerWeaponMenuComponent->ShowWeaponQuickSelectIndicator(Slot);
+		PlayerWeaponSelectionComponent->ShowWeaponQuickSelectIndicator(Slot);
 	}
 }
 
 void AStealthPlayerController::OpenWeaponSelectionWidget(EPlayerItemSlot InitialSlot)
 {
-	if (PlayerWeaponMenuComponent)
+	if (PlayerWeaponSelectionComponent)
 	{
-		PlayerWeaponMenuComponent->OpenWeaponSelectionWidget(InitialSlot);
+		PlayerWeaponSelectionComponent->OpenWeaponSelectionWidget(InitialSlot);
 	}
 }
 
 void AStealthPlayerController::CloseWeaponSelectionWidget()
 {
-	if (PlayerWeaponMenuComponent)
+	if (PlayerWeaponSelectionComponent)
 	{
-		PlayerWeaponMenuComponent->CloseWeaponSelectionWidget();
+		PlayerWeaponSelectionComponent->CloseWeaponSelectionWidget();
 	}
 }
 
 void AStealthPlayerController::SelectWeaponFromSelectionMenu(EPlayerItemSlot Slot)
 {
-	if (PlayerWeaponMenuComponent)
+	if (PlayerWeaponSelectionComponent)
 	{
-		PlayerWeaponMenuComponent->SelectWeaponFromSelectionMenu(Slot);
+		PlayerWeaponSelectionComponent->SelectWeaponFromSelectionMenu(Slot);
 	}
 }
 
 void AStealthPlayerController::CancelWeaponSelectionMenu()
 {
-	if (PlayerWeaponMenuComponent)
+	if (PlayerWeaponSelectionComponent)
 	{
-		PlayerWeaponMenuComponent->CancelWeaponSelectionMenu();
+		PlayerWeaponSelectionComponent->CancelWeaponSelectionMenu();
 	}
 }
 
 bool AStealthPlayerController::IsWeaponSelectionWidgetOpen() const
 {
-	return PlayerWeaponMenuComponent && PlayerWeaponMenuComponent->IsWeaponSelectionWidgetOpen();
+	return PlayerWeaponSelectionComponent && PlayerWeaponSelectionComponent->IsWeaponSelectionWidgetOpen();
 }
 
 void AStealthPlayerController::ApplyMenuInputMode(UUserWidget* FocusWidget)

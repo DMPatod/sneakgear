@@ -1,10 +1,10 @@
 #include "Game/StealthGameMode.h"
 
-#include "Player/StealthPlayerCharacter.h"
+#include "Player/SneakGearPlayerCharacter.h"
 #include "Player/StealthPlayerController.h"
 
 AStealthGameMode::AStealthGameMode()
 {
-	DefaultPawnClass = AStealthPlayerCharacter::StaticClass();
+	DefaultPawnClass = ASneakGearPlayerCharacter::StaticClass();
 	PlayerControllerClass = AStealthPlayerController::StaticClass();
 }

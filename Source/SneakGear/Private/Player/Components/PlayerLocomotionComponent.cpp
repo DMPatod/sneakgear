@@ -1,6 +1,6 @@
 #include "Player/Components/PlayerLocomotionComponent.h"
 
-#include "Player/ThirdPersonPlayerCharacter.h"
+#include "Player/PlayerCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/Cover/CoverStateComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -20,7 +20,7 @@ void UPlayerLocomotionComponent::Initialize(USpringArmComponent* InCameraBoom)
 
 void UPlayerLocomotionComponent::SetupMovementDefaults()
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return;
@@ -46,7 +46,7 @@ void UPlayerLocomotionComponent::TickLocomotion(float DeltaSeconds)
 
 void UPlayerLocomotionComponent::Move(const FInputActionValue& Value)
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter || !PlayerCharacter->Controller)
 	{
 		return;
@@ -65,7 +65,7 @@ void UPlayerLocomotionComponent::Move(const FInputActionValue& Value)
 
 void UPlayerLocomotionComponent::SetStance(EStance NewStance)
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter || PlayerCharacter->Stance == NewStance)
 	{
 		return;
@@ -128,7 +128,7 @@ void UPlayerLocomotionComponent::ToggleSprint()
 
 void UPlayerLocomotionComponent::OnStancePressed()
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return;
@@ -144,7 +144,7 @@ void UPlayerLocomotionComponent::OnStancePressed()
 
 void UPlayerLocomotionComponent::OnStanceReleased()
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return;
@@ -175,7 +175,7 @@ void UPlayerLocomotionComponent::OnStanceReleased()
 
 void UPlayerLocomotionComponent::UpdateRotationMode(bool bIsAiming)
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return;
@@ -203,7 +203,7 @@ float UPlayerLocomotionComponent::GetMaxSpeed() const
 
 void UPlayerLocomotionComponent::HandleStanceHold()
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter || !bStanceButtonDown || bStanceHoldTriggered)
 	{
 		return;
@@ -223,7 +223,7 @@ void UPlayerLocomotionComponent::HandleStanceHold()
 
 void UPlayerLocomotionComponent::UpdateCameraSocketOffset(float DeltaSeconds)
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter || !CameraBoom)
 	{
 		return;
@@ -244,7 +244,7 @@ void UPlayerLocomotionComponent::UpdateCameraSocketOffset(float DeltaSeconds)
 
 void UPlayerLocomotionComponent::UpdateMovementSpeed()
 {
-	AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return;
@@ -272,7 +272,7 @@ void UPlayerLocomotionComponent::UpdateMovementSpeed()
 
 float UPlayerLocomotionComponent::GetStanceBaseSpeed() const
 {
-	const AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	const APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return WalkSpeed;
@@ -293,7 +293,7 @@ float UPlayerLocomotionComponent::GetStanceBaseSpeed() const
 
 void UPlayerLocomotionComponent::RefreshMovementState()
 {
-	const AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	const APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return;
@@ -305,7 +305,7 @@ void UPlayerLocomotionComponent::RefreshMovementState()
 
 bool UPlayerLocomotionComponent::IsCoverActive() const
 {
-	const AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	const APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return false;
@@ -317,7 +317,7 @@ bool UPlayerLocomotionComponent::IsCoverActive() const
 
 bool UPlayerLocomotionComponent::CanResizeCapsuleTo(float TargetHalfHeight) const
 {
-	const AThirdPersonPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+	const APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
 	if (!PlayerCharacter)
 	{
 		return false;
@@ -346,7 +346,7 @@ bool UPlayerLocomotionComponent::CanResizeCapsuleTo(float TargetHalfHeight) cons
 	                                            FCollisionShape::MakeCapsule(Radius, TargetHalfHeight), Params);
 }
 
-AThirdPersonPlayerCharacter* UPlayerLocomotionComponent::GetPlayerCharacter() const
+APlayerCharacterBase* UPlayerLocomotionComponent::GetPlayerCharacter() const
 {
-	return Cast<AThirdPersonPlayerCharacter>(GetOwner());
+	return Cast<APlayerCharacterBase>(GetOwner());
 }

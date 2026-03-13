@@ -36,13 +36,13 @@ void ATestDeathCharacter::OnCharacterDeath()
 	++DeathCount;
 }
 
-void UTestPlayerItemComponent::ConfigureWeaponClasses(TSubclassOf<AWeaponBase> InPrimaryWeaponClass, TSubclassOf<AWeaponBase> InSecondaryWeaponClass)
+void UTestPlayerInventoryComponent::ConfigureWeaponClasses(TSubclassOf<AWeaponBase> InPrimaryWeaponClass, TSubclassOf<AWeaponBase> InSecondaryWeaponClass)
 {
 	PrimaryWeaponClass = InPrimaryWeaponClass;
 	SecondaryWeaponClass = InSecondaryWeaponClass;
 }
 
-void UTestPlayerItemComponent::RunBeginPlayForTest()
+void UTestPlayerInventoryComponent::RunBeginPlayForTest()
 {
 	BeginPlay();
 }
@@ -67,10 +67,10 @@ UTestWeaponFireModeComponent* ATestWeapon::GetTestFireMode() const
 
 ATestInventoryCharacter::ATestInventoryCharacter()
 {
-	TestItemComponent = CreateDefaultSubobject<UTestPlayerItemComponent>(TEXT("TestItemComponent"));
+	TestItemComponent = CreateDefaultSubobject<UTestPlayerInventoryComponent>(TEXT("TestItemComponent"));
 }
 
-UTestPlayerItemComponent* ATestInventoryCharacter::GetTestItemComponent() const
+UTestPlayerInventoryComponent* ATestInventoryCharacter::GetTestItemComponent() const
 {
 	return TestItemComponent;
 }

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Player/Components/PlayerItemComponent.h"
+#include "Player/Components/PlayerInventoryComponent.h"
 #include "WorldItemPickup.generated.h"
 
 class UStaticMeshComponent;

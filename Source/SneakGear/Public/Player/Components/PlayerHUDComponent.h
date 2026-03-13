@@ -6,9 +6,9 @@
 #include "PlayerHUDComponent.generated.h"
 
 class AStealthPlayerController;
-class AStealthPlayerCharacter;
+class ASneakGearPlayerCharacter;
 class UCrosshairWidget;
-class UMainHUDWidget;
+class UPlayerHUDWidget;
 class URadarWidget;
 
 USTRUCT()
@@ -43,7 +43,7 @@ class SNEAKGEAR_API UPlayerHUDComponent : public UActorComponent
 public:
 	UPlayerHUDComponent();
 
-	void Initialize(TSubclassOf<UMainHUDWidget> InMainHUDWidgetClass, TSubclassOf<UCrosshairWidget> InCrosshairWidgetClass,
+	void Initialize(TSubclassOf<UPlayerHUDWidget> InPlayerHUDWidgetClass, TSubclassOf<UCrosshairWidget> InCrosshairWidgetClass,
 	                const FCrosshairSpreadConfig& InCrosshairSpread);
 
 	void OnWeaponFired();
@@ -60,17 +60,17 @@ private:
 	void UpdateRadarWidget();
 	void UpdateCrosshairWidget(float DeltaSeconds);
 	AStealthPlayerController* GetOwningStealthPlayerController() const;
-	AStealthPlayerCharacter* GetOwningStealthPlayerCharacter() const;
+	ASneakGearPlayerCharacter* GetOwningSneakGearPlayerCharacter() const;
 	URadarWidget* GetRadarWidget() const;
 
 	UPROPERTY(Transient)
-	TSubclassOf<UMainHUDWidget> MainHUDWidgetClass;
+	TSubclassOf<UPlayerHUDWidget> PlayerHUDWidgetClass;
 
 	UPROPERTY(Transient)
 	TSubclassOf<UCrosshairWidget> CrosshairWidgetClass;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UMainHUDWidget> MainHUDWidget;
+	TObjectPtr<UPlayerHUDWidget> PlayerHUDWidget;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UCrosshairWidget> CrosshairWidget;

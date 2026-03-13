@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Player/ThirdPersonPlayerCharacter.h"
+#include "Player/PlayerCharacterBase.h"
 #include "PlayerLocomotionComponent.generated.h"
 
 class USpringArmComponent;
@@ -69,5 +69,5 @@ private:
 	float GetStanceBaseSpeed() const;
 	bool IsCoverActive() const;
 	bool CanResizeCapsuleTo(float TargetHalfHeight) const;
-	AThirdPersonPlayerCharacter* GetPlayerCharacter() const;
+	APlayerCharacterBase* GetPlayerCharacter() const;
 };

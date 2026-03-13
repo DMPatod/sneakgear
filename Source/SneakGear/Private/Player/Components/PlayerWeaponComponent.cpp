@@ -1,6 +1,6 @@
 #include "Player/Components/PlayerWeaponComponent.h"
 
-#include "Player/ThirdPersonPlayerCharacter.h"
+#include "Player/PlayerCharacterBase.h"
 
 UPlayerWeaponComponent::UPlayerWeaponComponent()
 {
@@ -8,7 +8,7 @@ UPlayerWeaponComponent::UPlayerWeaponComponent()
 
 void UPlayerWeaponComponent::Reload()
 {
-	auto* PlayerCharacter = Cast<AThirdPersonPlayerCharacter>(GetOwner());
+	auto* PlayerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 	if (!PlayerCharacter)
 	{
 		Super::Reload();
@@ -35,6 +35,6 @@ void UPlayerWeaponComponent::Reload()
 
 float UPlayerWeaponComponent::GetPlayerArmor() const
 {
-	const auto* PlayerCharacter = Cast<AThirdPersonPlayerCharacter>(GetOwner());
+	const auto* PlayerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 	return PlayerCharacter ? PlayerCharacter->GetAmmo() : 0.f;
 }

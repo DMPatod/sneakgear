@@ -11,6 +11,7 @@ public class SneakGearUI : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
+			"InputCore",
 			"UMG",
 			"SneakGearCore"
 		});
