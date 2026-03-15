@@ -2,7 +2,26 @@
 
 #include "GameFramework/Character.h"
 #include "Misc/DataValidation.h"
+#include "Player/SneakGearPlayerCharacter.h"
 #include "Weapon/WeaponBase.h"
+
+namespace
+{
+bool UsesInventoryDrivenWeapons(const UCharacterWeaponComponent* WeaponComponent)
+{
+	if (!WeaponComponent)
+	{
+		return false;
+	}
+
+	if (const AActor* OwnerActor = WeaponComponent->GetOwner())
+	{
+		return OwnerActor->IsA<ASneakGearPlayerCharacter>();
+	}
+
+	return WeaponComponent->GetTypedOuter<ASneakGearPlayerCharacter>() != nullptr;
+}
+}
 
 UCharacterWeaponComponent::UCharacterWeaponComponent()
 {
@@ -15,7 +34,10 @@ void UCharacterWeaponComponent::BeginPlay()
 
 	if (!StartedWeaponClass)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CharacterWeaponComponent '%s' has no StartedWeaponClass configured."), *GetName());
+		if (!UsesInventoryDrivenWeapons(this))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CharacterWeaponComponent '%s' has no StartedWeaponClass configured."), *GetName());
+		}
 		return;
 	}
 
@@ -62,10 +84,13 @@ EDataValidationResult UCharacterWeaponComponent::IsDataValid(FDataValidationCont
 
 	if (!StartedWeaponClass)
 	{
-		Context.AddWarning(FText::FromString(TEXT("StartedWeaponClass is not configured.")));
-		if (Result == EDataValidationResult::NotValidated)
+		if (!UsesInventoryDrivenWeapons(this))
 		{
-			Result = EDataValidationResult::Valid;
+			Context.AddWarning(FText::FromString(TEXT("StartedWeaponClass is not configured.")));
+			if (Result == EDataValidationResult::NotValidated)
+			{
+				Result = EDataValidationResult::Valid;
+			}
 		}
 	}
 

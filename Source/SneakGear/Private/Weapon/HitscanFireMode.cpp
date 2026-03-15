@@ -1,7 +1,7 @@
 #include "Weapon/HitscanFireMode.h"
 
 #include "Player/SneakGearPlayerCharacter.h"
-#include "Player/StealthPlayerController.h"
+#include "Player/SneakGearPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 void UHitscanFireMode::FireOnce(const FWeaponFireContext& Context)
@@ -40,7 +40,7 @@ void UHitscanFireMode::FireOnce(const FWeaponFireContext& Context)
 		UGameplayStatics::ApplyPointDamage(FireHit.GetActor(), Damage, ShotDirection, FireHit,
 		                                   Context.InstigatorPawn->GetController(), Context.WeaponActor, DamageType);
 
-		if (auto Controller = Cast<AStealthPlayerController>(Context.InstigatorPawn->GetController()))
+		if (auto Controller = Cast<ASneakGearPlayerController>(Context.InstigatorPawn->GetController()))
 		{
 			Controller->NotifyHitMarker();
 		}

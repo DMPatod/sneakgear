@@ -12,6 +12,7 @@ class UPlayerInventoryComponent;
 class AWorldItemPickup;
 class AWeaponBase;
 class UInputAction;
+class UPlayerItemPickupComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -49,12 +50,27 @@ public:
 	virtual bool GetWeaponQuickSlotViewData(EPlayerItemSlot Slot, FWeaponQuickSlotViewData& OutData) const override;
 	virtual bool GetStealthDebugViewData(FStealthDebugViewData& OutData) const override;
 	virtual FText GetInventoryItemDisplayName(EPlayerItemSlot Slot) const override;
+	virtual int32 GetInventoryItemCount(EPlayerItemSlot Slot) const override;
+	virtual FText GetInventoryItemDisplayNameAt(EPlayerItemSlot Slot, int32 Index) const override;
+	virtual int32 GetActiveInventoryItemIndex(EPlayerItemSlot Slot) const override;
+	bool HasNearbyPickup() const;
+	FText GetNearbyPickupDisplayName() const;
+	FText GetNearbyPickupSlotLabel() const;
+
+#if WITH_DEV_AUTOMATION_TESTS
+	void TestTriggerNearbyPickupInput();
+	void TestTriggerUseSupportItemInput();
+	void TestTriggerUseUtilityItemInput();
+	void TestTriggerPrimaryWeaponInput();
+#endif
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void OnCharacterDeath() override;
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void Move(const FInputActionValue& Value) override;
 	virtual void StartFire() override;
 	virtual void StopFire() override;
@@ -69,6 +85,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> SelectSecondaryWeaponAction;
 
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> PickUpNearbyItemAction;
+
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> UseSupportItemAction;
+
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> UseUtilityItemAction;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Cover")
 	TObjectPtr<UCoverComponent> CoverComponent;
 
@@ -80,10 +105,14 @@ protected:
 
 private:
 	void InitializeActiveWeaponFromInventory();
+	void UpdateNearbyPickup();
 	void HandlePrimaryWeaponPressed();
 	void HandlePrimaryWeaponReleased();
 	void HandleSecondaryWeaponPressed();
 	void HandleSecondaryWeaponReleased();
+	void HandlePickUpNearbyItem();
+	void HandleUseSupportItem();
+	void HandleUseUtilityItem();
 	void HandleWeaponSlotPressed(EPlayerItemSlot Slot);
 	void HandleWeaponSlotReleased(EPlayerItemSlot Slot);
 	void OnWeaponSelectHoldTriggered();
@@ -95,7 +124,14 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Input|Weapons")
 	float WeaponSelectionHoldTime = 0.35f;
 
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	float NearbyPickupSearchRadius = 150.f;
+
+	UPROPERTY(EditAnywhere, Category="Debug")
+	bool bDrawPickupRadiusDebug = false;
+
 	FTimerHandle WeaponSelectionHoldTimer;
+	TWeakObjectPtr<UPlayerItemPickupComponent> NearbyPickupComponent;
 	EPlayerItemSlot PendingWeaponSelectionSlot = EPlayerItemSlot::PrimaryWeapon;
 	bool bWeaponSelectionButtonDown = false;
 	bool bWeaponSelectionHoldTriggered = false;

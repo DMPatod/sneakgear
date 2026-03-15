@@ -2,7 +2,7 @@
 
 #include "Player/Components/PlayerInventoryComponent.h"
 #include "Player/SneakGearPlayerCharacter.h"
-#include "Player/StealthPlayerController.h"
+#include "Player/SneakGearPlayerController.h"
 #include "TimerManager.h"
 #include "UI/WeaponQuickIndicatorWidget.h"
 #include "UI/WeaponSelectionMenuWidget.h"
@@ -28,7 +28,7 @@ void UPlayerWeaponSelectionComponent::BeginPlay()
 
 void UPlayerWeaponSelectionComponent::ShowWeaponQuickSelectIndicator(EPlayerItemSlot Slot)
 {
-	AStealthPlayerController* Controller = GetOwningStealthPlayerController();
+	ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController();
 	if (!Controller)
 	{
 		return;
@@ -64,7 +64,7 @@ void UPlayerWeaponSelectionComponent::ShowWeaponQuickSelectIndicator(EPlayerItem
 
 void UPlayerWeaponSelectionComponent::OpenWeaponSelectionWidget(EPlayerItemSlot InitialSlot)
 {
-	AStealthPlayerController* Controller = GetOwningStealthPlayerController();
+	ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController();
 	if (!Controller || bWeaponSelectionOpen)
 	{
 		return;
@@ -99,7 +99,7 @@ void UPlayerWeaponSelectionComponent::OpenWeaponSelectionWidget(EPlayerItemSlot 
 
 void UPlayerWeaponSelectionComponent::CloseWeaponSelectionWidget()
 {
-	AStealthPlayerController* Controller = GetOwningStealthPlayerController();
+	ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController();
 	if (!Controller || !bWeaponSelectionOpen)
 	{
 		return;
@@ -145,14 +145,14 @@ void UPlayerWeaponSelectionComponent::CancelWeaponSelectionMenu()
 	CloseWeaponSelectionWidget();
 }
 
-AStealthPlayerController* UPlayerWeaponSelectionComponent::GetOwningStealthPlayerController() const
+ASneakGearPlayerController* UPlayerWeaponSelectionComponent::GetOwningSneakGearPlayerController() const
 {
-	return Cast<AStealthPlayerController>(GetOwner());
+	return Cast<ASneakGearPlayerController>(GetOwner());
 }
 
 ASneakGearPlayerCharacter* UPlayerWeaponSelectionComponent::GetOwningSneakGearPlayerCharacter() const
 {
-	if (const AStealthPlayerController* Controller = GetOwningStealthPlayerController())
+	if (const ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController())
 	{
 		return Cast<ASneakGearPlayerCharacter>(Controller->GetPawn());
 	}

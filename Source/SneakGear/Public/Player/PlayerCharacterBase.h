@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Characters/BaseCharacter.h"
+#include "GameplayEffectTypes.h"
 #include "UI/PlayerUIDataSource.h"
 #include "Types/PlayerMovementTypes.h"
 #include "Weapon/WeaponAimProvider.h"
@@ -11,10 +12,13 @@ class UCameraComponent;
 class USpringArmComponent;
 class UInputAction;
 class UEnhancedInputComponent;
+class UGameplayEffect;
 class UPlayerAimComponent;
 class UPlayerWeaponComponent;
 class UPlayerLocomotionComponent;
 class AWeaponBase;
+class UUserWidget;
+class UMaterialInterface;
 struct FInputActionValue;
 
 UCLASS()
@@ -30,6 +34,11 @@ public:
 	virtual bool GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDirection) const override;
 	float GetAmmo() const;
 	float ConsumeAmmo(float Amount);
+	bool ApplyHealthDelta(float DeltaHealth);
+	FActiveGameplayEffectHandle ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass);
+	bool RemoveGameplayEffectFromSelf(FActiveGameplayEffectHandle EffectHandle);
+	void SetCameraPostProcessMaterialEnabled(UMaterialInterface* Material, bool bEnabled, float Weight = 1.f);
+	void SetHUDOverlayWidgetVisible(TSubclassOf<UUserWidget> WidgetClass, bool bVisible);
 	float GetMaxSpeed() const;
 	virtual bool GetPlayerVitalsViewData(FPlayerVitalsViewData& OutData) const override;
 	virtual bool GetWeaponStatusViewData(FWeaponStatusViewData& OutData) const override;
@@ -37,6 +46,9 @@ public:
 	virtual bool GetStealthDebugViewData(FStealthDebugViewData& OutData) const override;
 	virtual bool GetCurrentStanceForUI(EStance& OutStance) const override;
 	virtual FText GetInventoryItemDisplayName(EPlayerItemSlot Slot) const override;
+	virtual int32 GetInventoryItemCount(EPlayerItemSlot Slot) const override;
+	virtual FText GetInventoryItemDisplayNameAt(EPlayerItemSlot Slot, int32 Index) const override;
+	virtual int32 GetActiveInventoryItemIndex(EPlayerItemSlot Slot) const override;
 	virtual FOnPlayerUIVitalsChanged& OnPlayerUIVitalsChangedEvent() override;
 	virtual FOnPlayerUIWeaponStateChanged& OnPlayerUIWeaponStateChangedEvent() override;
 	virtual FOnPlayerUIStanceChanged& OnPlayerUIStanceChangedEvent() override;

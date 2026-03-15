@@ -41,13 +41,8 @@ void UWeaponStatusWidget::NativeConstruct()
 		VBox->AddChild(AmmoText);
 	}
 
-	CachedPlayer = GetOwningPlayerPawn();
-	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
-	{
-		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIWeaponStateChangedEvent().AddUObject(
-			this, &UWeaponStatusWidget::HandleInventoryStateChanged);
-	}
-
+	TryCachePlayer();
+	BindToWeaponStateChanges();
 	UpdateFromPlayer();
 }
 
@@ -57,6 +52,7 @@ void UWeaponStatusWidget::NativeDestruct()
 	{
 		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIWeaponStateChangedEvent().RemoveAll(this);
 	}
+	bIsBoundToWeaponState = false;
 
 	Super::NativeDestruct();
 }
@@ -66,22 +62,58 @@ void UWeaponStatusWidget::HandleInventoryStateChanged()
 	UpdateFromPlayer();
 }
 
+bool UWeaponStatusWidget::TryCachePlayer()
+{
+	if (CachedPlayer.IsValid())
+	{
+		return true;
+	}
+
+	CachedPlayer = GetOwningPlayerPawn();
+	return CachedPlayer.IsValid();
+}
+
+void UWeaponStatusWidget::BindToWeaponStateChanges()
+{
+	if (bIsBoundToWeaponState)
+	{
+		return;
+	}
+
+	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+	{
+		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIWeaponStateChangedEvent().AddUObject(
+			this, &UWeaponStatusWidget::HandleInventoryStateChanged);
+		bIsBoundToWeaponState = true;
+	}
+}
+
 const IPlayerUIDataSource* UWeaponStatusWidget::GetPlayerUIDataSource() const
 {
 	return CachedPlayer.IsValid() ? Cast<IPlayerUIDataSource>(CachedPlayer.Get()) : nullptr;
 }
 
+void UWeaponStatusWidget::UpdateVisibility(bool bHasWeapon)
+{
+	SetVisibility((bHideWhenUnarmed && !bHasWeapon) ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+}
+
 void UWeaponStatusWidget::UpdateFromPlayer()
 {
+	TryCachePlayer();
+	BindToWeaponStateChanges();
+
 	const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource();
 	if (!PlayerUIDataSource)
 	{
+		UpdateVisibility(false);
 		return;
 	}
 
 	FWeaponStatusViewData WeaponStatus;
 	if (!PlayerUIDataSource->GetWeaponStatusViewData(WeaponStatus) || !WeaponStatus.bHasWeapon)
 	{
+		UpdateVisibility(false);
 		if (WeaponNameText)
 		{
 			WeaponNameText->SetText(NSLOCTEXT("SneakGear", "WeaponNone", "Weapon: None"));
@@ -96,6 +128,8 @@ void UWeaponStatusWidget::UpdateFromPlayer()
 		}
 		return;
 	}
+
+	UpdateVisibility(true);
 
 	if (WeaponNameText)
 	{

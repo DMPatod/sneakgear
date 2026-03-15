@@ -8,6 +8,49 @@
 #include "UI/PlayerUIDataSource.h"
 #include "UI/WeaponMenuActions.h"
 
+FText UWeaponSelectionMenuWidget::BuildInventoryListText(const IPlayerUIDataSource* PlayerUIDataSource, EPlayerItemSlot Slot,
+                                                         const FText& EmptyFallback, const FText& LabelFormat,
+                                                         const FText& ActiveLabelFormat) const
+{
+	if (!PlayerUIDataSource)
+	{
+		return EmptyFallback;
+	}
+
+	const int32 ItemCount = PlayerUIDataSource->GetInventoryItemCount(Slot);
+	if (ItemCount <= 0)
+	{
+		return EmptyFallback;
+	}
+
+	const int32 ActiveIndex = PlayerUIDataSource->GetActiveInventoryItemIndex(Slot);
+	FString JoinedEntries;
+
+	for (int32 Index = 0; Index < ItemCount; ++Index)
+	{
+		const FText ItemName = PlayerUIDataSource->GetInventoryItemDisplayNameAt(Slot, Index);
+		if (ItemName.IsEmpty())
+		{
+			continue;
+		}
+
+		const bool bIsActive = Index == ActiveIndex;
+		const FText EntryText = FText::Format(
+			bIsActive ? ActiveLabelFormat : LabelFormat,
+			FText::AsNumber(Index + 1),
+			ItemName
+		);
+
+		if (!JoinedEntries.IsEmpty())
+		{
+			JoinedEntries += TEXT("\n");
+		}
+		JoinedEntries += EntryText.ToString();
+	}
+
+	return JoinedEntries.IsEmpty() ? EmptyFallback : FText::FromString(JoinedEntries);
+}
+
 void UWeaponSelectionMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -96,25 +139,43 @@ void UWeaponSelectionMenuWidget::RefreshEntries(EPlayerItemSlot InitialSlot) con
 
 	if (EquippedItemText)
 	{
-		const FText DisplayValue = PlayerUIDataSource
-			? PlayerUIDataSource->GetInventoryItemDisplayName(EPlayerItemSlot::Equipped)
-			: NSLOCTEXT("SneakGear", "WeaponSelectionNoEquippedItem", "None");
-
 		EquippedItemText->SetText(FText::Format(
-			NSLOCTEXT("SneakGear", "WeaponSelectionEquippedItemFmt", "Equipped Item: {0}"),
-			DisplayValue
+			NSLOCTEXT("SneakGear", "WeaponSelectionEquippedItemFmt", "Equipped Items:\n{0}"),
+			BuildInventoryListText(
+				PlayerUIDataSource,
+				EPlayerItemSlot::Equipped,
+				NSLOCTEXT("SneakGear", "WeaponSelectionNoEquippedItem", "None"),
+				NSLOCTEXT("SneakGear", "WeaponSelectionListEntry", "{0}. {1}"),
+				NSLOCTEXT("SneakGear", "WeaponSelectionActiveListEntry", "{0}. {1} [Active]")
+			)
 		));
 	}
 
 	if (SupportItemText)
 	{
-		const FText DisplayValue = PlayerUIDataSource
-			? PlayerUIDataSource->GetInventoryItemDisplayName(EPlayerItemSlot::Support)
-			: NSLOCTEXT("SneakGear", "WeaponSelectionNoSupportItem", "None");
-
 		SupportItemText->SetText(FText::Format(
-			NSLOCTEXT("SneakGear", "WeaponSelectionSupportItemFmt", "Support Item: {0}"),
-			DisplayValue
+			NSLOCTEXT("SneakGear", "WeaponSelectionSupportItemFmt", "Support Items:\n{0}"),
+			BuildInventoryListText(
+				PlayerUIDataSource,
+				EPlayerItemSlot::Support,
+				NSLOCTEXT("SneakGear", "WeaponSelectionNoSupportItem", "None"),
+				NSLOCTEXT("SneakGear", "WeaponSelectionListEntry", "{0}. {1}"),
+				NSLOCTEXT("SneakGear", "WeaponSelectionActiveListEntry", "{0}. {1} [Active]")
+			)
+		));
+	}
+
+	if (UtilityItemText)
+	{
+		UtilityItemText->SetText(FText::Format(
+			NSLOCTEXT("SneakGear", "WeaponSelectionUtilityItemFmt", "Utility Items:\n{0}"),
+			BuildInventoryListText(
+				PlayerUIDataSource,
+				EPlayerItemSlot::Utility,
+				NSLOCTEXT("SneakGear", "WeaponSelectionNoUtilityItem", "None"),
+				NSLOCTEXT("SneakGear", "WeaponSelectionListEntry", "{0}. {1}"),
+				NSLOCTEXT("SneakGear", "WeaponSelectionActiveListEntry", "{0}. {1} [Active]")
+			)
 		));
 	}
 

@@ -1,8 +1,9 @@
 #include "Player/Components/PlayerHUDComponent.h"
 
+#include "Blueprint/UserWidget.h"
 #include "Guards/GuardCharacter.h"
 #include "Player/SneakGearPlayerCharacter.h"
-#include "Player/StealthPlayerController.h"
+#include "Player/SneakGearPlayerController.h"
 #include "Radar/RadarRegistrySubsystem.h"
 #include "UI/CrosshairWidget.h"
 #include "UI/PlayerHUDWidget.h"
@@ -15,11 +16,13 @@ UPlayerHUDComponent::UPlayerHUDComponent()
 
 void UPlayerHUDComponent::Initialize(TSubclassOf<UPlayerHUDWidget> InPlayerHUDWidgetClass,
                                      TSubclassOf<UCrosshairWidget> InCrosshairWidgetClass,
-                                     const FCrosshairSpreadConfig& InCrosshairSpread)
+                                     const FCrosshairSpreadConfig& InCrosshairSpread,
+                                     bool bInShowCrosshairOnlyWhenAiming)
 {
 	PlayerHUDWidgetClass = InPlayerHUDWidgetClass;
 	CrosshairWidgetClass = InCrosshairWidgetClass;
 	CrosshairSpread = InCrosshairSpread;
+	bShowCrosshairOnlyWhenAiming = bInShowCrosshairOnlyWhenAiming;
 	RadarRefreshCooldown = 0.f;
 	CreateHUDWidgets();
 }
@@ -68,9 +71,42 @@ void UPlayerHUDComponent::NotifyHitMarker() const
 	}
 }
 
+void UPlayerHUDComponent::SetOverlayWidgetVisible(TSubclassOf<UUserWidget> WidgetClass, bool bVisible)
+{
+	ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController();
+	UClass* OverlayClass = WidgetClass.Get();
+	if (!Controller || !OverlayClass)
+	{
+		return;
+	}
+
+	if (bVisible)
+	{
+		TObjectPtr<UUserWidget>& OverlayWidget = OverlayWidgets.FindOrAdd(OverlayClass);
+		if (!OverlayWidget)
+		{
+			OverlayWidget = CreateWidget<UUserWidget>(Controller, WidgetClass);
+		}
+
+		if (OverlayWidget && !OverlayWidget->IsInViewport())
+		{
+			OverlayWidget->AddToViewport();
+		}
+		return;
+	}
+
+	if (TObjectPtr<UUserWidget>* ExistingWidget = OverlayWidgets.Find(OverlayClass))
+	{
+		if (*ExistingWidget)
+		{
+			(*ExistingWidget)->RemoveFromParent();
+		}
+	}
+}
+
 void UPlayerHUDComponent::CreateHUDWidgets()
 {
-	AStealthPlayerController* Controller = GetOwningStealthPlayerController();
+	ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController();
 	if (!Controller)
 	{
 		return;
@@ -82,7 +118,7 @@ void UPlayerHUDComponent::CreateHUDWidgets()
 		if (CrosshairWidget)
 		{
 			CrosshairWidget->AddToViewport();
-			CrosshairWidget->SetVisible(false);
+			CrosshairWidget->SetVisible(!bShowCrosshairOnlyWhenAiming);
 			CrosshairWidget->SetSpread(0.f);
 		}
 	}
@@ -100,7 +136,7 @@ void UPlayerHUDComponent::CreateHUDWidgets()
 void UPlayerHUDComponent::UpdateRadarWidget()
 {
 	URadarWidget* RadarWidget = GetRadarWidget();
-	AStealthPlayerController* Controller = GetOwningStealthPlayerController();
+	ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController();
 	APawn* Pawn = Controller ? Controller->GetPawn() : nullptr;
 	if (!RadarWidget || !Pawn)
 	{
@@ -140,7 +176,7 @@ void UPlayerHUDComponent::UpdateCrosshairWidget(float DeltaSeconds)
 	SpreadTarget = CrosshairSpread.Min + MoveAlpha * CrosshairSpread.FromMove;
 
 	const bool bAiming = Player->IsAiming();
-	SetCrosshairVisible(bAiming);
+	SetCrosshairVisible(!bShowCrosshairOnlyWhenAiming || bAiming);
 
 	if (bAiming)
 	{
@@ -152,14 +188,14 @@ void UPlayerHUDComponent::UpdateCrosshairWidget(float DeltaSeconds)
 	CrosshairWidget->SetSpread(SpreadCurrent);
 }
 
-AStealthPlayerController* UPlayerHUDComponent::GetOwningStealthPlayerController() const
+ASneakGearPlayerController* UPlayerHUDComponent::GetOwningSneakGearPlayerController() const
 {
-	return Cast<AStealthPlayerController>(GetOwner());
+	return Cast<ASneakGearPlayerController>(GetOwner());
 }
 
 ASneakGearPlayerCharacter* UPlayerHUDComponent::GetOwningSneakGearPlayerCharacter() const
 {
-	if (const AStealthPlayerController* Controller = GetOwningStealthPlayerController())
+	if (const ASneakGearPlayerController* Controller = GetOwningSneakGearPlayerController())
 	{
 		return Cast<ASneakGearPlayerCharacter>(Controller->GetPawn());
 	}

@@ -7,6 +7,7 @@ public class SneakGear : ModuleRules
 	public SneakGear(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		CppCompileWarningSettings.ShadowVariableWarningLevel = WarningLevel.Error;
 
 		PublicDependencyModuleNames.AddRange(new string[]
 		{

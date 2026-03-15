@@ -2,9 +2,13 @@
 
 #include "Components/Cover/CoverComponent.h"
 #include "Components/Cover/CoverStateComponent.h"
+#include "Engine/OverlapResult.h"
+#include "DrawDebugHelpers.h"
+#include "Items/PlayerItemPickupComponent.h"
+#include "Misc/DataValidation.h"
 #include "Player/Components/PlayerInventoryComponent.h"
 #include "EnhancedInputComponent.h"
-#include "Player/StealthPlayerController.h"
+#include "Player/SneakGearPlayerController.h"
 #include "TimerManager.h"
 #include "Player/Components/PlayerWeaponComponent.h"
 #include "Weapon/WeaponBase.h"
@@ -65,6 +69,82 @@ void ASneakGearPlayerCharacter::OnCharacterDeath()
 	}
 }
 
+EDataValidationResult ASneakGearPlayerCharacter::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+
+	if (!ItemComponent)
+	{
+		Context.AddError(FText::FromString(TEXT("ItemComponent is missing.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (!CoverComponent)
+	{
+		Context.AddError(FText::FromString(TEXT("CoverComponent is missing.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (!CoverStateComponent)
+	{
+		Context.AddError(FText::FromString(TEXT("CoverStateComponent is missing.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (!SelectPrimaryWeaponAction)
+	{
+		Context.AddWarning(FText::FromString(TEXT("SelectPrimaryWeaponAction is not assigned.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
+	if (!SelectSecondaryWeaponAction)
+	{
+		Context.AddWarning(FText::FromString(TEXT("SelectSecondaryWeaponAction is not assigned.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
+	if (!PickUpNearbyItemAction)
+	{
+		Context.AddWarning(FText::FromString(TEXT("PickUpNearbyItemAction is not assigned; nearby pickups cannot be collected via input.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
+	if (!UseSupportItemAction)
+	{
+		Context.AddWarning(FText::FromString(TEXT("UseSupportItemAction is not assigned; support items cannot be used via input.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
+	if (!UseUtilityItemAction)
+	{
+		Context.AddWarning(FText::FromString(TEXT("UseUtilityItemAction is not assigned; utility items cannot be used via input.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
+	if (NearbyPickupSearchRadius <= 0.f)
+	{
+		Context.AddError(FText::FromString(TEXT("NearbyPickupSearchRadius must be greater than 0.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	return Result;
+}
+
 void ASneakGearPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -90,6 +170,50 @@ void ASneakGearPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 		EnhancedInput->BindAction(SelectSecondaryWeaponAction, ETriggerEvent::Completed, this,
 		                          &ASneakGearPlayerCharacter::HandleSecondaryWeaponReleased);
 	}
+
+	if (PickUpNearbyItemAction)
+	{
+		EnhancedInput->BindAction(PickUpNearbyItemAction, ETriggerEvent::Started, this,
+		                          &ASneakGearPlayerCharacter::HandlePickUpNearbyItem);
+	}
+
+	if (UseSupportItemAction)
+	{
+		EnhancedInput->BindAction(UseSupportItemAction, ETriggerEvent::Started, this,
+		                          &ASneakGearPlayerCharacter::HandleUseSupportItem);
+	}
+
+	if (UseUtilityItemAction)
+	{
+		EnhancedInput->BindAction(UseUtilityItemAction, ETriggerEvent::Started, this,
+		                          &ASneakGearPlayerCharacter::HandleUseUtilityItem);
+	}
+}
+
+void ASneakGearPlayerCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	UpdateNearbyPickup();
+
+	if (!bDrawPickupRadiusDebug || !GetWorld())
+	{
+		return;
+	}
+
+	const FVector DrawOrigin = GetActorLocation();
+	const FColor DrawColor = FColor::Cyan;
+	DrawDebugSphere(
+		GetWorld(),
+		DrawOrigin,
+		NearbyPickupSearchRadius,
+		24,
+		DrawColor,
+		false,
+		0.f,
+		0,
+		1.5f
+	);
 }
 
 // Cover
@@ -187,6 +311,95 @@ FText ASneakGearPlayerCharacter::GetInventoryItemDisplayName(EPlayerItemSlot Slo
 	return !Item.DisplayName.IsEmpty() ? Item.DisplayName : FText::FromName(Item.ItemId);
 }
 
+int32 ASneakGearPlayerCharacter::GetInventoryItemCount(EPlayerItemSlot Slot) const
+{
+	return ItemComponent ? ItemComponent->GetItemCount(Slot) : 0;
+}
+
+FText ASneakGearPlayerCharacter::GetInventoryItemDisplayNameAt(EPlayerItemSlot Slot, int32 Index) const
+{
+	if (!ItemComponent)
+	{
+		return FText::GetEmpty();
+	}
+
+	const FPlayerInventoryItem Item = ItemComponent->GetItemAt(Slot, Index);
+	if (!Item.IsValid())
+	{
+		return FText::GetEmpty();
+	}
+
+	return !Item.DisplayName.IsEmpty() ? Item.DisplayName : FText::FromName(Item.ItemId);
+}
+
+int32 ASneakGearPlayerCharacter::GetActiveInventoryItemIndex(EPlayerItemSlot Slot) const
+{
+	return ItemComponent ? ItemComponent->GetActiveItemIndex(Slot) : INDEX_NONE;
+}
+
+bool ASneakGearPlayerCharacter::HasNearbyPickup() const
+{
+	return NearbyPickupComponent.IsValid();
+}
+
+FText ASneakGearPlayerCharacter::GetNearbyPickupDisplayName() const
+{
+	if (!NearbyPickupComponent.IsValid())
+	{
+		return FText::GetEmpty();
+	}
+
+	const FPlayerInventoryItem PickupItem = NearbyPickupComponent->GetPickupItem();
+	if (!PickupItem.IsValid())
+	{
+		return FText::GetEmpty();
+	}
+
+	return !PickupItem.DisplayName.IsEmpty() ? PickupItem.DisplayName : FText::FromName(PickupItem.ItemId);
+}
+
+FText ASneakGearPlayerCharacter::GetNearbyPickupSlotLabel() const
+{
+	if (!NearbyPickupComponent.IsValid())
+	{
+		return FText::GetEmpty();
+	}
+
+	const FPlayerInventoryItem PickupItem = NearbyPickupComponent->GetPickupItem();
+	if (!PickupItem.IsValid())
+	{
+		return FText::GetEmpty();
+	}
+
+	const UEnum* SlotEnum = StaticEnum<EPlayerItemSlot>();
+	return SlotEnum
+		? SlotEnum->GetDisplayNameTextByValue(static_cast<int64>(PickupItem.SlotType))
+		: FText::GetEmpty();
+}
+
+#if WITH_DEV_AUTOMATION_TESTS
+void ASneakGearPlayerCharacter::TestTriggerNearbyPickupInput()
+{
+	HandlePickUpNearbyItem();
+}
+
+void ASneakGearPlayerCharacter::TestTriggerUseSupportItemInput()
+{
+	HandleUseSupportItem();
+}
+
+void ASneakGearPlayerCharacter::TestTriggerUseUtilityItemInput()
+{
+	HandleUseUtilityItem();
+}
+
+void ASneakGearPlayerCharacter::TestTriggerPrimaryWeaponInput()
+{
+	HandlePrimaryWeaponPressed();
+	HandlePrimaryWeaponReleased();
+}
+#endif
+
 void ASneakGearPlayerCharacter::StartFire()
 {
 	if (!IsAiming())
@@ -262,24 +475,82 @@ void ASneakGearPlayerCharacter::InitializeActiveWeaponFromInventory()
 		return;
 	}
 
-	EPlayerItemSlot StartupWeaponSlot = ItemComponent->GetActiveWeaponSlot();
-	if (!ItemComponent->GetWeaponInSlot(StartupWeaponSlot))
+	if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon))
 	{
-		if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon))
+		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon, true);
+		return;
+	}
+
+	if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::SecondaryWeapon))
+	{
+		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::SecondaryWeapon, true);
+		return;
+	}
+
+	ItemComponent->SetWeaponEquipped(true);
+}
+
+void ASneakGearPlayerCharacter::UpdateNearbyPickup()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		NearbyPickupComponent = nullptr;
+		return;
+	}
+
+	TArray<FOverlapResult> Overlaps;
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(PlayerNearbyPickup), false, this);
+	const FVector Center = GetActorLocation();
+	const FCollisionShape SearchShape = FCollisionShape::MakeSphere(FMath::Max(NearbyPickupSearchRadius, 1.f));
+
+	const bool bHasOverlaps = World->OverlapMultiByObjectType(
+		Overlaps,
+		Center,
+		FQuat::Identity,
+		FCollisionObjectQueryParams::AllDynamicObjects,
+		SearchShape,
+		QueryParams
+	);
+
+	if (!bHasOverlaps)
+	{
+		NearbyPickupComponent = nullptr;
+		return;
+	}
+
+	UPlayerItemPickupComponent* BestPickupComponent = nullptr;
+	float BestDistanceSq = TNumericLimits<float>::Max();
+
+	for (const FOverlapResult& Result : Overlaps)
+	{
+		AActor* PickupActor = Result.GetActor();
+		if (!PickupActor)
 		{
-			StartupWeaponSlot = EPlayerItemSlot::PrimaryWeapon;
+			continue;
 		}
-		else if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::SecondaryWeapon))
+
+		UPlayerItemPickupComponent* PickupComponent = PickupActor->FindComponentByClass<UPlayerItemPickupComponent>();
+		if (!PickupComponent)
 		{
-			StartupWeaponSlot = EPlayerItemSlot::SecondaryWeapon;
+			continue;
 		}
-		else
+
+		const FPlayerInventoryItem PickupItem = PickupComponent->GetPickupItem();
+		if (!PickupItem.IsValid())
 		{
-			return;
+			continue;
+		}
+
+		const float DistanceSq = FVector::DistSquared(Center, PickupActor->GetActorLocation());
+		if (DistanceSq < BestDistanceSq)
+		{
+			BestDistanceSq = DistanceSq;
+			BestPickupComponent = PickupComponent;
 		}
 	}
 
-	ItemComponent->SetActiveWeaponSlot(StartupWeaponSlot, true);
+	NearbyPickupComponent = BestPickupComponent;
 }
 
 void ASneakGearPlayerCharacter::HandleActiveWeaponFired(EPlayerItemSlot FiredSlot)
@@ -288,7 +559,7 @@ void ASneakGearPlayerCharacter::HandleActiveWeaponFired(EPlayerItemSlot FiredSlo
 
 	OnPlayerUIWeaponStateChanged.Broadcast();
 
-	if (AStealthPlayerController* Controller = Cast<AStealthPlayerController>(GetController()))
+	if (ASneakGearPlayerController* Controller = Cast<ASneakGearPlayerController>(GetController()))
 	{
 		Controller->OnWeaponFired();
 	}
@@ -340,6 +611,32 @@ void ASneakGearPlayerCharacter::HandleSecondaryWeaponReleased()
 	HandleWeaponSlotReleased(EPlayerItemSlot::SecondaryWeapon);
 }
 
+void ASneakGearPlayerCharacter::HandlePickUpNearbyItem()
+{
+	if (!ItemComponent)
+	{
+		return;
+	}
+
+	ItemComponent->TryPickUpNearbyFloorItem(NearbyPickupSearchRadius);
+}
+
+void ASneakGearPlayerCharacter::HandleUseSupportItem()
+{
+	if (ItemComponent)
+	{
+		ItemComponent->UseActiveSupportItem();
+	}
+}
+
+void ASneakGearPlayerCharacter::HandleUseUtilityItem()
+{
+	if (ItemComponent)
+	{
+		ItemComponent->UseActiveUtilityItem();
+	}
+}
+
 void ASneakGearPlayerCharacter::HandleWeaponSlotPressed(EPlayerItemSlot Slot)
 {
 	bWeaponSelectionButtonDown = true;
@@ -374,7 +671,7 @@ void ASneakGearPlayerCharacter::HandleWeaponSlotReleased(EPlayerItemSlot Slot)
 
 	HandleWeaponSlotSelect(Slot);
 
-	if (AStealthPlayerController* Controller = Cast<AStealthPlayerController>(GetController()))
+	if (ASneakGearPlayerController* Controller = Cast<ASneakGearPlayerController>(GetController()))
 	{
 		Controller->ShowWeaponQuickSelectIndicator(Slot);
 	}
@@ -389,7 +686,7 @@ void ASneakGearPlayerCharacter::OnWeaponSelectHoldTriggered()
 
 	bWeaponSelectionHoldTriggered = true;
 
-	if (AStealthPlayerController* Controller = Cast<AStealthPlayerController>(GetController()))
+	if (ASneakGearPlayerController* Controller = Cast<ASneakGearPlayerController>(GetController()))
 	{
 		Controller->OpenWeaponSelectionWidget(PendingWeaponSelectionSlot);
 	}

@@ -41,12 +41,17 @@ protected:
 	TObjectPtr<UTextBlock> SupportItemText;
 
 	UPROPERTY(meta=(BindWidgetOptional))
+	TObjectPtr<UTextBlock> UtilityItemText;
+
+	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UWeaponQuickIndicatorWidget> PrimaryWeaponInfoWidget;
 
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UWeaponQuickIndicatorWidget> SecondaryWeaponInfoWidget;
 
 private:
+	FText BuildInventoryListText(const class IPlayerUIDataSource* PlayerUIDataSource, EPlayerItemSlot Slot,
+	                             const FText& EmptyFallback, const FText& LabelFormat, const FText& ActiveLabelFormat) const;
 	void RefreshEntries(EPlayerItemSlot InitialSlot) const;
 	void SetFocusedSlot(EPlayerItemSlot NewFocusedSlot);
 	void ApplyFocusToCurrentSlot() const;

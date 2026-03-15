@@ -28,6 +28,9 @@ public:
 	virtual bool GetStealthDebugViewData(FStealthDebugViewData& OutData) const = 0;
 	virtual bool GetCurrentStanceForUI(EStance& OutStance) const = 0;
 	virtual FText GetInventoryItemDisplayName(EPlayerItemSlot Slot) const = 0;
+	virtual int32 GetInventoryItemCount(EPlayerItemSlot Slot) const = 0;
+	virtual FText GetInventoryItemDisplayNameAt(EPlayerItemSlot Slot, int32 Index) const = 0;
+	virtual int32 GetActiveInventoryItemIndex(EPlayerItemSlot Slot) const = 0;
 
 	virtual FOnPlayerUIVitalsChanged& OnPlayerUIVitalsChangedEvent() = 0;
 	virtual FOnPlayerUIWeaponStateChanged& OnPlayerUIWeaponStateChangedEvent() = 0;

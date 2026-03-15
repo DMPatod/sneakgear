@@ -17,6 +17,9 @@ public:
 	virtual void NativeDestruct() override;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
+	bool bHideWhenUnarmed = true;
+
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UTextBlock> WeaponNameText;
 
@@ -28,8 +31,12 @@ protected:
 
 private:
 	TWeakObjectPtr<APawn> CachedPlayer;
+	bool bIsBoundToWeaponState = false;
 
 	void HandleInventoryStateChanged();
+	bool TryCachePlayer();
+	void BindToWeaponStateChanges();
 	const class IPlayerUIDataSource* GetPlayerUIDataSource() const;
+	void UpdateVisibility(bool bHasWeapon);
 	void UpdateFromPlayer();
 };

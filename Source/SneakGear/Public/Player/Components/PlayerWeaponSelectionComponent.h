@@ -5,7 +5,7 @@
 #include "Player/Components/PlayerInventoryComponent.h"
 #include "PlayerWeaponSelectionComponent.generated.h"
 
-class AStealthPlayerController;
+class ASneakGearPlayerController;
 class ASneakGearPlayerCharacter;
 class UWeaponQuickIndicatorWidget;
 class UWeaponSelectionMenuWidget;
@@ -37,7 +37,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	AStealthPlayerController* GetOwningStealthPlayerController() const;
+	ASneakGearPlayerController* GetOwningSneakGearPlayerController() const;
 	ASneakGearPlayerCharacter* GetOwningSneakGearPlayerCharacter() const;
 
 	UPROPERTY(Transient)

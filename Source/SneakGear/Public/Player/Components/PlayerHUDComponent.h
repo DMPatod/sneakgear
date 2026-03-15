@@ -5,11 +5,12 @@
 #include "Types/RadarTypes.h"
 #include "PlayerHUDComponent.generated.h"
 
-class AStealthPlayerController;
+class ASneakGearPlayerController;
 class ASneakGearPlayerCharacter;
 class UCrosshairWidget;
 class UPlayerHUDWidget;
 class URadarWidget;
+class UUserWidget;
 
 USTRUCT()
 struct FCrosshairSpreadConfig
@@ -44,11 +45,12 @@ public:
 	UPlayerHUDComponent();
 
 	void Initialize(TSubclassOf<UPlayerHUDWidget> InPlayerHUDWidgetClass, TSubclassOf<UCrosshairWidget> InCrosshairWidgetClass,
-	                const FCrosshairSpreadConfig& InCrosshairSpread);
+	                const FCrosshairSpreadConfig& InCrosshairSpread, bool bInShowCrosshairOnlyWhenAiming);
 
 	void OnWeaponFired();
 	void SetCrosshairVisible(bool bVisible) const;
 	void NotifyHitMarker() const;
+	void SetOverlayWidgetVisible(TSubclassOf<UUserWidget> WidgetClass, bool bVisible);
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,7 +61,7 @@ private:
 	void CreateHUDWidgets();
 	void UpdateRadarWidget();
 	void UpdateCrosshairWidget(float DeltaSeconds);
-	AStealthPlayerController* GetOwningStealthPlayerController() const;
+	ASneakGearPlayerController* GetOwningSneakGearPlayerController() const;
 	ASneakGearPlayerCharacter* GetOwningSneakGearPlayerCharacter() const;
 	URadarWidget* GetRadarWidget() const;
 
@@ -75,10 +77,14 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UCrosshairWidget> CrosshairWidget;
 
+	UPROPERTY(Transient)
+	TMap<TObjectPtr<UClass>, TObjectPtr<UUserWidget>> OverlayWidgets;
+
 	FCrosshairSpreadConfig CrosshairSpread;
 	TArray<FRadarContact> RadarContactsCache;
 	float RadarRefreshCooldown = 0.f;
 	float RadarRefreshInterval = 0.1f;
 	float SpreadCurrent = 0.f;
 	float SpreadTarget = 0.f;
+	bool bShowCrosshairOnlyWhenAiming = false;
 };

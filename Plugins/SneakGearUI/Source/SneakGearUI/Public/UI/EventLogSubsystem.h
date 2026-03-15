@@ -51,6 +51,12 @@ public:
 	void ReportItemPickedUp(AActor* Picker, const FText& ItemName);
 
 	UFUNCTION(BlueprintCallable, Category="Event Log")
+	void ReportItemUsed(AActor* User, const FText& ItemName, const FText& SlotLabel);
+
+	UFUNCTION(BlueprintCallable, Category="Event Log")
+	void ReportItemEquipped(AActor* User, const FText& ItemName);
+
+	UFUNCTION(BlueprintCallable, Category="Event Log")
 	void ReportGuardAwarenessChanged(AActor* GuardActor, const FText& NewState);
 
 	UFUNCTION(BlueprintCallable, Category="Event Log")

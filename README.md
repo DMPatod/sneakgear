@@ -76,6 +76,26 @@ Ownership rules:
 - Stamina attribute set
 - Ammo attribute set
 
+## Automated Tests
+
+Run the full automation suite:
+
+```bash
+./Scripts/run-tests.sh
+```
+
+Run a narrower subset:
+
+```bash
+./Scripts/run-tests.sh SneakGear.Inventory.
+./Scripts/run-tests.sh SneakGear.UI. --no-build
+```
+
+Notes:
+- The script builds `SneakGearEditor` first unless `--no-build` is passed
+- Reports are exported to `Saved/AutomationReports`
+- Override `UE_EDITOR_BIN` or `UE_BUILD_SH` if Unreal is installed in a different location
+
 ## Guard Setup
 
 Guards are no longer supported through legacy patrol fallback logic. A valid Behavior Tree is required.

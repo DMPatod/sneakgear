@@ -11,12 +11,17 @@
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Int.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Object.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
+#include "Guards/GuardManagerSubsystem.h"
 #include "Guards/Patrol/PatrolPath.h"
+#include "Items/MedkitItemDefinition.h"
+#include "Items/ScannerItemDefinition.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/SneakGearPlayerCharacter.h"
 #include "Game/GAS/HealthAttributeSet.h"
 #include "Game/GAS/StaminaAttributeSet.h"
 #include "Tests/AutomationEditorCommon.h"
+#include "UI/EventLogSubsystem.h"
 
 #include "SneakGearTestTypes.h"
 
@@ -60,6 +65,26 @@ APlayerController* EnsureTestPlayerController(UWorld* World)
 	}
 
 	return World->SpawnActor<APlayerController>();
+}
+
+bool EventLogContains(UEventLogSubsystem* EventLog, const FString& Substring)
+{
+	if (!EventLog)
+	{
+		return false;
+	}
+
+	TArray<FGameEventEntry> Entries;
+	EventLog->GetEventsAfter(0, Entries);
+	for (const FGameEventEntry& Entry : Entries)
+	{
+		if (Entry.Message.ToString().Contains(Substring))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 }
 
@@ -236,6 +261,320 @@ bool FWeaponBaseUsesAimProviderWithoutCameraTest::RunTest(const FString& Paramet
 	TestEqual(TEXT("Aim direction should come from the aim provider"),
 		FireMode->LastContext.AimDirection, OwnerPawn->AimDirection.GetSafeNormal());
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentPickupReportsEventAndStoresUtilityItemTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.PickupReportsEventAndStoresUtilityItem",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentPickupReportsEventAndStoresUtilityItemTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	ATestPickupActor* PickupActor = World->SpawnActor<ATestPickupActor>();
+	UTestUtilityItemDefinition* UtilityDefinition = NewObject<UTestUtilityItemDefinition>(GetTransientPackage());
+	UEventLogSubsystem* EventLog = World->GetSubsystem<UEventLogSubsystem>();
+
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	TestNotNull(TEXT("Pickup actor should spawn"), PickupActor);
+	TestNotNull(TEXT("Utility definition should be created"), UtilityDefinition);
+	TestNotNull(TEXT("Event log subsystem should exist"), EventLog);
+
+	UtilityDefinition->ItemId = TEXT("ScannerPickup");
+	UtilityDefinition->DisplayName = FText::FromString(TEXT("Scanner Pickup"));
+	PickupActor->GetPickupComponent()->SetItemDefinitionForTest(UtilityDefinition);
+
+	TestTrue(TEXT("Picking up a utility item should succeed"), Character->GetTestItemComponent()->PickUpFromFloor(PickupActor));
+	TestEqual(TEXT("Utility inventory count should increase"), Character->GetTestItemComponent()->GetItemCount(EPlayerItemSlot::Utility), 1);
+	TestTrue(TEXT("Pickup event should be recorded"), EventLogContains(EventLog, TEXT("picked up Scanner Pickup")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentNearbyPickupRespectsRangeTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.NearbyPickupRespectsRange",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentNearbyPickupRespectsRangeTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+
+	UTestUtilityItemDefinition* NearbyDefinition = NewObject<UTestUtilityItemDefinition>(GetTransientPackage());
+	NearbyDefinition->ItemId = TEXT("NearbyScanner");
+	NearbyDefinition->DisplayName = FText::FromString(TEXT("Nearby Scanner"));
+
+	ATestPickupActor* NearbyPickup = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	TestNotNull(TEXT("Nearby pickup should spawn"), NearbyPickup);
+	NearbyPickup->GetPickupComponent()->SetItemDefinitionForTest(NearbyDefinition);
+
+	TestTrue(TEXT("Nearby pickup should succeed when inside the search radius"),
+		Character->GetTestItemComponent()->TryPickUpNearbyFloorItem(150.f));
+	TestEqual(TEXT("Successful nearby pickup should add the item"), Character->GetTestItemComponent()->GetItemCount(EPlayerItemSlot::Utility), 1);
+
+	UTestUtilityItemDefinition* FarDefinition = NewObject<UTestUtilityItemDefinition>(GetTransientPackage());
+	FarDefinition->ItemId = TEXT("FarScanner");
+	FarDefinition->DisplayName = FText::FromString(TEXT("Far Scanner"));
+
+	ATestPickupActor* FarPickup = World->SpawnActor<ATestPickupActor>(FVector(600.f, 0.f, 0.f), FRotator::ZeroRotator);
+	TestNotNull(TEXT("Far pickup should spawn"), FarPickup);
+	FarPickup->GetPickupComponent()->SetItemDefinitionForTest(FarDefinition);
+
+	TestFalse(TEXT("Far pickup should fail when outside the search radius"),
+		Character->GetTestItemComponent()->TryPickUpNearbyFloorItem(150.f));
+	TestEqual(TEXT("Failed far pickup should not add another item"), Character->GetTestItemComponent()->GetItemCount(EPlayerItemSlot::Utility), 1);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentWeaponPickupSpawnsAndSelectsRuntimeWeaponTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.WeaponPickupSpawnsAndSelectsRuntimeWeapon",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentWeaponPickupSpawnsAndSelectsRuntimeWeaponTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	ATestPickupActor* PickupActor = World->SpawnActor<ATestPickupActor>();
+	UPlayerItemDefinition* WeaponDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	UEventLogSubsystem* EventLog = World->GetSubsystem<UEventLogSubsystem>();
+
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	TestNotNull(TEXT("Pickup actor should spawn"), PickupActor);
+	TestNotNull(TEXT("Weapon definition should be created"), WeaponDefinition);
+	TestNotNull(TEXT("Event log subsystem should exist"), EventLog);
+
+	WeaponDefinition->ItemId = TEXT("PrimaryTestRifle");
+	WeaponDefinition->DisplayName = FText::FromString(TEXT("Primary Test Rifle"));
+	WeaponDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	WeaponDefinition->WeaponClass = ATestWeapon::StaticClass();
+	PickupActor->GetPickupComponent()->SetItemDefinitionForTest(WeaponDefinition);
+
+	TestTrue(TEXT("Weapon pickup should succeed"), Character->GetTestItemComponent()->PickUpFromFloor(PickupActor));
+	TestTrue(TEXT("Primary weapon slot should contain the picked-up item"),
+		Character->GetTestItemComponent()->HasItem(EPlayerItemSlot::PrimaryWeapon));
+
+	AWeaponBase* RuntimeWeapon = Character->GetTestItemComponent()->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon);
+	TestNotNull(TEXT("Picking up the weapon should spawn a runtime weapon actor"), RuntimeWeapon);
+	TestTrue(TEXT("Runtime weapon should use the weapon class from the item definition"),
+		RuntimeWeapon->IsA(ATestWeapon::StaticClass()));
+
+	TestTrue(TEXT("Selecting the picked-up primary weapon should succeed"),
+		Character->GetTestItemComponent()->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon));
+	TestEqual(TEXT("Primary weapon slot should become active"),
+		Character->GetTestItemComponent()->GetActiveWeaponSlot(),
+		EPlayerItemSlot::PrimaryWeapon);
+	TestEqual(TEXT("Active weapon should be the spawned runtime weapon"),
+		Character->GetTestItemComponent()->GetActiveWeapon(),
+		RuntimeWeapon);
+	TestTrue(TEXT("Pickup event should be recorded for the weapon"),
+		EventLogContains(EventLog, TEXT("picked up Primary Test Rifle")));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerCharacterFullInputFlowTest,
+	"SneakGear.Player.SneakGearPlayerCharacter.FullInputFlow",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSneakGearPlayerCharacterFullInputFlowTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	APlayerController* PlayerController = EnsureTestPlayerController(World);
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Player character should spawn"), Character);
+	TestNotNull(TEXT("Player controller should be available"), PlayerController);
+	PlayerController->Possess(Character);
+
+	if (UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent())
+	{
+		AbilitySystem->InitAbilityActorInfo(Character, Character);
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetMaxHealthAttribute(), 100.f);
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetHealthAttribute(), 50.f);
+	}
+
+	int32 WeaponStateBroadcasts = 0;
+	Character->OnPlayerUIWeaponStateChangedEvent().AddLambda([&WeaponStateBroadcasts]()
+	{
+		++WeaponStateBroadcasts;
+	});
+
+	ATestPickupActor* WeaponPickup = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	UPlayerItemDefinition* WeaponDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	WeaponDefinition->ItemId = TEXT("InputFlowRifle");
+	WeaponDefinition->DisplayName = FText::FromString(TEXT("Input Flow Rifle"));
+	WeaponDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	WeaponDefinition->WeaponClass = ATestWeapon::StaticClass();
+	WeaponPickup->GetPickupComponent()->SetItemDefinitionForTest(WeaponDefinition);
+
+	Character->TestTriggerNearbyPickupInput();
+	TestTrue(TEXT("Primary weapon should be picked up through the player input handler"),
+		Character->GetItemComponent()->HasItem(EPlayerItemSlot::PrimaryWeapon));
+
+	ATestPickupActor* MedkitPickup = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	UMedkitItemDefinition* MedkitDefinition = NewObject<UMedkitItemDefinition>(GetTransientPackage());
+	MedkitDefinition->ItemId = TEXT("InputFlowMedkit");
+	MedkitDefinition->DisplayName = FText::FromString(TEXT("Input Flow Medkit"));
+	MedkitPickup->GetPickupComponent()->SetItemDefinitionForTest(MedkitDefinition);
+
+	Character->TestTriggerNearbyPickupInput();
+	TestEqual(TEXT("Support inventory should contain the medkit after pickup"),
+		Character->GetItemComponent()->GetItemCount(EPlayerItemSlot::Support), 1);
+
+	ATestPickupActor* UtilityPickup = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	UTestUtilityItemDefinition* UtilityDefinition = NewObject<UTestUtilityItemDefinition>(GetTransientPackage());
+	UtilityDefinition->ItemId = TEXT("InputFlowScanner");
+	UtilityDefinition->DisplayName = FText::FromString(TEXT("Input Flow Scanner"));
+	UtilityPickup->GetPickupComponent()->SetItemDefinitionForTest(UtilityDefinition);
+
+	Character->TestTriggerNearbyPickupInput();
+	TestEqual(TEXT("Utility inventory should contain the utility item after pickup"),
+		Character->GetItemComponent()->GetItemCount(EPlayerItemSlot::Utility), 1);
+
+	Character->TestTriggerUseSupportItemInput();
+	const float CurrentHealth = Character->GetAbilitySystemComponent()
+		? Character->GetAbilitySystemComponent()->GetNumericAttribute(UHealthAttributeSet::GetHealthAttribute())
+		: 0.f;
+	TestEqual(TEXT("Support item input should use the medkit and restore health"), CurrentHealth, 85.f);
+	TestEqual(TEXT("Used medkit should be consumed"), Character->GetItemComponent()->GetItemCount(EPlayerItemSlot::Support), 0);
+
+	Character->TestTriggerUseUtilityItemInput();
+	TestEqual(TEXT("Utility input should use the active utility item once"), UtilityDefinition->UseCount, 1);
+
+	Character->TestTriggerPrimaryWeaponInput();
+	TestEqual(TEXT("Primary weapon input should select the primary weapon slot"),
+		Character->GetItemComponent()->GetActiveWeaponSlot(),
+		EPlayerItemSlot::PrimaryWeapon);
+	TestTrue(TEXT("Weapon-state delegate should have fired during the input flow"), WeaponStateBroadcasts > 0);
+	TestNotNull(TEXT("Primary weapon input should leave an active runtime weapon"), Character->GetCurrentWeapon());
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentEquippedItemSwitchLogsAndActivatesTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.EquippedItemSwitchLogsAndActivates",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentEquippedItemSwitchLogsAndActivatesTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	UEventLogSubsystem* EventLog = World->GetSubsystem<UEventLogSubsystem>();
+	UTestEquipmentItemDefinition* FirstDefinition = NewObject<UTestEquipmentItemDefinition>(GetTransientPackage());
+	UTestEquipmentItemDefinition* SecondDefinition = NewObject<UTestEquipmentItemDefinition>(GetTransientPackage());
+	ATestPickupActor* FirstPickup = World->SpawnActor<ATestPickupActor>();
+	ATestPickupActor* SecondPickup = World->SpawnActor<ATestPickupActor>();
+
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	TestNotNull(TEXT("Event log subsystem should exist"), EventLog);
+
+	FirstDefinition->ItemId = TEXT("NightVisor");
+	FirstDefinition->DisplayName = FText::FromString(TEXT("Night Visor"));
+	SecondDefinition->ItemId = TEXT("ThermalRig");
+	SecondDefinition->DisplayName = FText::FromString(TEXT("Thermal Rig"));
+	FirstPickup->GetPickupComponent()->SetItemDefinitionForTest(FirstDefinition);
+	SecondPickup->GetPickupComponent()->SetItemDefinitionForTest(SecondDefinition);
+
+	TestTrue(TEXT("First equipment pickup should succeed"), Character->GetTestItemComponent()->PickUpFromFloor(FirstPickup));
+	TestTrue(TEXT("Second equipment pickup should succeed"), Character->GetTestItemComponent()->PickUpFromFloor(SecondPickup));
+	TestTrue(TEXT("Switching active equipped item should succeed"), Character->GetTestItemComponent()->SetActiveItemIndex(EPlayerItemSlot::Equipped, 1));
+
+	TestEqual(TEXT("First equipment should have been activated once"), FirstDefinition->ActivationCount, 1);
+	TestEqual(TEXT("First equipment should have been deactivated once"), FirstDefinition->DeactivationCount, 1);
+	TestEqual(TEXT("Second equipment should have been activated once"), SecondDefinition->ActivationCount, 1);
+	TestTrue(TEXT("Equip event should be recorded"), EventLogContains(EventLog, TEXT("equipped Thermal Rig")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentConsumableUseRestoresHealthConsumesAndLogsTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.ConsumableUseRestoresHealthConsumesAndLogs",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentConsumableUseRestoresHealthConsumesAndLogsTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	ATestPickupActor* PickupActor = World->SpawnActor<ATestPickupActor>();
+	UMedkitItemDefinition* MedkitDefinition = NewObject<UMedkitItemDefinition>(GetTransientPackage());
+	UEventLogSubsystem* EventLog = World->GetSubsystem<UEventLogSubsystem>();
+
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	TestNotNull(TEXT("Pickup actor should spawn"), PickupActor);
+	TestNotNull(TEXT("Medkit definition should be created"), MedkitDefinition);
+	TestNotNull(TEXT("Event log subsystem should exist"), EventLog);
+
+	if (UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent())
+	{
+		AbilitySystem->InitAbilityActorInfo(Character, Character);
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetMaxHealthAttribute(), 100.f);
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetHealthAttribute(), 50.f);
+	}
+
+	MedkitDefinition->ItemId = TEXT("Medkit");
+	MedkitDefinition->DisplayName = FText::FromString(TEXT("Medkit"));
+	PickupActor->GetPickupComponent()->SetItemDefinitionForTest(MedkitDefinition);
+
+	TestTrue(TEXT("Consumable pickup should succeed"), Character->GetTestItemComponent()->PickUpFromFloor(PickupActor));
+	TestTrue(TEXT("Using the active support item should succeed"), Character->GetTestItemComponent()->UseActiveSupportItem());
+
+	const float CurrentHealth = Character->GetAbilitySystemComponent()
+		? Character->GetAbilitySystemComponent()->GetNumericAttribute(UHealthAttributeSet::GetHealthAttribute())
+		: 0.f;
+
+	TestEqual(TEXT("Medkit should restore health"), CurrentHealth, 85.f);
+	TestEqual(TEXT("Consumed support item should be removed"), Character->GetTestItemComponent()->GetItemCount(EPlayerItemSlot::Support), 0);
+	TestTrue(TEXT("Support use event should be recorded"), EventLogContains(EventLog, TEXT("used Medkit (Support)")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentUtilityScannerReportsNearbyGuardsTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.UtilityScannerReportsNearbyGuards",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentUtilityScannerReportsNearbyGuardsTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	ATestPickupActor* PickupActor = World->SpawnActor<ATestPickupActor>();
+	ATestGuardCharacter* NearbyGuard = World->SpawnActor<ATestGuardCharacter>(FVector(200.f, 0.f, 0.f), FRotator::ZeroRotator);
+	ATestGuardCharacter* FarGuard = World->SpawnActor<ATestGuardCharacter>(FVector(5000.f, 0.f, 0.f), FRotator::ZeroRotator);
+	UScannerItemDefinition* ScannerDefinition = NewObject<UScannerItemDefinition>(GetTransientPackage());
+	UGuardManagerSubsystem* GuardManager = World->GetSubsystem<UGuardManagerSubsystem>();
+	UEventLogSubsystem* EventLog = World->GetSubsystem<UEventLogSubsystem>();
+
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	TestNotNull(TEXT("Pickup actor should spawn"), PickupActor);
+	TestNotNull(TEXT("Scanner definition should be created"), ScannerDefinition);
+	TestNotNull(TEXT("Guard manager should exist"), GuardManager);
+	TestNotNull(TEXT("Event log subsystem should exist"), EventLog);
+
+	GuardManager->RegisterGuard(NearbyGuard);
+	GuardManager->RegisterGuard(FarGuard);
+
+	ScannerDefinition->ItemId = TEXT("Scanner");
+	ScannerDefinition->DisplayName = FText::FromString(TEXT("Scanner"));
+	PickupActor->GetPickupComponent()->SetItemDefinitionForTest(ScannerDefinition);
+
+	TestTrue(TEXT("Utility pickup should succeed"), Character->GetTestItemComponent()->PickUpFromFloor(PickupActor));
+	TestTrue(TEXT("Using the active utility item should succeed"), Character->GetTestItemComponent()->UseActiveUtilityItem());
+	TestEqual(TEXT("Non-consumable scanner should remain in inventory"), Character->GetTestItemComponent()->GetItemCount(EPlayerItemSlot::Utility), 1);
+	TestTrue(TEXT("Scanner should report the nearby guard"), EventLogContains(EventLog, TEXT("Scanner detected 1 guard")));
+	TestTrue(TEXT("Utility use event should be recorded"), EventLogContains(EventLog, TEXT("used Scanner (Utility)")));
 	return true;
 }
 

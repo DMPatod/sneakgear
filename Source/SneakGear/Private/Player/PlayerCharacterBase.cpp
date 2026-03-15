@@ -1,12 +1,15 @@
 #include "Player/PlayerCharacterBase.h"
 
 #include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/Scene.h"
 #include "Player/Components/PlayerAimComponent.h"
 #include "Player/Components/PlayerLocomotionComponent.h"
 #include "Player/Components/PlayerWeaponComponent.h"
+#include "Player/SneakGearPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Game/GAS/AmmoAttributeSet.h"
 #include "Game/GAS/HealthAttributeSet.h"
@@ -96,6 +99,113 @@ float APlayerCharacterBase::ConsumeAmmo(float Amount)
 	return UsedAmmo;
 }
 
+bool APlayerCharacterBase::ApplyHealthDelta(float DeltaHealth)
+{
+	if (DeltaHealth <= 0.f)
+	{
+		return false;
+	}
+
+	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
+	const UHealthAttributeSet* HealthSet = GetHealthSet();
+	if (!AbilitySystemComponent || !HealthSet)
+	{
+		return false;
+	}
+
+	const float CurrentHealth = HealthSet->GetHealth();
+	const float MaxHealth = HealthSet->GetMaxHealth();
+	if (CurrentHealth >= MaxHealth)
+	{
+		return false;
+	}
+
+	const float AppliedDelta = FMath::Min(DeltaHealth, MaxHealth - CurrentHealth);
+	AbilitySystemComponent->ApplyModToAttribute(UHealthAttributeSet::GetHealthAttribute(), EGameplayModOp::Additive, AppliedDelta);
+	return AppliedDelta > 0.f;
+}
+
+FActiveGameplayEffectHandle APlayerCharacterBase::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass)
+{
+	if (!GameplayEffectClass)
+	{
+		return FActiveGameplayEffectHandle();
+	}
+
+	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
+	if (!AbilitySystemComponent)
+	{
+		return FActiveGameplayEffectHandle();
+	}
+
+	const FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+	const FGameplayEffectSpecHandle EffectSpec = AbilitySystemComponent->MakeOutgoingSpec(GameplayEffectClass, 1.f, EffectContext);
+	if (!EffectSpec.IsValid())
+	{
+		return FActiveGameplayEffectHandle();
+	}
+
+	return AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpec.Data.Get());
+}
+
+bool APlayerCharacterBase::RemoveGameplayEffectFromSelf(FActiveGameplayEffectHandle EffectHandle)
+{
+	if (!EffectHandle.IsValid())
+	{
+		return false;
+	}
+
+	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
+	return AbilitySystemComponent && AbilitySystemComponent->RemoveActiveGameplayEffect(EffectHandle) > 0;
+}
+
+void APlayerCharacterBase::SetCameraPostProcessMaterialEnabled(UMaterialInterface* Material, bool bEnabled, float Weight)
+{
+	auto UpdateCameraBlendable = [Material, bEnabled, Weight](UCameraComponent* Camera)
+	{
+		if (!Camera || !Material)
+		{
+			return;
+		}
+
+		TArray<FWeightedBlendable>& Blendables = Camera->PostProcessSettings.WeightedBlendables.Array;
+		for (int32 Index = 0; Index < Blendables.Num(); ++Index)
+		{
+			FWeightedBlendable& Blendable = Blendables[Index];
+			if (Blendable.Object == Material)
+			{
+				if (bEnabled)
+				{
+					Blendable.Weight = Weight;
+					Camera->PostProcessBlendWeight = 1.f;
+				}
+				else
+				{
+					Blendables.RemoveAt(Index);
+				}
+				return;
+			}
+		}
+
+		if (bEnabled)
+		{
+			Blendables.Add(FWeightedBlendable(Weight, Material));
+			Camera->PostProcessBlendWeight = 1.f;
+		}
+	};
+
+	UpdateCameraBlendable(ThirdPersonCamera);
+	UpdateCameraBlendable(FirstPersonCamera);
+}
+
+void APlayerCharacterBase::SetHUDOverlayWidgetVisible(TSubclassOf<UUserWidget> WidgetClass, bool bVisible)
+{
+	if (ASneakGearPlayerController* PlayerController = Cast<ASneakGearPlayerController>(GetController()))
+	{
+		PlayerController->SetOverlayWidgetVisible(WidgetClass, bVisible);
+	}
+}
+
 float APlayerCharacterBase::GetMaxSpeed() const
 {
 	return LocomotionComponent ? LocomotionComponent->GetMaxSpeed() : 0.f;
@@ -168,6 +278,25 @@ FText APlayerCharacterBase::GetInventoryItemDisplayName(EPlayerItemSlot Slot) co
 {
 	(void)Slot;
 	return FText::GetEmpty();
+}
+
+int32 APlayerCharacterBase::GetInventoryItemCount(EPlayerItemSlot Slot) const
+{
+	(void)Slot;
+	return 0;
+}
+
+FText APlayerCharacterBase::GetInventoryItemDisplayNameAt(EPlayerItemSlot Slot, int32 Index) const
+{
+	(void)Slot;
+	(void)Index;
+	return FText::GetEmpty();
+}
+
+int32 APlayerCharacterBase::GetActiveInventoryItemIndex(EPlayerItemSlot Slot) const
+{
+	(void)Slot;
+	return INDEX_NONE;
 }
 
 FOnPlayerUIVitalsChanged& APlayerCharacterBase::OnPlayerUIVitalsChangedEvent()

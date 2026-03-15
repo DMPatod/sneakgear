@@ -9,7 +9,8 @@ enum class EPlayerItemSlot : uint8
 	Equipped UMETA(DisplayName="Equipped"),
 	Support UMETA(DisplayName="Support"),
 	PrimaryWeapon UMETA(DisplayName="Primary Weapon"),
-	SecondaryWeapon UMETA(DisplayName="Secondary Weapon")
+	SecondaryWeapon UMETA(DisplayName="Secondary Weapon"),
+	Utility UMETA(DisplayName="Utility")
 };
 
 USTRUCT(BlueprintType)
