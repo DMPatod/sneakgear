@@ -345,63 +345,84 @@ bool UPlayerInventoryComponent::PickUpFromFloor(AActor* PickupActor, bool bAllow
 
 bool UPlayerInventoryComponent::TryPickUpNearbyFloorItem(float SearchRadius, bool bAllowReplace)
 {
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return false;
-	}
-
-	const AActor* OwnerActor = GetOwner();
-	if (!OwnerActor)
-	{
-		return false;
-	}
-
-	TArray<FOverlapResult> Overlaps;
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(FloorItemPickup), false, OwnerActor);
-	const FVector Center = OwnerActor->GetActorLocation();
-	const FCollisionShape Shape = FCollisionShape::MakeSphere(FMath::Max(SearchRadius, 1.f));
-
-	const bool bHasOverlaps = World->OverlapMultiByObjectType(
-		Overlaps,
-		Center,
-		FQuat::Identity,
-		FCollisionObjectQueryParams::AllDynamicObjects,
-		Shape,
-		QueryParams
-	);
-
-	if (!bHasOverlaps)
-	{
-		return false;
-	}
-
-	AActor* BestPickup = nullptr;
-	float BestDistanceSq = TNumericLimits<float>::Max();
-
-	for (const FOverlapResult& Result : Overlaps)
-	{
-		AActor* PickupActor = Result.GetActor();
-		if (!PickupActor)
-		{
-			continue;
-		}
-
-		UPlayerItemPickupComponent* PickupComponent = PickupActor->FindComponentByClass<UPlayerItemPickupComponent>();
-		if (!PickupComponent || !PickupComponent->GetItemDefinition())
-		{
-			continue;
-		}
-
-		const float DistanceSq = FVector::DistSquared(Center, PickupActor->GetActorLocation());
-		if (DistanceSq < BestDistanceSq)
-		{
-			BestDistanceSq = DistanceSq;
-			BestPickup = PickupActor;
-		}
-	}
-
+	AActor* BestPickup = FindBestNearbyFloorPickup(SearchRadius);
 	return BestPickup ? PickUpFromFloor(BestPickup, bAllowReplace) : false;
+}
+
+bool UPlayerInventoryComponent::RequiresHoldToSwapNearbyFloorItem(float SearchRadius) const
+{
+	AActor* BestPickup = FindBestNearbyFloorPickup(SearchRadius);
+	if (!BestPickup)
+	{
+		return false;
+	}
+
+	const UPlayerItemPickupComponent* PickupComponent = BestPickup->FindComponentByClass<UPlayerItemPickupComponent>();
+	return PickupRequiresWeaponSwap(PickupComponent);
+}
+
+bool UPlayerInventoryComponent::RequiresHoldToSwapItem(const FPlayerInventoryItem& Item) const
+{
+	if (Item.SlotType != EPlayerItemSlot::PrimaryWeapon && Item.SlotType != EPlayerItemSlot::SecondaryWeapon)
+	{
+		return false;
+	}
+
+	const FPlayerInventoryItem* ExistingItem = ResolveSlot(Item.SlotType);
+	return ExistingItem && ExistingItem->IsValid();
+}
+
+bool UPlayerInventoryComponent::SwapNearbyFloorWeaponItem(float SearchRadius)
+{
+	AActor* BestPickup = FindBestNearbyFloorPickup(SearchRadius);
+	if (!BestPickup)
+	{
+		return false;
+	}
+
+	UPlayerItemPickupComponent* PickupComponent = BestPickup->FindComponentByClass<UPlayerItemPickupComponent>();
+	if (!PickupRequiresWeaponSwap(PickupComponent))
+	{
+		return false;
+	}
+
+	const FPlayerInventoryItem PickupItem = PickupComponent->GetPickupItem();
+	UPlayerItemDefinition* PickupDefinition = PickupComponent->GetItemDefinition();
+	const EPlayerItemSlot Slot = PickupItem.SlotType;
+	FPlayerInventoryItem* ExistingItem = ResolveMutableSlot(Slot);
+	UPlayerItemDefinition* ExistingDefinition = GetItemDefinition(Slot);
+	if (!ExistingItem || !ExistingItem->IsValid() || !ExistingDefinition || !PickupDefinition)
+	{
+		return false;
+	}
+
+	const FPlayerInventoryItem PreviousItem = *ExistingItem;
+	UPlayerItemDefinition* PreviousDefinition = ExistingDefinition;
+	const TSubclassOf<AWeaponBase> PreviousWeaponClass = PreviousDefinition->WeaponClass;
+
+	*ExistingItem = PickupItem;
+	SetItemDefinitionForSlot(Slot, PickupDefinition);
+	if (!SetWeaponClassForSlot(Slot, PickupComponent->GetPickupWeaponClass()))
+	{
+		*ExistingItem = PreviousItem;
+		SetItemDefinitionForSlot(Slot, PreviousDefinition);
+		SetWeaponClassForSlot(Slot, PreviousWeaponClass);
+		return false;
+	}
+
+	PickupComponent->SetItemDefinition(PreviousDefinition);
+	OnItemSlotUpdated.Broadcast(Slot);
+	OnInventoryStateChanged.Broadcast();
+
+	if (UWorld* World = GetWorld())
+	{
+		if (UEventLogSubsystem* EventLog = World->GetSubsystem<UEventLogSubsystem>())
+		{
+			EventLog->ReportItemPickedUp(GetOwner(), GetInventoryItemLabel(PickupItem));
+		}
+	}
+
+	return true;
 }
 
 bool UPlayerInventoryComponent::HasItem(EPlayerItemSlot Slot) const
@@ -1222,4 +1243,82 @@ void UPlayerInventoryComponent::OnPrimaryWeaponFired()
 void UPlayerInventoryComponent::OnSecondaryWeaponFired()
 {
 	HandleWeaponFired(EPlayerItemSlot::SecondaryWeapon);
+}
+
+AActor* UPlayerInventoryComponent::FindBestNearbyFloorPickup(float SearchRadius) const
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	const AActor* OwnerActor = GetOwner();
+	if (!OwnerActor)
+	{
+		return nullptr;
+	}
+
+	TArray<FOverlapResult> Overlaps;
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(FloorItemPickup), false, OwnerActor);
+	const FVector Center = OwnerActor->GetActorLocation();
+	const FCollisionShape Shape = FCollisionShape::MakeSphere(FMath::Max(SearchRadius, 1.f));
+
+	const bool bHasOverlaps = World->OverlapMultiByObjectType(
+		Overlaps,
+		Center,
+		FQuat::Identity,
+		FCollisionObjectQueryParams::AllDynamicObjects,
+		Shape,
+		QueryParams
+	);
+
+	if (!bHasOverlaps)
+	{
+		return nullptr;
+	}
+
+	AActor* BestPickup = nullptr;
+	float BestDistanceSq = TNumericLimits<float>::Max();
+
+	for (const FOverlapResult& Result : Overlaps)
+	{
+		AActor* PickupActor = Result.GetActor();
+		if (!PickupActor)
+		{
+			continue;
+		}
+
+		const UPlayerItemPickupComponent* PickupComponent = PickupActor->FindComponentByClass<UPlayerItemPickupComponent>();
+		if (!PickupComponent || !PickupComponent->GetItemDefinition())
+		{
+			continue;
+		}
+
+		const float DistanceSq = FVector::DistSquared(Center, PickupActor->GetActorLocation());
+		if (DistanceSq < BestDistanceSq)
+		{
+			BestDistanceSq = DistanceSq;
+			BestPickup = PickupActor;
+		}
+	}
+
+	return BestPickup;
+}
+
+bool UPlayerInventoryComponent::PickupRequiresWeaponSwap(const UPlayerItemPickupComponent* PickupComponent) const
+{
+	if (!PickupComponent)
+	{
+		return false;
+	}
+
+	const FPlayerInventoryItem PickupItem = PickupComponent->GetPickupItem();
+	if (PickupItem.SlotType != EPlayerItemSlot::PrimaryWeapon && PickupItem.SlotType != EPlayerItemSlot::SecondaryWeapon)
+	{
+		return false;
+	}
+
+	const FPlayerInventoryItem* ExistingItem = ResolveSlot(PickupItem.SlotType);
+	return ExistingItem && ExistingItem->IsValid();
 }

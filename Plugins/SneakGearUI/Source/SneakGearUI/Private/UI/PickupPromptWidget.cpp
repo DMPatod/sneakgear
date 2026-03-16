@@ -1,6 +1,7 @@
 #include "UI/PickupPromptWidget.h"
 
 #include "Blueprint/WidgetTree.h"
+#include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 
@@ -8,34 +9,63 @@ void UPickupPromptWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	EnsureRuntimeWidgetTree();
+	ApplyCachedState();
 }
 
 void UPickupPromptWidget::SetPickupInfo(const FText& ItemName, const FText& SlotLabel)
 {
-	if (PromptText)
-	{
-		PromptText->SetText(FText::Format(PromptFormat, ItemName));
-	}
+	CachedItemName = ItemName;
+	CachedSlotLabel = SlotLabel;
+	ApplyCachedState();
+}
 
-	if (ItemNameText)
-	{
-		ItemNameText->SetText(ItemName);
-	}
+void UPickupPromptWidget::SetSwapPrompt(bool bInRequiresHoldToSwap)
+{
+	bRequiresHoldToSwap = bInRequiresHoldToSwap;
+	ApplyCachedState();
+}
 
-	if (SlotText)
-	{
-		SlotText->SetText(SlotLabel);
-	}
+void UPickupPromptWidget::SetHoldProgress(float InProgress)
+{
+	CachedHoldProgress = FMath::Clamp(InProgress, 0.f, 1.f);
+	ApplyCachedState();
 }
 
 void UPickupPromptWidget::SetPromptVisible(bool bVisible)
 {
+	bPromptVisible = bVisible;
 	SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+}
+
+void UPickupPromptWidget::ApplyCachedState()
+{
+	if (PromptText)
+	{
+		PromptText->SetText(FText::Format(bRequiresHoldToSwap ? SwapPromptFormat : PromptFormat, CachedItemName));
+	}
+
+	if (ItemNameText)
+	{
+		ItemNameText->SetText(CachedItemName);
+	}
+
+	if (SlotText)
+	{
+		SlotText->SetText(CachedSlotLabel);
+	}
+
+	if (HoldProgressBar)
+	{
+		HoldProgressBar->SetPercent(CachedHoldProgress);
+		HoldProgressBar->SetVisibility(bRequiresHoldToSwap ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+	}
+
+	SetVisibility(bPromptVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
 
 void UPickupPromptWidget::EnsureRuntimeWidgetTree()
 {
-	if (PromptText || ItemNameText || SlotText || !WidgetTree)
+	if ((PromptText || ItemNameText || SlotText || HoldProgressBar) || !WidgetTree)
 	{
 		return;
 	}
@@ -55,4 +85,7 @@ void UPickupPromptWidget::EnsureRuntimeWidgetTree()
 
 	SlotText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SlotText"));
 	Root->AddChild(SlotText);
+
+	HoldProgressBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("HoldProgressBar"));
+	Root->AddChild(HoldProgressBar);
 }

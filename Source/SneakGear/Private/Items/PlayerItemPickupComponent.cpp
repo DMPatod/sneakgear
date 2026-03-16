@@ -37,6 +37,11 @@ UPlayerItemDefinition* UPlayerItemPickupComponent::GetItemDefinition() const
 	return ItemDefinition;
 }
 
+void UPlayerItemPickupComponent::SetItemDefinition(UPlayerItemDefinition* InItemDefinition)
+{
+	ItemDefinition = InItemDefinition;
+}
+
 void UPlayerItemPickupComponent::ConsumePickup()
 {
 	if (AActor* OwnerActor = GetOwner())

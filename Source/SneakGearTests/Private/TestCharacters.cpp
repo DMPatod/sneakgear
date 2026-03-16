@@ -11,7 +11,6 @@ void ATestDeathCharacter::InitializeAbilitySystemForTest(float InitialHealth)
 	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
 	check(AbilitySystemComponent);
 
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->SetNumericAttributeBase(UHealthAttributeSet::GetMaxHealthAttribute(), InitialHealth);
 	AbilitySystemComponent->SetNumericAttributeBase(UHealthAttributeSet::GetHealthAttribute(), InitialHealth);
 }
@@ -49,7 +48,6 @@ void ATestInventoryCharacter::InitializeAbilitySystemForTest(float InitialAmmo, 
 	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
 	check(AbilitySystemComponent);
 
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->SetNumericAttributeBase(UAmmoAttributeSet::GetMaxAmmoAttribute(), MaxAmmo);
 	AbilitySystemComponent->SetNumericAttributeBase(UAmmoAttributeSet::GetAmmoAttribute(), FMath::Clamp(InitialAmmo, 0.f, MaxAmmo));
 }

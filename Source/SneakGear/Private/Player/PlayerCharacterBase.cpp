@@ -399,6 +399,12 @@ void APlayerCharacterBase::BeginPlay()
 	BindUIDataDelegates();
 }
 
+void APlayerCharacterBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	BindUIDataDelegates();
+}
+
 void APlayerCharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	UnbindUIDataDelegates();
@@ -610,6 +616,11 @@ void APlayerCharacterBase::OnStanceReleased()
 
 void APlayerCharacterBase::BindUIDataDelegates()
 {
+	if (bHasBoundUIDataDelegates)
+	{
+		return;
+	}
+
 	if (UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent())
 	{
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UHealthAttributeSet::GetHealthAttribute()).AddUObject(
@@ -618,6 +629,7 @@ void APlayerCharacterBase::BindUIDataDelegates()
 			this, &APlayerCharacterBase::HandleStaminaAttributeChanged);
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetAmmoAttribute()).AddUObject(
 			this, &APlayerCharacterBase::HandleAmmoAttributeChanged);
+		bHasBoundUIDataDelegates = true;
 	}
 }
 
@@ -629,6 +641,8 @@ void APlayerCharacterBase::UnbindUIDataDelegates()
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UStaminaAttributeSet::GetStaminaAttribute()).RemoveAll(this);
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAmmoAttributeSet::GetAmmoAttribute()).RemoveAll(this);
 	}
+
+	bHasBoundUIDataDelegates = false;
 }
 
 void APlayerCharacterBase::HandleHealthAttributeChanged(const FOnAttributeChangeData& Data)

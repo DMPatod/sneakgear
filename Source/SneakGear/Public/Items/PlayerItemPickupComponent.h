@@ -26,6 +26,9 @@ public:
 	UPlayerItemDefinition* GetItemDefinition() const;
 
 	UFUNCTION(BlueprintCallable, Category="Pickup")
+	void SetItemDefinition(UPlayerItemDefinition* InItemDefinition);
+
+	UFUNCTION(BlueprintCallable, Category="Pickup")
 	void ConsumePickup();
 
 protected:

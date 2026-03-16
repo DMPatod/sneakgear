@@ -65,6 +65,7 @@ public:
 	EStance Stance = EStance::Standing;
 
 protected:
+	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -156,4 +157,5 @@ private:
 	
 	void OnStancePressed();
 	void OnStanceReleased();
+	bool bHasBoundUIDataDelegates = false;
 };

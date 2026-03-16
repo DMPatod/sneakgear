@@ -16,6 +16,7 @@ class SNEAKGEARUI_API UPlayerVitalsWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	void SetObservedPlayer(APawn* InPawn);
 
 protected:
 	UPROPERTY(meta=(BindWidgetOptional))

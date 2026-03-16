@@ -1,6 +1,7 @@
 #include "UI/PickupPromptNativeWidget.h"
 
 #include "Blueprint/WidgetTree.h"
+#include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 
@@ -43,5 +44,12 @@ void UPickupPromptNativeWidget::BuildWidgetTree()
 		SlotText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SlotText"));
 		SlotText->SetColorAndOpacity(SecondaryColor);
 		Root->AddChild(SlotText);
+	}
+
+	if (!HoldProgressBar)
+	{
+		HoldProgressBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("HoldProgressBar"));
+		HoldProgressBar->SetFillColorAndOpacity(ProgressFillColor);
+		Root->AddChild(HoldProgressBar);
 	}
 }

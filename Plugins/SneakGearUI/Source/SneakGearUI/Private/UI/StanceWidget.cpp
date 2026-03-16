@@ -63,6 +63,23 @@ void UStanceWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+void UStanceWidget::SetObservedPlayer(APawn* InPawn)
+{
+	if (IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+	{
+		PlayerUIDataSource->OnPlayerUIStanceChangedEvent().RemoveAll(this);
+	}
+
+	CachedPlayer = InPawn;
+
+	if (IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+	{
+		PlayerUIDataSource->OnPlayerUIStanceChangedEvent().AddUObject(this, &UStanceWidget::HandleStanceChanged);
+	}
+
+	UpdateFromPlayer();
+}
+
 bool UStanceWidget::TryCachePlayer()
 {
 	if (CachedPlayer.IsValid())

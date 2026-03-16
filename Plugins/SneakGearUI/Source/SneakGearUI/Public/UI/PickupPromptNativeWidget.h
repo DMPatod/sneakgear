@@ -18,6 +18,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Pickup|Style")
 	FSlateColor SecondaryColor = FLinearColor(0.8f, 0.8f, 0.8f, 1.f);
 
+	UPROPERTY(EditDefaultsOnly, Category="Pickup|Style")
+	FLinearColor ProgressFillColor = FLinearColor(0.9f, 0.8f, 0.25f, 1.f);
+
 private:
 	void BuildWidgetTree();
 };

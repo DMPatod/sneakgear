@@ -11,6 +11,7 @@
 #include "Player/SneakGearPlayerController.h"
 #include "TimerManager.h"
 #include "Player/Components/PlayerWeaponComponent.h"
+#include "UI/EventLogSubsystem.h"
 #include "Weapon/WeaponBase.h"
 
 ASneakGearPlayerCharacter::ASneakGearPlayerCharacter()
@@ -37,13 +38,15 @@ void ASneakGearPlayerCharacter::BeginPlay()
 	if (ItemComponent)
 	{
 		ItemComponent->OnActiveWeaponFiredEvent().AddUObject(this, &ASneakGearPlayerCharacter::HandleActiveWeaponFired);
-		ItemComponent->OnInventoryStateChangedEvent().AddUObject(this, &ASneakGearPlayerCharacter::HandleInventoryStateChanged);
+		ItemComponent->OnInventoryStateChangedEvent().AddUObject(
+			this, &ASneakGearPlayerCharacter::HandleInventoryStateChanged);
 	}
 }
 
 void ASneakGearPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	GetWorldTimerManager().ClearTimer(WeaponSelectionHoldTimer);
+	GetWorldTimerManager().ClearTimer(PickupSwapHoldTimer);
 
 	if (ItemComponent)
 	{
@@ -59,8 +62,11 @@ void ASneakGearPlayerCharacter::OnCharacterDeath()
 	Super::OnCharacterDeath();
 
 	GetWorldTimerManager().ClearTimer(WeaponSelectionHoldTimer);
+	GetWorldTimerManager().ClearTimer(PickupSwapHoldTimer);
 	bWeaponSelectionButtonDown = false;
 	bWeaponSelectionHoldTriggered = false;
+	bPickupButtonDown = false;
+	bPickupHoldTriggered = false;
 	bIsVaulting = false;
 
 	if (ItemComponent)
@@ -111,7 +117,8 @@ EDataValidationResult ASneakGearPlayerCharacter::IsDataValid(FDataValidationCont
 
 	if (!PickUpNearbyItemAction)
 	{
-		Context.AddWarning(FText::FromString(TEXT("PickUpNearbyItemAction is not assigned; nearby pickups cannot be collected via input.")));
+		Context.AddWarning(FText::FromString(
+			TEXT("PickUpNearbyItemAction is not assigned; nearby pickups cannot be collected via input.")));
 		if (Result == EDataValidationResult::NotValidated)
 		{
 			Result = EDataValidationResult::Valid;
@@ -120,7 +127,8 @@ EDataValidationResult ASneakGearPlayerCharacter::IsDataValid(FDataValidationCont
 
 	if (!UseSupportItemAction)
 	{
-		Context.AddWarning(FText::FromString(TEXT("UseSupportItemAction is not assigned; support items cannot be used via input.")));
+		Context.AddWarning(
+			FText::FromString(TEXT("UseSupportItemAction is not assigned; support items cannot be used via input.")));
 		if (Result == EDataValidationResult::NotValidated)
 		{
 			Result = EDataValidationResult::Valid;
@@ -129,7 +137,8 @@ EDataValidationResult ASneakGearPlayerCharacter::IsDataValid(FDataValidationCont
 
 	if (!UseUtilityItemAction)
 	{
-		Context.AddWarning(FText::FromString(TEXT("UseUtilityItemAction is not assigned; utility items cannot be used via input.")));
+		Context.AddWarning(
+			FText::FromString(TEXT("UseUtilityItemAction is not assigned; utility items cannot be used via input.")));
 		if (Result == EDataValidationResult::NotValidated)
 		{
 			Result = EDataValidationResult::Valid;
@@ -174,7 +183,9 @@ void ASneakGearPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 	if (PickUpNearbyItemAction)
 	{
 		EnhancedInput->BindAction(PickUpNearbyItemAction, ETriggerEvent::Started, this,
-		                          &ASneakGearPlayerCharacter::HandlePickUpNearbyItem);
+		                          &ASneakGearPlayerCharacter::HandlePickUpNearbyItemPressed);
+		EnhancedInput->BindAction(PickUpNearbyItemAction, ETriggerEvent::Completed, this,
+		                          &ASneakGearPlayerCharacter::HandlePickUpNearbyItemReleased);
 	}
 
 	if (UseSupportItemAction)
@@ -249,7 +260,8 @@ bool ASneakGearPlayerCharacter::GetWeaponStatusViewData(FWeaponStatusViewData& O
 	return true;
 }
 
-bool ASneakGearPlayerCharacter::GetWeaponQuickSlotViewData(EPlayerItemSlot Slot, FWeaponQuickSlotViewData& OutData) const
+bool ASneakGearPlayerCharacter::GetWeaponQuickSlotViewData(EPlayerItemSlot Slot,
+                                                           FWeaponQuickSlotViewData& OutData) const
 {
 	OutData.Slot = Slot;
 	if (!ItemComponent)
@@ -260,8 +272,8 @@ bool ASneakGearPlayerCharacter::GetWeaponQuickSlotViewData(EPlayerItemSlot Slot,
 	const AWeaponBase* Weapon = ItemComponent->GetWeaponInSlot(Slot);
 	OutData.bHasWeapon = Weapon != nullptr;
 	OutData.WeaponName = Weapon
-		? FText::FromString(Weapon->GetClass() ? Weapon->GetClass()->GetName() : Weapon->GetName())
-		: NSLOCTEXT("SneakGear", "WeaponQuickIndicatorEmpty", "Empty");
+		                     ? FText::FromString(Weapon->GetClass() ? Weapon->GetClass()->GetName() : Weapon->GetName())
+		                     : NSLOCTEXT("SneakGear", "WeaponQuickIndicatorEmpty", "Empty");
 	OutData.InClip = FMath::Max(ItemComponent->GetInClip(Slot), 0);
 	OutData.ClipSize = FMath::Max(ItemComponent->GetClipSize(Slot), 0);
 	OutData.ReserveAmmo = ItemComponent->GetReserveAmmoCount();
@@ -373,14 +385,39 @@ FText ASneakGearPlayerCharacter::GetNearbyPickupSlotLabel() const
 
 	const UEnum* SlotEnum = StaticEnum<EPlayerItemSlot>();
 	return SlotEnum
-		? SlotEnum->GetDisplayNameTextByValue(static_cast<int64>(PickupItem.SlotType))
+		       ? SlotEnum->GetDisplayNameTextByValue(static_cast<int64>(PickupItem.SlotType))
 		: FText::GetEmpty();
+}
+
+bool ASneakGearPlayerCharacter::IsPickupSwapHoldActive() const
+{
+	return bPickupButtonDown && !bPickupHoldTriggered && GetWorldTimerManager().IsTimerActive(PickupSwapHoldTimer);
+}
+
+float ASneakGearPlayerCharacter::GetPickupSwapHoldProgress() const
+{
+	if (!IsPickupSwapHoldActive())
+	{
+		return bPickupHoldTriggered ? 1.f : 0.f;
+	}
+
+	const float HoldDuration = FMath::Max(PickupSwapHoldTime, 0.05f);
+	const float Elapsed = GetWorldTimerManager().GetTimerElapsed(PickupSwapHoldTimer);
+	return FMath::Clamp(Elapsed / HoldDuration, 0.f, 1.f);
 }
 
 #if WITH_DEV_AUTOMATION_TESTS
 void ASneakGearPlayerCharacter::TestTriggerNearbyPickupInput()
 {
-	HandlePickUpNearbyItem();
+	HandlePickUpNearbyItemPressed();
+	HandlePickUpNearbyItemReleased();
+}
+
+void ASneakGearPlayerCharacter::TestTriggerNearbyPickupHoldInput()
+{
+	HandlePickUpNearbyItemPressed();
+	OnPickupSwapHoldTriggered();
+	HandlePickUpNearbyItemReleased();
 }
 
 void ASneakGearPlayerCharacter::TestTriggerUseSupportItemInput()
@@ -584,11 +621,17 @@ void ASneakGearPlayerCharacter::HandleWeaponSlotSelect(EPlayerItemSlot Slot)
 	// Pressing the already-active weapon slot toggles to holstered state.
 	if (bSameSlot && bCurrentlyEquipped)
 	{
-		ItemComponent->SetWeaponEquipped(false);
+		if (ItemComponent->SetWeaponEquipped(false))
+		{
+			OnPlayerUIWeaponStateChanged.Broadcast();
+		}
 		return;
 	}
 
-	ItemComponent->SetActiveWeaponSlot(Slot, true);
+	if (ItemComponent->SetActiveWeaponSlot(Slot, true))
+	{
+		OnPlayerUIWeaponStateChanged.Broadcast();
+	}
 }
 
 void ASneakGearPlayerCharacter::HandlePrimaryWeaponPressed()
@@ -611,14 +654,41 @@ void ASneakGearPlayerCharacter::HandleSecondaryWeaponReleased()
 	HandleWeaponSlotReleased(EPlayerItemSlot::SecondaryWeapon);
 }
 
-void ASneakGearPlayerCharacter::HandlePickUpNearbyItem()
+void ASneakGearPlayerCharacter::HandlePickUpNearbyItemPressed()
 {
 	if (!ItemComponent)
 	{
 		return;
 	}
 
-	ItemComponent->TryPickUpNearbyFloorItem(NearbyPickupSearchRadius);
+	bPickupButtonDown = true;
+	bPickupHoldTriggered = false;
+
+	GetWorldTimerManager().SetTimer(
+		PickupSwapHoldTimer,
+		this,
+		&ASneakGearPlayerCharacter::OnPickupSwapHoldTriggered,
+		FMath::Max(PickupSwapHoldTime, 0.05f),
+		false
+	);
+}
+
+void ASneakGearPlayerCharacter::HandlePickUpNearbyItemReleased()
+{
+	bPickupButtonDown = false;
+	GetWorldTimerManager().ClearTimer(PickupSwapHoldTimer);
+
+	if (!ItemComponent || bPickupHoldTriggered)
+	{
+		return;
+	}
+
+	if (ItemComponent->RequiresHoldToSwapNearbyFloorItem(NearbyPickupSearchRadius))
+	{
+		return;
+	}
+
+	ItemComponent->TryPickUpNearbyFloorItem(NearbyPickupSearchRadius, false);
 }
 
 void ASneakGearPlayerCharacter::HandleUseSupportItem()
@@ -690,4 +760,15 @@ void ASneakGearPlayerCharacter::OnWeaponSelectHoldTriggered()
 	{
 		Controller->OpenWeaponSelectionWidget(PendingWeaponSelectionSlot);
 	}
+}
+
+void ASneakGearPlayerCharacter::OnPickupSwapHoldTriggered()
+{
+	if (!bPickupButtonDown || !ItemComponent)
+	{
+		return;
+	}
+
+	bPickupHoldTriggered = true;
+	ItemComponent->SwapNearbyFloorWeaponItem(NearbyPickupSearchRadius);
 }

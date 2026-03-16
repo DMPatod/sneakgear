@@ -21,6 +21,7 @@ class SNEAKGEAR_API AWorldItemPickup : public AActor
 public:
 	AWorldItemPickup();
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 
 	UFUNCTION(BlueprintPure, Category="Pickup")
@@ -55,6 +56,11 @@ protected:
 	FVector PickupPromptOffset = FVector(0.f, 0.f, 90.f);
 
 private:
+	UPROPERTY(Transient)
+	TWeakObjectPtr<AActor> PendingPromptActor;
+
+	FTimerHandle PromptRetryTimer;
+
 	UFUNCTION()
 	void HandlePickupTriggerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
@@ -64,6 +70,9 @@ private:
 	void HandlePickupTriggerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	                                   UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	void UpdatePickupPrompt();
+	UFUNCTION()
+	void RetryShowPickupPrompt();
+
+	bool UpdatePickupPrompt();
 	bool IsLocallyControlledPlayerActor(const AActor* OtherActor) const;
 };

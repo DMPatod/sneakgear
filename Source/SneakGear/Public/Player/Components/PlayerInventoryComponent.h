@@ -40,6 +40,15 @@ public:
 	bool TryPickUpNearbyFloorItem(float SearchRadius = 150.f, bool bAllowReplace = false);
 
 	UFUNCTION(BlueprintPure, Category="Inventory")
+	bool RequiresHoldToSwapNearbyFloorItem(float SearchRadius = 150.f) const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	bool RequiresHoldToSwapItem(const FPlayerInventoryItem& Item) const;
+
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	bool SwapNearbyFloorWeaponItem(float SearchRadius = 150.f);
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
 	bool HasItem(EPlayerItemSlot Slot) const;
 
 	UFUNCTION(BlueprintPure, Category="Inventory")
@@ -239,4 +248,6 @@ private:
 	void ClearRuntimeWeapon(FWeaponSlotRuntime& Runtime) const;
 	void OnPrimaryWeaponFired();
 	void OnSecondaryWeaponFired();
+	AActor* FindBestNearbyFloorPickup(float SearchRadius) const;
+	bool PickupRequiresWeaponSwap(const UPlayerItemPickupComponent* PickupComponent) const;
 };

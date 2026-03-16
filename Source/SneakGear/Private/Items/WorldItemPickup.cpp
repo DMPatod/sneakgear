@@ -5,15 +5,18 @@
 #include "Components/StaticMeshComponent.h"
 #include "Items/PlayerItemPickupComponent.h"
 #include "Misc/DataValidation.h"
+#include "Player/SneakGearPlayerCharacter.h"
+#include "Player/Components/PlayerInventoryComponent.h"
 #include "UI/PickupPromptNativeWidget.h"
 #include "UI/PickupPromptWidget.h"
 #include "Weapon/WeaponBase.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "TimerManager.h"
 
 AWorldItemPickup::AWorldItemPickup()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
 	SetRootComponent(PickupMesh);
@@ -35,6 +38,17 @@ AWorldItemPickup::AWorldItemPickup()
 	PickupPromptComponent->SetVisibility(false);
 	PickupPromptComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	PickupPromptWidgetClass = UPickupPromptNativeWidget::StaticClass();
+}
+
+void AWorldItemPickup::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	(void)DeltaSeconds;
+
+	if (PendingPromptActor.IsValid())
+	{
+		UpdatePickupPrompt();
+	}
 }
 
 void AWorldItemPickup::BeginPlay()
@@ -137,11 +151,17 @@ void AWorldItemPickup::HandlePickupTriggerBeginOverlap(UPrimitiveComponent* Over
 		return;
 	}
 
-	UpdatePickupPrompt();
+	const bool bPromptReady = UpdatePickupPrompt();
 
 	if (PickupPromptComponent)
 	{
 		PickupPromptComponent->SetVisibility(true);
+	}
+
+	if (!bPromptReady && GetWorld())
+	{
+		PendingPromptActor = OtherActor;
+		GetWorld()->GetTimerManager().SetTimer(PromptRetryTimer, this, &AWorldItemPickup::RetryShowPickupPrompt, 0.01f, false);
 	}
 }
 
@@ -161,19 +181,51 @@ void AWorldItemPickup::HandlePickupTriggerEndOverlap(UPrimitiveComponent* Overla
 	{
 		PickupPromptComponent->SetVisibility(false);
 	}
+
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(PromptRetryTimer);
+	}
+	PendingPromptActor.Reset();
 }
 
-void AWorldItemPickup::UpdatePickupPrompt()
+void AWorldItemPickup::RetryShowPickupPrompt()
+{
+	if (!PendingPromptActor.IsValid() || !IsLocallyControlledPlayerActor(PendingPromptActor.Get()))
+	{
+		return;
+	}
+
+	if (!UpdatePickupPrompt())
+	{
+		return;
+	}
+
+	if (PickupPromptComponent)
+	{
+		PickupPromptComponent->SetVisibility(true);
+	}
+}
+
+bool AWorldItemPickup::UpdatePickupPrompt()
 {
 	if (!PickupPromptComponent)
 	{
-		return;
+		return false;
+	}
+
+	if (!PickupPromptComponent->GetWidget())
+	{
+		PickupPromptComponent->SetWidgetClass(PickupPromptWidgetClass
+			                                      ? PickupPromptWidgetClass.Get()
+			                                      : UPickupPromptNativeWidget::StaticClass());
+		PickupPromptComponent->InitWidget();
 	}
 
 	UPickupPromptWidget* PromptWidget = Cast<UPickupPromptWidget>(PickupPromptComponent->GetWidget());
 	if (!PromptWidget)
 	{
-		return;
+		return false;
 	}
 
 	const FPlayerInventoryItem PickupItem = GetPickupItem();
@@ -185,8 +237,23 @@ void AWorldItemPickup::UpdatePickupPrompt()
 		                        ? SlotEnum->GetDisplayNameTextByValue(static_cast<int64>(PickupItem.SlotType))
 		                        : FText::GetEmpty();
 
+	bool bRequiresHoldToSwap = false;
+	float HoldProgress = 0.f;
+	if (const ASneakGearPlayerCharacter* PlayerCharacter = Cast<ASneakGearPlayerCharacter>(PendingPromptActor.Get()))
+	{
+		if (const UPlayerInventoryComponent* InventoryComponent = PlayerCharacter->GetItemComponent())
+		{
+			bRequiresHoldToSwap = InventoryComponent->RequiresHoldToSwapItem(PickupItem);
+		}
+
+		HoldProgress = bRequiresHoldToSwap ? PlayerCharacter->GetPickupSwapHoldProgress() : 0.f;
+	}
+
 	PromptWidget->SetPickupInfo(ItemName, SlotLabel);
+	PromptWidget->SetSwapPrompt(bRequiresHoldToSwap);
+	PromptWidget->SetHoldProgress(HoldProgress);
 	PromptWidget->SetPromptVisible(true);
+	return true;
 }
 
 bool AWorldItemPickup::IsLocallyControlledPlayerActor(const AActor* OtherActor) const
@@ -195,6 +262,11 @@ bool AWorldItemPickup::IsLocallyControlledPlayerActor(const AActor* OtherActor) 
 	if (!Pawn)
 	{
 		return false;
+	}
+
+	if (Pawn->IsLocallyControlled())
+	{
+		return true;
 	}
 
 	const APlayerController* PlayerController = Cast<APlayerController>(Pawn->GetController());

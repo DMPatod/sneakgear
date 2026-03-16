@@ -56,9 +56,12 @@ public:
 	bool HasNearbyPickup() const;
 	FText GetNearbyPickupDisplayName() const;
 	FText GetNearbyPickupSlotLabel() const;
+	bool IsPickupSwapHoldActive() const;
+	float GetPickupSwapHoldProgress() const;
 
 #if WITH_DEV_AUTOMATION_TESTS
 	void TestTriggerNearbyPickupInput();
+	void TestTriggerNearbyPickupHoldInput();
 	void TestTriggerUseSupportItemInput();
 	void TestTriggerUseUtilityItemInput();
 	void TestTriggerPrimaryWeaponInput();
@@ -110,12 +113,14 @@ private:
 	void HandlePrimaryWeaponReleased();
 	void HandleSecondaryWeaponPressed();
 	void HandleSecondaryWeaponReleased();
-	void HandlePickUpNearbyItem();
+	void HandlePickUpNearbyItemPressed();
+	void HandlePickUpNearbyItemReleased();
 	void HandleUseSupportItem();
 	void HandleUseUtilityItem();
 	void HandleWeaponSlotPressed(EPlayerItemSlot Slot);
 	void HandleWeaponSlotReleased(EPlayerItemSlot Slot);
 	void OnWeaponSelectHoldTriggered();
+	void OnPickupSwapHoldTriggered();
 
 	void HandleWeaponSlotSelect(EPlayerItemSlot Slot);
 	void HandleActiveWeaponFired(EPlayerItemSlot FiredSlot);
@@ -127,13 +132,19 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Inventory")
 	float NearbyPickupSearchRadius = 150.f;
 
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	float PickupSwapHoldTime = 0.35f;
+
 	UPROPERTY(EditAnywhere, Category="Debug")
 	bool bDrawPickupRadiusDebug = false;
 
 	FTimerHandle WeaponSelectionHoldTimer;
+	FTimerHandle PickupSwapHoldTimer;
 	TWeakObjectPtr<UPlayerItemPickupComponent> NearbyPickupComponent;
 	EPlayerItemSlot PendingWeaponSelectionSlot = EPlayerItemSlot::PrimaryWeapon;
 	bool bWeaponSelectionButtonDown = false;
 	bool bWeaponSelectionHoldTriggered = false;
+	bool bPickupButtonDown = false;
+	bool bPickupHoldTriggered = false;
 	bool bIsVaulting = false;
 };

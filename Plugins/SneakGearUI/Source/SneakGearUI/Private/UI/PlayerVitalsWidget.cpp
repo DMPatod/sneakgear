@@ -15,7 +15,11 @@ void UPlayerVitalsWidget::NativeConstruct()
 	{
 		if (!WidgetTree)
 		{
-			return;
+			WidgetTree = NewObject<UWidgetTree>(this, TEXT("PlayerVitalsWidgetTree"));
+			if (!WidgetTree)
+			{
+				return;
+			}
 		}
 
 		auto Root = WidgetTree->RootWidget;
@@ -45,7 +49,10 @@ void UPlayerVitalsWidget::NativeConstruct()
 		VBox->AddChild(StaminaBar);
 	}
 
-	CachedPlayer = GetOwningPlayerPawn();
+	if (!CachedPlayer.IsValid())
+	{
+		CachedPlayer = GetOwningPlayerPawn();
+	}
 	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
 	{
 		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIVitalsChangedEvent().AddUObject(
@@ -63,6 +70,24 @@ void UPlayerVitalsWidget::NativeDestruct()
 	}
 
 	Super::NativeDestruct();
+}
+
+void UPlayerVitalsWidget::SetObservedPlayer(APawn* InPawn)
+{
+	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+	{
+		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIVitalsChangedEvent().RemoveAll(this);
+	}
+
+	CachedPlayer = InPawn;
+
+	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+	{
+		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIVitalsChangedEvent().AddUObject(
+			this, &UPlayerVitalsWidget::HandleVitalsChanged);
+	}
+
+	UpdateFromPlayer();
 }
 
 void UPlayerVitalsWidget::HandleVitalsChanged()

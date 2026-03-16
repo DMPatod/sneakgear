@@ -29,7 +29,14 @@ namespace
 {
 UWorld* CreateTestWorld()
 {
-	return FAutomationEditorCommonUtils::CreateNewMap();
+	UWorld* World = FAutomationEditorCommonUtils::CreateNewMap();
+	if (World && !World->HasBegunPlay())
+	{
+		World->InitializeActorsForPlay(FURL());
+		World->BeginPlay();
+	}
+
+	return World;
 }
 
 UBlackboardData* CreatePatrolBlackboard(UObject* Outer)
@@ -94,7 +101,10 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBaseCharacterDeathOnlyRunsOnceTest,
 
 bool FBaseCharacterDeathOnlyRunsOnceTest::RunTest(const FString& Parameters)
 {
-	ATestDeathCharacter* Character = NewObject<ATestDeathCharacter>();
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestDeathCharacter* Character = World->SpawnActor<ATestDeathCharacter>();
 	TestNotNull(TEXT("Test death character should be created"), Character);
 
 	Character->InitializeAbilitySystemForTest(100.f);
@@ -380,6 +390,96 @@ bool FPlayerInventoryComponentWeaponPickupSpawnsAndSelectsRuntimeWeaponTest::Run
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNearbyWeaponPickupRequiresHoldToSwapTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.NearbyWeaponPickupRequiresHoldToSwap",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNearbyWeaponPickupRequiresHoldToSwapTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Player character should spawn"), Character);
+
+	ATestPickupActor* InitialPickup = World->SpawnActor<ATestPickupActor>(FVector(50.f, 0.f, 0.f), FRotator::ZeroRotator);
+	ATestPickupActor* NearbySwapPickup = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	TestNotNull(TEXT("Initial weapon pickup should spawn"), InitialPickup);
+	TestNotNull(TEXT("Nearby swap pickup should spawn"), NearbySwapPickup);
+
+	UPlayerItemDefinition* InitialDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	InitialDefinition->ItemId = TEXT("HeldRifle");
+	InitialDefinition->DisplayName = FText::FromString(TEXT("Held Rifle"));
+	InitialDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	InitialDefinition->WeaponClass = ATestWeapon::StaticClass();
+	InitialPickup->GetPickupComponent()->SetItemDefinitionForTest(InitialDefinition);
+
+	UPlayerItemDefinition* SwapDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	SwapDefinition->ItemId = TEXT("FloorRifle");
+	SwapDefinition->DisplayName = FText::FromString(TEXT("Floor Rifle"));
+	SwapDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	SwapDefinition->WeaponClass = ATestWeapon::StaticClass();
+	NearbySwapPickup->GetPickupComponent()->SetItemDefinitionForTest(SwapDefinition);
+
+	TestTrue(TEXT("Initial weapon pickup should succeed"), Character->GetItemComponent()->PickUpFromFloor(InitialPickup));
+	TestTrue(TEXT("Nearby weapon pickup should require a hold when the slot is already filled"),
+		Character->GetItemComponent()->RequiresHoldToSwapNearbyFloorItem(150.f));
+
+	Character->TestTriggerNearbyPickupInput();
+
+	const FPlayerInventoryItem EquippedItem = Character->GetItemComponent()->GetItem(EPlayerItemSlot::PrimaryWeapon);
+	TestEqual(TEXT("Tap pickup should keep the currently equipped primary weapon"), EquippedItem.ItemId, InitialDefinition->ItemId);
+	TestEqual(TEXT("Tap pickup should leave the floor pickup unchanged"),
+		NearbySwapPickup->GetPickupComponent()->GetItemDefinition(),
+		SwapDefinition);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNearbyWeaponPickupHoldSwapsWithFloorItemTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.NearbyWeaponPickupHoldSwapsWithFloorItem",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FNearbyWeaponPickupHoldSwapsWithFloorItemTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Player character should spawn"), Character);
+
+	ATestPickupActor* InitialPickup = World->SpawnActor<ATestPickupActor>(FVector(50.f, 0.f, 0.f), FRotator::ZeroRotator);
+	ATestPickupActor* NearbySwapPickup = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	TestNotNull(TEXT("Initial weapon pickup should spawn"), InitialPickup);
+	TestNotNull(TEXT("Nearby swap pickup should spawn"), NearbySwapPickup);
+
+	UPlayerItemDefinition* InitialDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	InitialDefinition->ItemId = TEXT("HeldSMG");
+	InitialDefinition->DisplayName = FText::FromString(TEXT("Held SMG"));
+	InitialDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	InitialDefinition->WeaponClass = ATestWeapon::StaticClass();
+	InitialPickup->GetPickupComponent()->SetItemDefinitionForTest(InitialDefinition);
+
+	UPlayerItemDefinition* SwapDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	SwapDefinition->ItemId = TEXT("FloorSMG");
+	SwapDefinition->DisplayName = FText::FromString(TEXT("Floor SMG"));
+	SwapDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	SwapDefinition->WeaponClass = ATestWeapon::StaticClass();
+	NearbySwapPickup->GetPickupComponent()->SetItemDefinitionForTest(SwapDefinition);
+
+	TestTrue(TEXT("Initial weapon pickup should succeed"), Character->GetItemComponent()->PickUpFromFloor(InitialPickup));
+
+	Character->TestTriggerNearbyPickupHoldInput();
+
+	const FPlayerInventoryItem EquippedItem = Character->GetItemComponent()->GetItem(EPlayerItemSlot::PrimaryWeapon);
+	TestEqual(TEXT("Hold pickup should swap in the floor weapon"), EquippedItem.ItemId, SwapDefinition->ItemId);
+	TestEqual(TEXT("Hold pickup should leave the previous weapon on the floor"),
+		NearbySwapPickup->GetPickupComponent()->GetItemDefinition(),
+		InitialDefinition);
+	TestTrue(TEXT("Swapped primary weapon should still expose a runtime weapon"),
+		Character->GetItemComponent()->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon) != nullptr);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerCharacterFullInputFlowTest,
 	"SneakGear.Player.SneakGearPlayerCharacter.FullInputFlow",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -632,7 +732,6 @@ bool FPlayerVitalsWidgetUpdatesFromAttributeDelegatesTest::RunTest(const FString
 
 	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
 	TestNotNull(TEXT("Inventory character should spawn"), Character);
-	PlayerController->Possess(Character);
 
 	Character->InitializeAbilitySystemForTest(0.f, 10.f);
 	if (UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent())
@@ -643,9 +742,10 @@ bool FPlayerVitalsWidgetUpdatesFromAttributeDelegatesTest::RunTest(const FString
 		AbilitySystem->SetNumericAttributeBase(UStaminaAttributeSet::GetStaminaAttribute(), 50.f);
 	}
 
-	UTestPlayerVitalsWidget* Widget = CreateWidget<UTestPlayerVitalsWidget>(PlayerController, UTestPlayerVitalsWidget::StaticClass());
+	UTestPlayerVitalsWidget* Widget = CreateWidget<UTestPlayerVitalsWidget>(World, UTestPlayerVitalsWidget::StaticClass());
 	TestNotNull(TEXT("Vitals widget should be created"), Widget);
-	Widget->NativeConstruct();
+	Widget->SetObservedPlayer(Character);
+	Widget->ConstructForTest();
 
 	if (UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent())
 	{
@@ -674,10 +774,10 @@ bool FStanceWidgetUpdatesFromStanceDelegateTest::RunTest(const FString& Paramete
 
 	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
 	TestNotNull(TEXT("Inventory character should spawn"), Character);
-	PlayerController->Possess(Character);
 
-	UTestStanceWidget* Widget = CreateWidget<UTestStanceWidget>(PlayerController, UTestStanceWidget::StaticClass());
+	UTestStanceWidget* Widget = CreateWidget<UTestStanceWidget>(World, UTestStanceWidget::StaticClass());
 	TestNotNull(TEXT("Stance widget should be created"), Widget);
+	Widget->SetObservedPlayer(Character);
 	Widget->ConstructForTest();
 
 	Character->SetStance(EStance::Crouching);
@@ -708,6 +808,42 @@ bool FEventFeedWidgetUpdatesFromEventDelegateTest::RunTest(const FString& Parame
 
 	TestTrue(TEXT("Event feed should update from the event-log delegate without widget tick"),
 		Widget->GetEventFeedText().ToString().Contains(TEXT("Guard alerted")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPickupPromptWidgetShowsSwapMessageAndHoldProgressTest,
+	"SneakGear.UI.PickupPromptWidget.ShowsSwapMessageAndHoldProgress",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPickupPromptWidgetShowsSwapMessageAndHoldProgressTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	UTestPickupPromptWidget* Widget = CreateWidget<UTestPickupPromptWidget>(World, UTestPickupPromptWidget::StaticClass());
+	TestNotNull(TEXT("Pickup prompt widget should be created"), Widget);
+	Widget->ConstructForTest();
+
+	Widget->SetPickupInfo(FText::FromString(TEXT("Rifle")), FText::FromString(TEXT("Primary Weapon")));
+	Widget->SetSwapPrompt(false);
+	Widget->SetHoldProgress(0.6f);
+	Widget->SetPromptVisible(true);
+
+	TestTrue(TEXT("Default prompt should use the pickup text"), Widget->GetPromptDisplayText().ToString().Contains(TEXT("Pick up Rifle")));
+	TestEqual(TEXT("Progress bar should stay hidden when swap is not required"),
+		Widget->GetHoldProgressVisibility(),
+		ESlateVisibility::Collapsed);
+
+	Widget->SetSwapPrompt(true);
+	Widget->SetHoldProgress(0.6f);
+
+	TestTrue(TEXT("Swap prompt should use the hold-to-swap text"),
+		Widget->GetPromptDisplayText().ToString().Contains(TEXT("Hold to swap Rifle")));
+	TestEqual(TEXT("Progress bar should be visible when swap is required"),
+		Widget->GetHoldProgressVisibility(),
+		ESlateVisibility::Visible);
+	TestTrue(TEXT("Progress bar should reflect the hold progress"),
+		FMath::IsNearlyEqual(Widget->GetHoldProgressValue(), 0.6f, KINDA_SMALL_NUMBER));
 	return true;
 }
 

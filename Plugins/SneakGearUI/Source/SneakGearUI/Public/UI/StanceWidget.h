@@ -19,6 +19,8 @@ protected:
 	virtual void NativeDestruct() override;
 
 public:
+	void SetObservedPlayer(APawn* InPawn);
+
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UImage> StanceImage;
 

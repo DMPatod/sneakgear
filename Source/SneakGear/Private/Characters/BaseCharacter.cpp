@@ -17,6 +17,11 @@ ABaseCharacter::ABaseCharacter()
 	HealthSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthSet"));
 	StaminaSet = CreateDefaultSubobject<UStaminaAttributeSet>(TEXT("StaminaSet"));
 	AmmoSet = CreateDefaultSubobject<UAmmoAttributeSet>(TEXT("AmmoSet"));
+
+	// GAS requires attribute sets to be registered on the ASC before attribute base values are mutated.
+	AbilitySystem->AddAttributeSetSubobject(HealthSet.Get());
+	AbilitySystem->AddAttributeSetSubobject(StaminaSet.Get());
+	AbilitySystem->AddAttributeSetSubobject(AmmoSet.Get());
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
