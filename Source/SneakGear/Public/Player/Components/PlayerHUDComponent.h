@@ -8,6 +8,7 @@
 class ASneakGearPlayerController;
 class ASneakGearPlayerCharacter;
 class UCrosshairWidget;
+class UInfoPromptNativeWidget;
 class UPlayerHUDWidget;
 class URadarWidget;
 class UUserWidget;
@@ -61,6 +62,7 @@ private:
 	void CreateHUDWidgets();
 	void UpdateRadarWidget();
 	void UpdateCrosshairWidget(float DeltaSeconds);
+	void UpdateVaultPromptWidget();
 	ASneakGearPlayerController* GetOwningSneakGearPlayerController() const;
 	ASneakGearPlayerCharacter* GetOwningSneakGearPlayerCharacter() const;
 	URadarWidget* GetRadarWidget() const;
@@ -80,10 +82,17 @@ private:
 	UPROPERTY(Transient)
 	TMap<TObjectPtr<UClass>, TObjectPtr<UUserWidget>> OverlayWidgets;
 
+	UPROPERTY(Transient)
+	TSubclassOf<UInfoPromptNativeWidget> VaultPromptWidgetClass;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInfoPromptNativeWidget> VaultPromptWidget;
+
 	FCrosshairSpreadConfig CrosshairSpread;
 	TArray<FRadarContact> RadarContactsCache;
 	float RadarRefreshCooldown = 0.f;
 	float RadarRefreshInterval = 0.1f;
+	int32 VaultPromptZOrder = 6;
 	float SpreadCurrent = 0.f;
 	float SpreadTarget = 0.f;
 	bool bShowCrosshairOnlyWhenAiming = false;

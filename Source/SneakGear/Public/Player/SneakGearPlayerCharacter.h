@@ -2,17 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "Player/PlayerCharacterBase.h"
-#include "Player/Components/PlayerInventoryComponent.h"
-#include "Components/Cover/CoverStateComponent.h"
 #include "SneakGearPlayerCharacter.generated.h"
 
 class UCoverComponent;
 class UCoverStateComponent;
+class UPlayerInventoryInteractionComponent;
 class UPlayerInventoryComponent;
-class AWorldItemPickup;
 class AWeaponBase;
 class UInputAction;
-class UPlayerItemPickupComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -23,15 +20,9 @@ class SNEAKGEAR_API ASneakGearPlayerCharacter : public APlayerCharacterBase
 public:
 	ASneakGearPlayerCharacter();
 
-	bool IsInCover() const
-	{
-		return CoverStateComponent ? CoverStateComponent->IsInCover() : false;
-	}
-
-	float GetCoverMoveAxis() const
-	{
-		return CoverStateComponent ? CoverStateComponent->GetCoverMoveAxis() : 0.f;
-	}
+	bool IsInCover() const;
+	float GetCoverMoveAxis() const;
+	bool IsVaultAvailable() const;
 
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	UPlayerInventoryComponent* GetItemComponent() const
@@ -40,10 +31,7 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure, Category="Cover")
-	bool IsVaulting() const
-	{
-		return bIsVaulting;
-	}
+	bool IsVaulting() const;
 
 	virtual AWeaponBase* GetCurrentWeapon() const override;
 	virtual bool GetWeaponStatusViewData(FWeaponStatusViewData& OutData) const override;
@@ -106,45 +94,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	TObjectPtr<UPlayerInventoryComponent> ItemComponent;
 
-private:
-	void InitializeActiveWeaponFromInventory();
-	void UpdateNearbyPickup();
-	void HandlePrimaryWeaponPressed();
-	void HandlePrimaryWeaponReleased();
-	void HandleSecondaryWeaponPressed();
-	void HandleSecondaryWeaponReleased();
-	void HandlePickUpNearbyItemPressed();
-	void HandlePickUpNearbyItemReleased();
-	void HandleUseSupportItem();
-	void HandleUseUtilityItem();
-	void HandleWeaponSlotPressed(EPlayerItemSlot Slot);
-	void HandleWeaponSlotReleased(EPlayerItemSlot Slot);
-	void OnWeaponSelectHoldTriggered();
-	void OnPickupSwapHoldTriggered();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
+	TObjectPtr<UPlayerInventoryInteractionComponent> InventoryInteractionComponent;
 
-	void HandleWeaponSlotSelect(EPlayerItemSlot Slot);
+private:
 	void HandleActiveWeaponFired(EPlayerItemSlot FiredSlot);
 	void HandleInventoryStateChanged();
 
-	UPROPERTY(EditDefaultsOnly, Category="Input|Weapons")
-	float WeaponSelectionHoldTime = 0.35f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Inventory")
-	float NearbyPickupSearchRadius = 150.f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Inventory")
-	float PickupSwapHoldTime = 0.35f;
-
 	UPROPERTY(EditAnywhere, Category="Debug")
 	bool bDrawPickupRadiusDebug = false;
-
-	FTimerHandle WeaponSelectionHoldTimer;
-	FTimerHandle PickupSwapHoldTimer;
-	TWeakObjectPtr<UPlayerItemPickupComponent> NearbyPickupComponent;
-	EPlayerItemSlot PendingWeaponSelectionSlot = EPlayerItemSlot::PrimaryWeapon;
-	bool bWeaponSelectionButtonDown = false;
-	bool bWeaponSelectionHoldTriggered = false;
-	bool bPickupButtonDown = false;
-	bool bPickupHoldTriggered = false;
-	bool bIsVaulting = false;
 };

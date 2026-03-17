@@ -3,7 +3,9 @@
 #include "Components/WidgetComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Items/PickupItemInterface.h"
 #include "Items/PlayerItemPickupComponent.h"
+#include "Items/PlayerItemDefinition.h"
 #include "Misc/DataValidation.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "Player/Components/PlayerInventoryComponent.h"
@@ -40,6 +42,12 @@ AWorldItemPickup::AWorldItemPickup()
 	PickupPromptWidgetClass = UPickupPromptNativeWidget::StaticClass();
 }
 
+void AWorldItemPickup::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	ApplyPickupInterfaceData();
+}
+
 void AWorldItemPickup::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -54,6 +62,8 @@ void AWorldItemPickup::Tick(float DeltaSeconds)
 void AWorldItemPickup::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ApplyPickupInterfaceData();
 
 	if (PickupPromptComponent)
 	{
@@ -93,9 +103,16 @@ EDataValidationResult AWorldItemPickup::IsDataValid(FDataValidationContext& Cont
 		Context.AddError(FText::FromString(TEXT("PickupItemComponent is missing.")));
 		Result = EDataValidationResult::Invalid;
 	}
-	else if (!PickupItemComponent->GetItemDefinition())
+
+	UPlayerItemDefinition* ItemDefinition = PickupItemDefinition;
+	if (!ItemDefinition)
 	{
-		Context.AddError(FText::FromString(TEXT("PickupItemComponent must have an ItemDefinition assigned.")));
+		Context.AddError(FText::FromString(TEXT("Pickup item data must provide an ItemDefinition.")));
+		Result = EDataValidationResult::Invalid;
+	}
+	else if (!ItemDefinition->BuildInventoryItem().IsValid())
+	{
+		Context.AddError(FText::FromString(TEXT("Pickup ItemDefinition does not build a valid inventory item.")));
 		Result = EDataValidationResult::Invalid;
 	}
 
@@ -110,17 +127,23 @@ EDataValidationResult AWorldItemPickup::IsDataValid(FDataValidationContext& Cont
 
 FPlayerInventoryItem AWorldItemPickup::GetPickupItem() const
 {
-	return PickupItemComponent ? PickupItemComponent->GetPickupItem() : FPlayerInventoryItem();
+	if (const UPlayerItemDefinition* ItemDefinition = PickupItemDefinition)
+	{
+		return ItemDefinition->BuildInventoryItem();
+	}
+
+	return FPlayerInventoryItem();
 }
 
 TSubclassOf<AWeaponBase> AWorldItemPickup::GetPickupWeaponClass() const
 {
-	return PickupItemComponent ? PickupItemComponent->GetPickupWeaponClass() : nullptr;
+	const UPlayerItemDefinition* ItemDefinition = PickupItemDefinition;
+	return ItemDefinition ? ItemDefinition->WeaponClass : nullptr;
 }
 
 UPlayerItemDefinition* AWorldItemPickup::GetItemDefinition() const
 {
-	return PickupItemComponent ? PickupItemComponent->GetItemDefinition() : nullptr;
+	return PickupItemDefinition;
 }
 
 void AWorldItemPickup::ConsumePickup()
@@ -132,6 +155,19 @@ void AWorldItemPickup::ConsumePickup()
 	else
 	{
 		Destroy();
+	}
+}
+
+void AWorldItemPickup::ApplyPickupInterfaceData()
+{
+	if (PickupMesh)
+	{
+		PickupMesh->SetStaticMesh(PickupItemDefinition ? PickupItemDefinition->PickupMesh : nullptr);
+	}
+
+	if (PickupItemComponent)
+	{
+		PickupItemComponent->SetItemDefinition(PickupItemDefinition);
 	}
 }
 

@@ -1,6 +1,7 @@
 #include "Items/PlayerItemPickupComponent.h"
 
 #include "Items/PlayerItemDefinition.h"
+#include "Items/WorldItemPickup.h"
 #include "Misc/DataValidation.h"
 #include "Weapon/WeaponBase.h"
 
@@ -10,8 +11,14 @@ EDataValidationResult UPlayerItemPickupComponent::IsDataValid(FDataValidationCon
 
 	if (!ItemDefinition)
 	{
-		Context.AddError(FText::FromString(TEXT("ItemDefinition must be assigned.")));
-		Result = EDataValidationResult::Invalid;
+		const AActor* OwnerActor = GetOwner();
+		const AWorldItemPickup* WorldPickup = Cast<AWorldItemPickup>(OwnerActor);
+		const bool bOwnerProvidesItemDefinition = WorldPickup && WorldPickup->GetItemDefinition() != nullptr;
+		if (!bOwnerProvidesItemDefinition)
+		{
+			Context.AddError(FText::FromString(TEXT("ItemDefinition must be assigned or provided by the owning WorldItemPickup.")));
+			Result = EDataValidationResult::Invalid;
+		}
 	}
 	else if (!ItemDefinition->BuildInventoryItem().IsValid())
 	{

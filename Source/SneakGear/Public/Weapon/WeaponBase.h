@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Types/PlayerInventoryTypes.h"
 #include "WeaponBase.generated.h"
 
 class UWeaponFireModeComponent;
@@ -38,11 +39,20 @@ public:
 		return MuzzleSocketName;
 	}
 
+	UFUNCTION(BlueprintCallable, Category="Weapon")
+	EAmmoType GetAmmoType() const
+	{
+		return AmmoType;
+	}
+
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TSubclassOf<UAnimInstance> AnimationSetBP;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Details")
 	int32 ClipSize = 8;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ammo")
+	EAmmoType AmmoType = EAmmoType::None;
 
 protected:
 	FTimerHandle FireTimer;

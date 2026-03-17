@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Items/PickupItemInterface.h"
 #include "Types/PlayerInventoryTypes.h"
 #include "PlayerItemDefinition.generated.h"
 
@@ -10,7 +11,7 @@ class APlayerCharacterBase;
 class UPlayerInventoryComponent;
 
 UCLASS(BlueprintType)
-class SNEAKGEAR_API UPlayerItemDefinition : public UPrimaryDataAsset
+class SNEAKGEAR_API UPlayerItemDefinition : public UPrimaryDataAsset, public IPickupItemInterface
 {
 	GENERATED_BODY()
 
@@ -32,6 +33,13 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item|Weapon")
 	TSubclassOf<AWeaponBase> WeaponClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item|Pickup")
+	TObjectPtr<UStaticMesh> PickupMesh;
+
+	virtual UPlayerItemDefinition* GetPickupItemDefinition_Implementation() const override;
+	virtual UStaticMesh* GetPickupDisplayMesh_Implementation() const override;
+	virtual EPlayerItemSlot GetPickupSlot_Implementation() const override;
 
 	UFUNCTION(BlueprintPure, Category="Item")
 	FPlayerInventoryItem BuildInventoryItem() const

@@ -40,6 +40,15 @@ EDataValidationResult UPlayerItemDefinition::IsDataValid(FDataValidationContext&
 		}
 	}
 
+	if (!PickupMesh)
+	{
+		Context.AddWarning(FText::FromString(TEXT("PickupMesh is not assigned; world pickups using this item will not display a mesh.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
 	return Result;
 }
 
@@ -66,4 +75,19 @@ bool UPlayerItemDefinition::UseItem(APlayerCharacterBase* PlayerCharacter, UPlay
 bool UPlayerItemDefinition::ShouldConsumeOnUse() const
 {
 	return false;
+}
+
+UPlayerItemDefinition* UPlayerItemDefinition::GetPickupItemDefinition_Implementation() const
+{
+	return const_cast<UPlayerItemDefinition*>(this);
+}
+
+UStaticMesh* UPlayerItemDefinition::GetPickupDisplayMesh_Implementation() const
+{
+	return PickupMesh;
+}
+
+EPlayerItemSlot UPlayerItemDefinition::GetPickupSlot_Implementation() const
+{
+	return SlotType;
 }

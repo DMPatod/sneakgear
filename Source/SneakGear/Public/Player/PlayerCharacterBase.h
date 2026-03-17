@@ -118,12 +118,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> StanceAction;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ammo")
-	float InitialAmmo = 10000.f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ammo")
-	float InitialMaxAmmo = 10000.f;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
 

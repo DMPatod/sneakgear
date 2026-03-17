@@ -2,14 +2,12 @@
 
 #include "Components/Cover/CoverComponent.h"
 #include "Components/Cover/CoverStateComponent.h"
-#include "Engine/OverlapResult.h"
 #include "DrawDebugHelpers.h"
-#include "Items/PlayerItemPickupComponent.h"
 #include "Misc/DataValidation.h"
 #include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/Components/PlayerInventoryInteractionComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Player/SneakGearPlayerController.h"
-#include "TimerManager.h"
 #include "Player/Components/PlayerWeaponComponent.h"
 #include "UI/EventLogSubsystem.h"
 #include "Weapon/WeaponBase.h"
@@ -19,6 +17,17 @@ ASneakGearPlayerCharacter::ASneakGearPlayerCharacter()
 	CoverComponent = CreateDefaultSubobject<UCoverComponent>(TEXT("CoverComponent"));
 	CoverStateComponent = CreateDefaultSubobject<UCoverStateComponent>(TEXT("CoverStateComponent"));
 	ItemComponent = CreateDefaultSubobject<UPlayerInventoryComponent>(TEXT("ItemComponent"));
+	InventoryInteractionComponent = CreateDefaultSubobject<UPlayerInventoryInteractionComponent>(TEXT("InventoryInteractionComponent"));
+}
+
+bool ASneakGearPlayerCharacter::IsInCover() const
+{
+	return CoverStateComponent ? CoverStateComponent->IsInCover() : false;
+}
+
+float ASneakGearPlayerCharacter::GetCoverMoveAxis() const
+{
+	return CoverStateComponent ? CoverStateComponent->GetCoverMoveAxis() : 0.f;
 }
 
 // Lifecycle
@@ -26,7 +35,10 @@ void ASneakGearPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitializeActiveWeaponFromInventory();
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->InitializeActiveWeaponFromInventory();
+	}
 
 	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
 	{
@@ -45,8 +57,10 @@ void ASneakGearPlayerCharacter::BeginPlay()
 
 void ASneakGearPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	GetWorldTimerManager().ClearTimer(WeaponSelectionHoldTimer);
-	GetWorldTimerManager().ClearTimer(PickupSwapHoldTimer);
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->ResetInteractionState();
+	}
 
 	if (ItemComponent)
 	{
@@ -61,13 +75,15 @@ void ASneakGearPlayerCharacter::OnCharacterDeath()
 {
 	Super::OnCharacterDeath();
 
-	GetWorldTimerManager().ClearTimer(WeaponSelectionHoldTimer);
-	GetWorldTimerManager().ClearTimer(PickupSwapHoldTimer);
-	bWeaponSelectionButtonDown = false;
-	bWeaponSelectionHoldTriggered = false;
-	bPickupButtonDown = false;
-	bPickupHoldTriggered = false;
-	bIsVaulting = false;
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->ResetInteractionState();
+	}
+
+	if (CoverStateComponent)
+	{
+		CoverStateComponent->HandleLanded(nullptr);
+	}
 
 	if (ItemComponent)
 	{
@@ -145,12 +161,6 @@ EDataValidationResult ASneakGearPlayerCharacter::IsDataValid(FDataValidationCont
 		}
 	}
 
-	if (NearbyPickupSearchRadius <= 0.f)
-	{
-		Context.AddError(FText::FromString(TEXT("NearbyPickupSearchRadius must be greater than 0.")));
-		Result = EDataValidationResult::Invalid;
-	}
-
 	return Result;
 }
 
@@ -166,38 +176,38 @@ void ASneakGearPlayerCharacter::SetupPlayerInputComponent(UInputComponent* Playe
 
 	if (SelectPrimaryWeaponAction)
 	{
-		EnhancedInput->BindAction(SelectPrimaryWeaponAction, ETriggerEvent::Started, this,
-		                          &ASneakGearPlayerCharacter::HandlePrimaryWeaponPressed);
-		EnhancedInput->BindAction(SelectPrimaryWeaponAction, ETriggerEvent::Completed, this,
-		                          &ASneakGearPlayerCharacter::HandlePrimaryWeaponReleased);
+		EnhancedInput->BindAction(SelectPrimaryWeaponAction, ETriggerEvent::Started, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandlePrimaryWeaponPressed);
+		EnhancedInput->BindAction(SelectPrimaryWeaponAction, ETriggerEvent::Completed, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandlePrimaryWeaponReleased);
 	}
 
 	if (SelectSecondaryWeaponAction)
 	{
-		EnhancedInput->BindAction(SelectSecondaryWeaponAction, ETriggerEvent::Started, this,
-		                          &ASneakGearPlayerCharacter::HandleSecondaryWeaponPressed);
-		EnhancedInput->BindAction(SelectSecondaryWeaponAction, ETriggerEvent::Completed, this,
-		                          &ASneakGearPlayerCharacter::HandleSecondaryWeaponReleased);
+		EnhancedInput->BindAction(SelectSecondaryWeaponAction, ETriggerEvent::Started, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandleSecondaryWeaponPressed);
+		EnhancedInput->BindAction(SelectSecondaryWeaponAction, ETriggerEvent::Completed, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandleSecondaryWeaponReleased);
 	}
 
 	if (PickUpNearbyItemAction)
 	{
-		EnhancedInput->BindAction(PickUpNearbyItemAction, ETriggerEvent::Started, this,
-		                          &ASneakGearPlayerCharacter::HandlePickUpNearbyItemPressed);
-		EnhancedInput->BindAction(PickUpNearbyItemAction, ETriggerEvent::Completed, this,
-		                          &ASneakGearPlayerCharacter::HandlePickUpNearbyItemReleased);
+		EnhancedInput->BindAction(PickUpNearbyItemAction, ETriggerEvent::Started, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandlePickUpNearbyItemPressed);
+		EnhancedInput->BindAction(PickUpNearbyItemAction, ETriggerEvent::Completed, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandlePickUpNearbyItemReleased);
 	}
 
 	if (UseSupportItemAction)
 	{
-		EnhancedInput->BindAction(UseSupportItemAction, ETriggerEvent::Started, this,
-		                          &ASneakGearPlayerCharacter::HandleUseSupportItem);
+		EnhancedInput->BindAction(UseSupportItemAction, ETriggerEvent::Started, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandleUseSupportItem);
 	}
 
 	if (UseUtilityItemAction)
 	{
-		EnhancedInput->BindAction(UseUtilityItemAction, ETriggerEvent::Started, this,
-		                          &ASneakGearPlayerCharacter::HandleUseUtilityItem);
+		EnhancedInput->BindAction(UseUtilityItemAction, ETriggerEvent::Started, InventoryInteractionComponent.Get(),
+		                          &UPlayerInventoryInteractionComponent::HandleUseUtilityItem);
 	}
 }
 
@@ -205,7 +215,10 @@ void ASneakGearPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	UpdateNearbyPickup();
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->UpdateNearbyPickup();
+	}
 
 	if (!bDrawPickupRadiusDebug || !GetWorld())
 	{
@@ -217,7 +230,7 @@ void ASneakGearPlayerCharacter::Tick(float DeltaSeconds)
 	DrawDebugSphere(
 		GetWorld(),
 		DrawOrigin,
-		NearbyPickupSearchRadius,
+		InventoryInteractionComponent ? InventoryInteractionComponent->GetNearbyPickupSearchRadius() : 0.f,
 		24,
 		DrawColor,
 		false,
@@ -245,14 +258,21 @@ AWeaponBase* ASneakGearPlayerCharacter::GetCurrentWeapon() const
 
 bool ASneakGearPlayerCharacter::GetWeaponStatusViewData(FWeaponStatusViewData& OutData) const
 {
-	const AWeaponBase* Weapon = GetCurrentWeapon();
-	if (!Weapon || !ItemComponent)
+	if (!ItemComponent)
 	{
 		return Super::GetWeaponStatusViewData(OutData);
 	}
 
+	const EPlayerItemSlot ActiveSlot = ItemComponent->GetActiveWeaponSlot();
+	const AWeaponBase* Weapon = ItemComponent->GetWeaponInSlot(ActiveSlot);
+	if (!Weapon)
+	{
+		OutData = FWeaponStatusViewData();
+		return false;
+	}
+
 	OutData.bHasWeapon = true;
-	OutData.WeaponName = FText::FromString(Weapon->GetClass() ? Weapon->GetClass()->GetName() : Weapon->GetName());
+	OutData.WeaponName = GetInventoryItemDisplayName(ActiveSlot);
 	OutData.FireRate = Weapon->GetFireRate();
 	OutData.InClip = ItemComponent->GetActiveWeaponInClip();
 	OutData.ClipSize = ItemComponent->GetActiveWeaponClipSize();
@@ -272,7 +292,7 @@ bool ASneakGearPlayerCharacter::GetWeaponQuickSlotViewData(EPlayerItemSlot Slot,
 	const AWeaponBase* Weapon = ItemComponent->GetWeaponInSlot(Slot);
 	OutData.bHasWeapon = Weapon != nullptr;
 	OutData.WeaponName = Weapon
-		                     ? FText::FromString(Weapon->GetClass() ? Weapon->GetClass()->GetName() : Weapon->GetName())
+		                     ? GetInventoryItemDisplayName(Slot)
 		                     : NSLOCTEXT("SneakGear", "WeaponQuickIndicatorEmpty", "Empty");
 	OutData.InClip = FMath::Max(ItemComponent->GetInClip(Slot), 0);
 	OutData.ClipSize = FMath::Max(ItemComponent->GetClipSize(Slot), 0);
@@ -297,11 +317,15 @@ bool ASneakGearPlayerCharacter::GetStealthDebugViewData(FStealthDebugViewData& O
 		OutData.InClip = ItemComponent->GetActiveWeaponInClip();
 		OutData.ClipSize = ItemComponent->GetActiveWeaponClipSize();
 		OutData.ReserveAmmo = ItemComponent->GetReserveAmmoCount();
-	}
 
-	if (const AWeaponBase* Weapon = GetCurrentWeapon())
-	{
-		OutData.WeaponName = FText::FromString(Weapon->GetClass() ? Weapon->GetClass()->GetName() : Weapon->GetName());
+		if (ItemComponent->GetWeaponInSlot(OutData.ActiveWeaponSlot))
+		{
+			OutData.WeaponName = GetInventoryItemDisplayName(OutData.ActiveWeaponSlot);
+		}
+		else
+		{
+			OutData.WeaponName = FText::GetEmpty();
+		}
 	}
 
 	return true;
@@ -349,91 +373,84 @@ int32 ASneakGearPlayerCharacter::GetActiveInventoryItemIndex(EPlayerItemSlot Slo
 	return ItemComponent ? ItemComponent->GetActiveItemIndex(Slot) : INDEX_NONE;
 }
 
+bool ASneakGearPlayerCharacter::IsVaulting() const
+{
+	return CoverStateComponent && CoverStateComponent->IsVaulting();
+}
+
+bool ASneakGearPlayerCharacter::IsVaultAvailable() const
+{
+	return CoverStateComponent && CoverStateComponent->CanVault(this);
+}
+
 bool ASneakGearPlayerCharacter::HasNearbyPickup() const
 {
-	return NearbyPickupComponent.IsValid();
+	return InventoryInteractionComponent && InventoryInteractionComponent->HasNearbyPickup();
 }
 
 FText ASneakGearPlayerCharacter::GetNearbyPickupDisplayName() const
 {
-	if (!NearbyPickupComponent.IsValid())
-	{
-		return FText::GetEmpty();
-	}
-
-	const FPlayerInventoryItem PickupItem = NearbyPickupComponent->GetPickupItem();
-	if (!PickupItem.IsValid())
-	{
-		return FText::GetEmpty();
-	}
-
-	return !PickupItem.DisplayName.IsEmpty() ? PickupItem.DisplayName : FText::FromName(PickupItem.ItemId);
+	return InventoryInteractionComponent ? InventoryInteractionComponent->GetNearbyPickupDisplayName() : FText::GetEmpty();
 }
 
 FText ASneakGearPlayerCharacter::GetNearbyPickupSlotLabel() const
 {
-	if (!NearbyPickupComponent.IsValid())
-	{
-		return FText::GetEmpty();
-	}
-
-	const FPlayerInventoryItem PickupItem = NearbyPickupComponent->GetPickupItem();
-	if (!PickupItem.IsValid())
-	{
-		return FText::GetEmpty();
-	}
-
-	const UEnum* SlotEnum = StaticEnum<EPlayerItemSlot>();
-	return SlotEnum
-		       ? SlotEnum->GetDisplayNameTextByValue(static_cast<int64>(PickupItem.SlotType))
-		: FText::GetEmpty();
+	return InventoryInteractionComponent ? InventoryInteractionComponent->GetNearbyPickupSlotLabel() : FText::GetEmpty();
 }
 
 bool ASneakGearPlayerCharacter::IsPickupSwapHoldActive() const
 {
-	return bPickupButtonDown && !bPickupHoldTriggered && GetWorldTimerManager().IsTimerActive(PickupSwapHoldTimer);
+	return InventoryInteractionComponent && InventoryInteractionComponent->IsPickupSwapHoldActive();
 }
 
 float ASneakGearPlayerCharacter::GetPickupSwapHoldProgress() const
 {
-	if (!IsPickupSwapHoldActive())
-	{
-		return bPickupHoldTriggered ? 1.f : 0.f;
-	}
-
-	const float HoldDuration = FMath::Max(PickupSwapHoldTime, 0.05f);
-	const float Elapsed = GetWorldTimerManager().GetTimerElapsed(PickupSwapHoldTimer);
-	return FMath::Clamp(Elapsed / HoldDuration, 0.f, 1.f);
+	return InventoryInteractionComponent ? InventoryInteractionComponent->GetPickupSwapHoldProgress() : 0.f;
 }
 
 #if WITH_DEV_AUTOMATION_TESTS
 void ASneakGearPlayerCharacter::TestTriggerNearbyPickupInput()
 {
-	HandlePickUpNearbyItemPressed();
-	HandlePickUpNearbyItemReleased();
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->HandlePickUpNearbyItemPressed();
+		InventoryInteractionComponent->HandlePickUpNearbyItemReleased();
+	}
 }
 
 void ASneakGearPlayerCharacter::TestTriggerNearbyPickupHoldInput()
 {
-	HandlePickUpNearbyItemPressed();
-	OnPickupSwapHoldTriggered();
-	HandlePickUpNearbyItemReleased();
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->HandlePickUpNearbyItemPressed();
+		InventoryInteractionComponent->TriggerPickupSwapHoldForTest();
+		InventoryInteractionComponent->HandlePickUpNearbyItemReleased();
+	}
 }
 
 void ASneakGearPlayerCharacter::TestTriggerUseSupportItemInput()
 {
-	HandleUseSupportItem();
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->HandleUseSupportItem();
+	}
 }
 
 void ASneakGearPlayerCharacter::TestTriggerUseUtilityItemInput()
 {
-	HandleUseUtilityItem();
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->HandleUseUtilityItem();
+	}
 }
 
 void ASneakGearPlayerCharacter::TestTriggerPrimaryWeaponInput()
 {
-	HandlePrimaryWeaponPressed();
-	HandlePrimaryWeaponReleased();
+	if (InventoryInteractionComponent)
+	{
+		InventoryInteractionComponent->HandlePrimaryWeaponPressed();
+		InventoryInteractionComponent->HandlePrimaryWeaponReleased();
+	}
 }
 #endif
 
@@ -481,7 +498,6 @@ void ASneakGearPlayerCharacter::OnJumpPressed()
 	{
 		// Match regular jump behavior: leave crouch stance when taking off.
 		SetStance(EStance::Standing);
-		bIsVaulting = true;
 		return;
 	}
 
@@ -497,97 +513,10 @@ void ASneakGearPlayerCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
-	if (bIsVaulting && Stance == EStance::Crouching)
+	if (CoverStateComponent)
 	{
-		SetStance(EStance::Standing);
+		CoverStateComponent->HandleLanded(this);
 	}
-
-	bIsVaulting = false;
-}
-
-void ASneakGearPlayerCharacter::InitializeActiveWeaponFromInventory()
-{
-	if (!ItemComponent)
-	{
-		return;
-	}
-
-	if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon))
-	{
-		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon, true);
-		return;
-	}
-
-	if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::SecondaryWeapon))
-	{
-		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::SecondaryWeapon, true);
-		return;
-	}
-
-	ItemComponent->SetWeaponEquipped(true);
-}
-
-void ASneakGearPlayerCharacter::UpdateNearbyPickup()
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		NearbyPickupComponent = nullptr;
-		return;
-	}
-
-	TArray<FOverlapResult> Overlaps;
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(PlayerNearbyPickup), false, this);
-	const FVector Center = GetActorLocation();
-	const FCollisionShape SearchShape = FCollisionShape::MakeSphere(FMath::Max(NearbyPickupSearchRadius, 1.f));
-
-	const bool bHasOverlaps = World->OverlapMultiByObjectType(
-		Overlaps,
-		Center,
-		FQuat::Identity,
-		FCollisionObjectQueryParams::AllDynamicObjects,
-		SearchShape,
-		QueryParams
-	);
-
-	if (!bHasOverlaps)
-	{
-		NearbyPickupComponent = nullptr;
-		return;
-	}
-
-	UPlayerItemPickupComponent* BestPickupComponent = nullptr;
-	float BestDistanceSq = TNumericLimits<float>::Max();
-
-	for (const FOverlapResult& Result : Overlaps)
-	{
-		AActor* PickupActor = Result.GetActor();
-		if (!PickupActor)
-		{
-			continue;
-		}
-
-		UPlayerItemPickupComponent* PickupComponent = PickupActor->FindComponentByClass<UPlayerItemPickupComponent>();
-		if (!PickupComponent)
-		{
-			continue;
-		}
-
-		const FPlayerInventoryItem PickupItem = PickupComponent->GetPickupItem();
-		if (!PickupItem.IsValid())
-		{
-			continue;
-		}
-
-		const float DistanceSq = FVector::DistSquared(Center, PickupActor->GetActorLocation());
-		if (DistanceSq < BestDistanceSq)
-		{
-			BestDistanceSq = DistanceSq;
-			BestPickupComponent = PickupComponent;
-		}
-	}
-
-	NearbyPickupComponent = BestPickupComponent;
 }
 
 void ASneakGearPlayerCharacter::HandleActiveWeaponFired(EPlayerItemSlot FiredSlot)
@@ -605,170 +534,4 @@ void ASneakGearPlayerCharacter::HandleActiveWeaponFired(EPlayerItemSlot FiredSlo
 void ASneakGearPlayerCharacter::HandleInventoryStateChanged()
 {
 	OnPlayerUIWeaponStateChanged.Broadcast();
-}
-
-// Weapon Selection
-void ASneakGearPlayerCharacter::HandleWeaponSlotSelect(EPlayerItemSlot Slot)
-{
-	if (!ItemComponent)
-	{
-		return;
-	}
-
-	const bool bSameSlot = ItemComponent->GetActiveWeaponSlot() == Slot;
-	const bool bCurrentlyEquipped = ItemComponent->IsWeaponEquipped();
-
-	// Pressing the already-active weapon slot toggles to holstered state.
-	if (bSameSlot && bCurrentlyEquipped)
-	{
-		if (ItemComponent->SetWeaponEquipped(false))
-		{
-			OnPlayerUIWeaponStateChanged.Broadcast();
-		}
-		return;
-	}
-
-	if (ItemComponent->SetActiveWeaponSlot(Slot, true))
-	{
-		OnPlayerUIWeaponStateChanged.Broadcast();
-	}
-}
-
-void ASneakGearPlayerCharacter::HandlePrimaryWeaponPressed()
-{
-	HandleWeaponSlotPressed(EPlayerItemSlot::PrimaryWeapon);
-}
-
-void ASneakGearPlayerCharacter::HandlePrimaryWeaponReleased()
-{
-	HandleWeaponSlotReleased(EPlayerItemSlot::PrimaryWeapon);
-}
-
-void ASneakGearPlayerCharacter::HandleSecondaryWeaponPressed()
-{
-	HandleWeaponSlotPressed(EPlayerItemSlot::SecondaryWeapon);
-}
-
-void ASneakGearPlayerCharacter::HandleSecondaryWeaponReleased()
-{
-	HandleWeaponSlotReleased(EPlayerItemSlot::SecondaryWeapon);
-}
-
-void ASneakGearPlayerCharacter::HandlePickUpNearbyItemPressed()
-{
-	if (!ItemComponent)
-	{
-		return;
-	}
-
-	bPickupButtonDown = true;
-	bPickupHoldTriggered = false;
-
-	GetWorldTimerManager().SetTimer(
-		PickupSwapHoldTimer,
-		this,
-		&ASneakGearPlayerCharacter::OnPickupSwapHoldTriggered,
-		FMath::Max(PickupSwapHoldTime, 0.05f),
-		false
-	);
-}
-
-void ASneakGearPlayerCharacter::HandlePickUpNearbyItemReleased()
-{
-	bPickupButtonDown = false;
-	GetWorldTimerManager().ClearTimer(PickupSwapHoldTimer);
-
-	if (!ItemComponent || bPickupHoldTriggered)
-	{
-		return;
-	}
-
-	if (ItemComponent->RequiresHoldToSwapNearbyFloorItem(NearbyPickupSearchRadius))
-	{
-		return;
-	}
-
-	ItemComponent->TryPickUpNearbyFloorItem(NearbyPickupSearchRadius, false);
-}
-
-void ASneakGearPlayerCharacter::HandleUseSupportItem()
-{
-	if (ItemComponent)
-	{
-		ItemComponent->UseActiveSupportItem();
-	}
-}
-
-void ASneakGearPlayerCharacter::HandleUseUtilityItem()
-{
-	if (ItemComponent)
-	{
-		ItemComponent->UseActiveUtilityItem();
-	}
-}
-
-void ASneakGearPlayerCharacter::HandleWeaponSlotPressed(EPlayerItemSlot Slot)
-{
-	bWeaponSelectionButtonDown = true;
-	bWeaponSelectionHoldTriggered = false;
-	PendingWeaponSelectionSlot = Slot;
-
-	GetWorldTimerManager().SetTimer(
-		WeaponSelectionHoldTimer,
-		this,
-		&ASneakGearPlayerCharacter::OnWeaponSelectHoldTriggered,
-		FMath::Max(WeaponSelectionHoldTime, 0.05f),
-		false
-	);
-}
-
-void ASneakGearPlayerCharacter::HandleWeaponSlotReleased(EPlayerItemSlot Slot)
-{
-	if (Slot != PendingWeaponSelectionSlot)
-	{
-		return;
-	}
-
-	bWeaponSelectionButtonDown = false;
-	GetWorldTimerManager().ClearTimer(WeaponSelectionHoldTimer);
-
-	if (bWeaponSelectionHoldTriggered)
-	{
-		// Keep the selection menu open after hold-trigger release.
-		// It now closes only when the user confirms a selection or cancels from the menu.
-		return;
-	}
-
-	HandleWeaponSlotSelect(Slot);
-
-	if (ASneakGearPlayerController* Controller = Cast<ASneakGearPlayerController>(GetController()))
-	{
-		Controller->ShowWeaponQuickSelectIndicator(Slot);
-	}
-}
-
-void ASneakGearPlayerCharacter::OnWeaponSelectHoldTriggered()
-{
-	if (!bWeaponSelectionButtonDown)
-	{
-		return;
-	}
-
-	bWeaponSelectionHoldTriggered = true;
-
-	if (ASneakGearPlayerController* Controller = Cast<ASneakGearPlayerController>(GetController()))
-	{
-		Controller->OpenWeaponSelectionWidget(PendingWeaponSelectionSlot);
-	}
-}
-
-void ASneakGearPlayerCharacter::OnPickupSwapHoldTriggered()
-{
-	if (!bPickupButtonDown || !ItemComponent)
-	{
-		return;
-	}
-
-	bPickupHoldTriggered = true;
-	ItemComponent->SwapNearbyFloorWeaponItem(NearbyPickupSearchRadius);
 }

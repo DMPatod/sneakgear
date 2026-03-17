@@ -6,6 +6,7 @@ AUnarmedWeapon::AUnarmedWeapon()
 {
 	ClipSize = 1;
 	FireRate = 1.f;
+	AmmoType = EAmmoType::None;
 }
 
 void AUnarmedWeapon::StartFire()

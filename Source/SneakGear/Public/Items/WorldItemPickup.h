@@ -21,6 +21,7 @@ class SNEAKGEAR_API AWorldItemPickup : public AActor
 public:
 	AWorldItemPickup();
 	virtual void BeginPlay() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 
@@ -55,7 +56,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pickup")
 	FVector PickupPromptOffset = FVector(0.f, 0.f, 90.f);
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Pickup|Item")
+	TObjectPtr<UPlayerItemDefinition> PickupItemDefinition;
+
 private:
+	void ApplyPickupInterfaceData();
+
 	UPROPERTY(Transient)
 	TWeakObjectPtr<AActor> PendingPromptActor;
 

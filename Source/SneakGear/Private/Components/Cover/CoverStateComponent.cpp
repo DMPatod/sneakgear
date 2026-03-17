@@ -30,7 +30,7 @@ void UCoverStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		return;
 	}
 
-	const APlayerCharacterBase* ThirdPersonCharacter = Cast<APlayerCharacterBase>(OwnerCharacter);
+	APlayerCharacterBase* ThirdPersonCharacter = Cast<APlayerCharacterBase>(OwnerCharacter);
 	const bool bIsProne = ThirdPersonCharacter && ThirdPersonCharacter->Stance == EStance::Prone;
 
 	if (bIsProne && CoverState != ECoverState::None)
@@ -116,6 +116,52 @@ bool UCoverStateComponent::HandleMoveInput(ACharacter* OwnerCharacter, const FIn
 
 bool UCoverStateComponent::TryVault(ACharacter* OwnerCharacter)
 {
+	if (!CanVault(OwnerCharacter))
+	{
+		return false;
+	}
+
+	FVector VaultDir = -CurrentCover.Normal;
+	VaultDir.Z = 0.f;
+	VaultDir.Normalize();
+	if (VaultDir.IsNearlyZero())
+	{
+		return false;
+	}
+
+	ExitCover(OwnerCharacter);
+	OwnerCharacter->LaunchCharacter(VaultDir * VaultLaunchForward + FVector(0.f, 0.f, VaultLaunchUp), true, true);
+	bIsVaulting = true;
+	return true;
+}
+
+bool UCoverStateComponent::CanVault(const ACharacter* OwnerCharacter) const
+{
+	FVector LandingLocation = FVector::ZeroVector;
+	return FindVaultLandingLocation(OwnerCharacter, LandingLocation);
+}
+
+void UCoverStateComponent::HandleLanded(ACharacter* OwnerCharacter)
+{
+	if (!OwnerCharacter)
+	{
+		bIsVaulting = false;
+		return;
+	}
+
+	APlayerCharacterBase* ThirdPersonCharacter = Cast<APlayerCharacterBase>(OwnerCharacter);
+	if (bIsVaulting && ThirdPersonCharacter && ThirdPersonCharacter->Stance == EStance::Crouching)
+	{
+		ThirdPersonCharacter->SetStance(EStance::Standing);
+	}
+
+	bIsVaulting = false;
+}
+
+bool UCoverStateComponent::FindVaultLandingLocation(const ACharacter* OwnerCharacter, FVector& OutLandingLocation) const
+{
+	OutLandingLocation = FVector::ZeroVector;
+
 	if (!OwnerCharacter || CoverState != ECoverState::Locked || !CurrentCover.bValid || !CurrentCover.bIsCrouchHeightCover)
 	{
 		return false;
@@ -127,9 +173,9 @@ bool UCoverStateComponent::TryVault(ACharacter* OwnerCharacter)
 		return false;
 	}
 
-	UCharacterMovementComponent* Move = OwnerCharacter->GetCharacterMovement();
+	const UCharacterMovementComponent* Move = OwnerCharacter->GetCharacterMovement();
 	UWorld* World = GetWorld();
-	UCapsuleComponent* Capsule = OwnerCharacter->GetCapsuleComponent();
+	const UCapsuleComponent* Capsule = OwnerCharacter->GetCapsuleComponent();
 	if (!Move || !World || !Capsule)
 	{
 		return false;
@@ -157,7 +203,7 @@ bool UCoverStateComponent::TryVault(ACharacter* OwnerCharacter)
 
 	FHitResult LandingHit;
 	const bool bFoundLanding = World->LineTraceSingleByChannel(LandingHit, LandingProbeStart, LandingProbeEnd,
-	                                                            ECC_Visibility, Params);
+		ECC_Visibility, Params);
 	if (!bFoundLanding)
 	{
 		return false;
@@ -165,10 +211,10 @@ bool UCoverStateComponent::TryVault(ACharacter* OwnerCharacter)
 
 	const float Radius = Capsule->GetScaledCapsuleRadius();
 	const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
-	const FVector LandingLocation = LandingHit.ImpactPoint + FVector(0.f, 0.f, HalfHeight + 2.f);
+	OutLandingLocation = LandingHit.ImpactPoint + FVector(0.f, 0.f, HalfHeight + 2.f);
 
 	const bool bLandingBlocked = World->OverlapBlockingTestByChannel(
-		LandingLocation,
+		OutLandingLocation,
 		FQuat::Identity,
 		ECC_Pawn,
 		FCollisionShape::MakeCapsule(Radius, HalfHeight),
@@ -176,11 +222,10 @@ bool UCoverStateComponent::TryVault(ACharacter* OwnerCharacter)
 	);
 	if (bLandingBlocked)
 	{
+		OutLandingLocation = FVector::ZeroVector;
 		return false;
 	}
 
-	ExitCover(OwnerCharacter);
-	OwnerCharacter->LaunchCharacter(VaultDir * VaultLaunchForward + FVector(0.f, 0.f, VaultLaunchUp), true, true);
 	return true;
 }
 

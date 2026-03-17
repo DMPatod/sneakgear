@@ -43,8 +43,16 @@ public:
 		return CoverMaxSpeed;
 	}
 
+	bool CanVault(const ACharacter* OwnerCharacter) const;
+
+	bool IsVaulting() const
+	{
+		return bIsVaulting;
+	}
+
 	bool HandleMoveInput(ACharacter* OwnerCharacter, const FInputActionValue& Value);
 	bool TryVault(ACharacter* OwnerCharacter);
+	void HandleLanded(ACharacter* OwnerCharacter);
 	void RequestExitCover();
 
 protected:
@@ -101,6 +109,7 @@ private:
 	void UpdateCoverApproach(ACharacter* OwnerCharacter, float DeltaTime);
 	void UpdateCoverRotation(ACharacter* OwnerCharacter, float DeltaTime);
 	FVector GetCoverTangentAlignedToCamera(const ACharacter* OwnerCharacter) const;
+	bool FindVaultLandingLocation(const ACharacter* OwnerCharacter, FVector& OutLandingLocation) const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UCoverComponent> CoverComponent;
@@ -108,4 +117,5 @@ private:
 	float CoverApproachTime = 0.f;
 	float CoverFacingSign = 1.f;
 	float CoverMoveAxis = 0.f;
+	bool bIsVaulting = false;
 };

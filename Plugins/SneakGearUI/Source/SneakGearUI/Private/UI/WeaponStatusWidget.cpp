@@ -114,6 +114,7 @@ void UWeaponStatusWidget::UpdateFromPlayer()
 	if (!PlayerUIDataSource->GetWeaponStatusViewData(WeaponStatus) || !WeaponStatus.bHasWeapon)
 	{
 		UpdateVisibility(false);
+		// TODO: Remove to Widget Disappears
 		if (WeaponNameText)
 		{
 			WeaponNameText->SetText(NSLOCTEXT("SneakGear", "WeaponNone", "Weapon: None"));

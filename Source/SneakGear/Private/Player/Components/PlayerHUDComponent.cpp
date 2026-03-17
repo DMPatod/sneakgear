@@ -6,12 +6,14 @@
 #include "Player/SneakGearPlayerController.h"
 #include "Radar/RadarRegistrySubsystem.h"
 #include "UI/CrosshairWidget.h"
+#include "UI/InfoPromptNativeWidget.h"
 #include "UI/PlayerHUDWidget.h"
 #include "UI/RadarWidget.h"
 
 UPlayerHUDComponent::UPlayerHUDComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	VaultPromptWidgetClass = UInfoPromptNativeWidget::StaticClass();
 }
 
 void UPlayerHUDComponent::Initialize(TSubclassOf<UPlayerHUDWidget> InPlayerHUDWidgetClass,
@@ -44,6 +46,7 @@ void UPlayerHUDComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		RadarRefreshCooldown = RadarRefreshInterval;
 	}
 	UpdateCrosshairWidget(DeltaTime);
+	UpdateVaultPromptWidget();
 }
 
 void UPlayerHUDComponent::OnWeaponFired()
@@ -131,6 +134,17 @@ void UPlayerHUDComponent::CreateHUDWidgets()
 			PlayerHUDWidget->AddToViewport();
 		}
 	}
+
+	if (!VaultPromptWidget && VaultPromptWidgetClass)
+	{
+		VaultPromptWidget = CreateWidget<UInfoPromptNativeWidget>(Controller, VaultPromptWidgetClass);
+		if (VaultPromptWidget)
+		{
+			VaultPromptWidget->AddToViewport(VaultPromptZOrder);
+			VaultPromptWidget->SetPromptText(NSLOCTEXT("SneakGearUI", "VaultPromptText", "Space to vault"));
+			VaultPromptWidget->SetPromptVisible(false);
+		}
+	}
 }
 
 void UPlayerHUDComponent::UpdateRadarWidget()
@@ -186,6 +200,19 @@ void UPlayerHUDComponent::UpdateCrosshairWidget(float DeltaSeconds)
 	SpreadTarget = FMath::Clamp(SpreadTarget, CrosshairSpread.Min, CrosshairSpread.Max);
 	SpreadCurrent = FMath::FInterpTo(SpreadCurrent, SpreadTarget, DeltaSeconds, CrosshairSpread.InterpolationSpeed);
 	CrosshairWidget->SetSpread(SpreadCurrent);
+}
+
+void UPlayerHUDComponent::UpdateVaultPromptWidget()
+{
+	if (!VaultPromptWidget)
+	{
+		return;
+	}
+
+	const ASneakGearPlayerCharacter* Player = GetOwningSneakGearPlayerCharacter();
+	const bool bShowVaultPrompt = Player && Player->IsVaultAvailable() && !Player->IsVaulting();
+	VaultPromptWidget->SetPromptText(NSLOCTEXT("SneakGearUI", "VaultPromptText", "Space to vault"));
+	VaultPromptWidget->SetPromptVisible(bShowVaultPrompt);
 }
 
 ASneakGearPlayerController* UPlayerHUDComponent::GetOwningSneakGearPlayerController() const

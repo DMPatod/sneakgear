@@ -13,6 +13,28 @@ enum class EPlayerItemSlot : uint8
 	Utility UMETA(DisplayName="Utility")
 };
 
+UENUM(BlueprintType)
+enum class EAmmoType : uint8
+{
+	None UMETA(DisplayName="None"),
+	Light UMETA(DisplayName="Light"),
+	Shell UMETA(DisplayName="Shell"),
+	Heavy UMETA(DisplayName="Heavy"),
+	Energy UMETA(DisplayName="Energy")
+};
+
+USTRUCT(BlueprintType)
+struct SNEAKGEARCORE_API FAmmoReserve
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ammo")
+	int32 Current = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ammo")
+	int32 Max = 0;
+};
+
 USTRUCT(BlueprintType)
 struct SNEAKGEARCORE_API FPlayerInventoryItem
 {

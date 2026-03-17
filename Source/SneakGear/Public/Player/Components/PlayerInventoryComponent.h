@@ -120,6 +120,12 @@ public:
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	int32 GetActiveWeaponClipSize() const;
 
+	UFUNCTION(BlueprintCallable, Category="Inventory|Ammo")
+	bool SetAmmoReserve(EAmmoType AmmoType, int32 CurrentAmount, int32 MaxAmount);
+
+	UFUNCTION(BlueprintPure, Category="Inventory|Ammo")
+	int32 GetReserveAmmoCountForType(EAmmoType AmmoType) const;
+
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	int32 GetReserveAmmoCount() const;
 
@@ -192,6 +198,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	FPlayerInventoryItem SecondaryWeaponItem;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory|Ammo")
+	TMap<EAmmoType, FAmmoReserve> InitialAmmoReserves;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory|Ammo")
+	TMap<EAmmoType, FAmmoReserve> AmmoReserves;
+
 private:
 	struct FWeaponSlotRuntime
 	{
@@ -238,6 +250,7 @@ private:
 	const FWeaponSlotRuntime* ResolveWeaponRuntime(EPlayerItemSlot Slot) const;
 	bool HasValidWeaponItem(EPlayerItemSlot Slot) const;
 	bool HasValidWeaponSelection(EPlayerItemSlot Slot) const;
+	EAmmoType GetAmmoTypeForSlot(EPlayerItemSlot Slot) const;
 	bool SetWeaponClassForSlot(EPlayerItemSlot Slot, TSubclassOf<AWeaponBase> WeaponClass);
 	AWeaponBase* SpawnWeapon(TSubclassOf<AWeaponBase> WeaponClass) const;
 	void AttachWeapon(AWeaponBase* Weapon, FName SocketName, bool bUseHolsterOffset) const;
@@ -248,6 +261,9 @@ private:
 	void ClearRuntimeWeapon(FWeaponSlotRuntime& Runtime) const;
 	void OnPrimaryWeaponFired();
 	void OnSecondaryWeaponFired();
+	FAmmoReserve* FindAmmoReserveMutable(EAmmoType AmmoType);
+	const FAmmoReserve* FindAmmoReserve(EAmmoType AmmoType) const;
+	int32 ConsumeReserveAmmo(EAmmoType AmmoType, int32 Amount);
 	AActor* FindBestNearbyFloorPickup(float SearchRadius) const;
 	bool PickupRequiresWeaponSwap(const UPlayerItemPickupComponent* PickupComponent) const;
 };

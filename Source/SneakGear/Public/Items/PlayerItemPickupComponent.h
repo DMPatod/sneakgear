@@ -32,6 +32,6 @@ public:
 	void ConsumePickup();
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup")
+	UPROPERTY(Transient)
 	TObjectPtr<UPlayerItemDefinition> ItemDefinition;
 };

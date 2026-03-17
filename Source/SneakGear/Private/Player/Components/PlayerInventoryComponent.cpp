@@ -38,6 +38,13 @@ void UPlayerInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	AmmoReserves = InitialAmmoReserves;
+	for (TPair<EAmmoType, FAmmoReserve>& Entry : AmmoReserves)
+	{
+		Entry.Value.Max = FMath::Max(Entry.Value.Max, 0);
+		Entry.Value.Current = FMath::Clamp(Entry.Value.Current, 0, Entry.Value.Max);
+	}
+
 	PrimaryWeaponRuntime.WeaponActor = SpawnWeapon(PrimaryWeaponClass);
 	SecondaryWeaponRuntime.WeaponActor = SpawnWeapon(SecondaryWeaponClass);
 	UnarmedWeapon = SpawnWeapon(UnarmedWeaponClass);
@@ -680,8 +687,7 @@ bool UPlayerInventoryComponent::ReloadActiveWeapon()
 	}
 
 	FWeaponSlotRuntime* ActiveRuntime = ResolveWeaponRuntimeMutable(ActiveWeaponSlot);
-	APlayerCharacterBase* OwnerPlayer = Cast<APlayerCharacterBase>(GetOwner());
-	if (!ActiveRuntime || !ActiveRuntime->WeaponActor || !OwnerPlayer)
+	if (!ActiveRuntime || !ActiveRuntime->WeaponActor)
 	{
 		return false;
 	}
@@ -693,15 +699,15 @@ bool UPlayerInventoryComponent::ReloadActiveWeapon()
 		return false;
 	}
 
-	const int32 AvailableReserve = FMath::Max(FMath::FloorToInt(OwnerPlayer->GetAmmo()), 0);
+	const EAmmoType AmmoType = GetAmmoTypeForSlot(ActiveWeaponSlot);
+	const int32 AvailableReserve = GetReserveAmmoCountForType(AmmoType);
 	const int32 AmmoToLoad = FMath::Min(MissingAmmo, AvailableReserve);
 	if (AmmoToLoad <= 0)
 	{
 		return false;
 	}
 
-	const float ConsumedReserve = OwnerPlayer->ConsumeAmmo(static_cast<float>(AmmoToLoad));
-	const int32 LoadedAmmo = FMath::Clamp(FMath::FloorToInt(ConsumedReserve), 0, AmmoToLoad);
+	const int32 LoadedAmmo = FMath::Clamp(ConsumeReserveAmmo(AmmoType, AmmoToLoad), 0, AmmoToLoad);
 	ActiveRuntime->InClip = FMath::Clamp(ActiveRuntime->InClip + LoadedAmmo, 0, ClipSize);
 	if (LoadedAmmo > 0)
 	{
@@ -734,6 +740,12 @@ bool UPlayerInventoryComponent::HasValidWeaponSelection(EPlayerItemSlot Slot) co
 	return HasValidWeaponItem(Slot) && GetWeaponInSlot(Slot) != nullptr;
 }
 
+EAmmoType UPlayerInventoryComponent::GetAmmoTypeForSlot(EPlayerItemSlot Slot) const
+{
+	const AWeaponBase* Weapon = GetWeaponInSlot(Slot);
+	return Weapon ? Weapon->GetAmmoType() : EAmmoType::None;
+}
+
 bool UPlayerInventoryComponent::SetWeaponClassForSlot(EPlayerItemSlot Slot, TSubclassOf<AWeaponBase> WeaponClass)
 {
 	FWeaponSlotRuntime* Runtime = ResolveWeaponRuntimeMutable(Slot);
@@ -761,6 +773,8 @@ bool UPlayerInventoryComponent::SetWeaponClassForSlot(EPlayerItemSlot Slot, TSub
 	}
 
 	SyncWeaponAttachments();
+	OnItemSlotUpdated.Broadcast(Slot);
+	OnInventoryStateChanged.Broadcast();
 	return Runtime->WeaponActor != nullptr || !WeaponClass;
 }
 
@@ -784,10 +798,29 @@ int32 UPlayerInventoryComponent::GetActiveWeaponClipSize() const
 	return FMath::Max(GetClipSize(ActiveWeaponSlot), 0);
 }
 
+bool UPlayerInventoryComponent::SetAmmoReserve(EAmmoType AmmoType, int32 CurrentAmount, int32 MaxAmount)
+{
+	if (AmmoType == EAmmoType::None)
+	{
+		return false;
+	}
+
+	FAmmoReserve& Reserve = AmmoReserves.FindOrAdd(AmmoType);
+	Reserve.Max = FMath::Max(MaxAmount, 0);
+	Reserve.Current = FMath::Clamp(CurrentAmount, 0, Reserve.Max);
+	OnInventoryStateChanged.Broadcast();
+	return true;
+}
+
+int32 UPlayerInventoryComponent::GetReserveAmmoCountForType(EAmmoType AmmoType) const
+{
+	const FAmmoReserve* Reserve = FindAmmoReserve(AmmoType);
+	return Reserve ? FMath::Max(Reserve->Current, 0) : 0;
+}
+
 int32 UPlayerInventoryComponent::GetReserveAmmoCount() const
 {
-	const APlayerCharacterBase* OwnerPlayer = Cast<APlayerCharacterBase>(GetOwner());
-	return OwnerPlayer ? FMath::Max(FMath::FloorToInt(OwnerPlayer->GetAmmo()), 0) : 0;
+	return GetReserveAmmoCountForType(GetAmmoTypeForSlot(ActiveWeaponSlot));
 }
 
 bool UPlayerInventoryComponent::WasActiveWeaponFiredRecently(float WindowSeconds) const
@@ -1243,6 +1276,29 @@ void UPlayerInventoryComponent::OnPrimaryWeaponFired()
 void UPlayerInventoryComponent::OnSecondaryWeaponFired()
 {
 	HandleWeaponFired(EPlayerItemSlot::SecondaryWeapon);
+}
+
+FAmmoReserve* UPlayerInventoryComponent::FindAmmoReserveMutable(EAmmoType AmmoType)
+{
+	return AmmoType == EAmmoType::None ? nullptr : AmmoReserves.Find(AmmoType);
+}
+
+const FAmmoReserve* UPlayerInventoryComponent::FindAmmoReserve(EAmmoType AmmoType) const
+{
+	return AmmoType == EAmmoType::None ? nullptr : AmmoReserves.Find(AmmoType);
+}
+
+int32 UPlayerInventoryComponent::ConsumeReserveAmmo(EAmmoType AmmoType, int32 Amount)
+{
+	FAmmoReserve* Reserve = FindAmmoReserveMutable(AmmoType);
+	if (!Reserve || Amount <= 0)
+	{
+		return 0;
+	}
+
+	const int32 Consumed = FMath::Clamp(Amount, 0, FMath::Max(Reserve->Current, 0));
+	Reserve->Current = FMath::Max(Reserve->Current - Consumed, 0);
+	return Consumed;
 }
 
 AActor* UPlayerInventoryComponent::FindBestNearbyFloorPickup(float SearchRadius) const

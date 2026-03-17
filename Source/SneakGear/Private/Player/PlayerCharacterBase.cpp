@@ -385,16 +385,6 @@ void APlayerCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->SetNumericAttributeBase(UAmmoAttributeSet::GetMaxAmmoAttribute(), FMath::Max(InitialMaxAmmo, 0.f));
-		AbilitySystemComponent->SetNumericAttributeBase(
-			UAmmoAttributeSet::GetAmmoAttribute(),
-			FMath::Clamp(InitialAmmo, 0.f, FMath::Max(InitialMaxAmmo, 0.f))
-		);
-	}
-
 	InitializeGameplayState();
 	BindUIDataDelegates();
 }

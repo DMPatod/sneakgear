@@ -11,6 +11,7 @@ ATestWeapon::ATestWeapon()
 	PrimaryFireModeClass = UTestWeaponFireModeComponent::StaticClass();
 	ClipSize = 3;
 	FireRate = 10.f;
+	AmmoType = EAmmoType::Light;
 }
 
 UTestWeaponFireModeComponent* ATestWeapon::GetTestFireMode() const
