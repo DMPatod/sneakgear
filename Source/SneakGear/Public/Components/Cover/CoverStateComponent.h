@@ -6,6 +6,7 @@
 #include "CoverStateComponent.generated.h"
 
 struct FInputActionValue;
+class APlayerCharacterBase;
 
 UENUM(BlueprintType)
 enum class ECoverState : uint8
@@ -43,7 +44,13 @@ public:
 		return CoverMaxSpeed;
 	}
 
+	float GetCurrentCoverObstacleHeight() const
+	{
+		return CurrentCover.ObstacleHeight;
+	}
+
 	bool CanVault(const ACharacter* OwnerCharacter) const;
+	float GetCurrentVaultMaxObstacleHeight(const ACharacter* OwnerCharacter) const;
 
 	bool IsVaulting() const
 	{
@@ -54,6 +61,11 @@ public:
 	bool TryVault(ACharacter* OwnerCharacter);
 	void HandleLanded(ACharacter* OwnerCharacter);
 	void RequestExitCover();
+
+#if WITH_DEV_AUTOMATION_TESTS
+	void TestSetLockedCover(const FCoverHit& Hit);
+	void TestSetVaultMaxObstacleHeights(float InStandingMaxHeight, float InCrouchingMaxHeight);
+#endif
 
 protected:
 	virtual void BeginPlay() override;
@@ -102,7 +114,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Cover|Vault")
 	float VaultLaunchUp = 240.f;
 
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float StandingVaultMaxObstacleHeight = 70.f;
+
+	UPROPERTY(EditAnywhere, Category="Cover|Vault")
+	float CrouchingVaultMaxObstacleHeight = 90.f;
+
 private:
+	float GetVaultMaxObstacleHeightForStance(const APlayerCharacterBase* PlayerCharacter) const;
 	void EnterCover(ACharacter* OwnerCharacter, const FCoverHit& Hit);
 	void LockCover(ACharacter* OwnerCharacter);
 	void ExitCover(ACharacter* OwnerCharacter);

@@ -1,53 +1,13 @@
 #include "UI/PlayerVitalsWidget.h"
 
-#include "Blueprint/WidgetTree.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
-#include "Components/VerticalBox.h"
 #include "GameFramework/Pawn.h"
 #include "UI/PlayerUIDataSource.h"
 
 void UPlayerVitalsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-	if (!HealthBar && !StaminaBar && !HealthText && !StaminaText)
-	{
-		if (!WidgetTree)
-		{
-			WidgetTree = NewObject<UWidgetTree>(this, TEXT("PlayerVitalsWidgetTree"));
-			if (!WidgetTree)
-			{
-				return;
-			}
-		}
-
-		auto Root = WidgetTree->RootWidget;
-		if (!Root)
-		{
-			Root = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VitalsRoot"));
-			WidgetTree->RootWidget = Root;
-		}
-
-		auto* VBox = Cast<UVerticalBox>(Root);
-		if (!VBox)
-		{
-			VBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VitalsRoot"));
-			WidgetTree->RootWidget = VBox;
-		}
-
-		HealthText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("HealthText"));
-		VBox->AddChild(HealthText);
-
-		HealthBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("HealthBar"));
-		VBox->AddChild(HealthBar);
-
-		StaminaText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("StaminaText"));
-		VBox->AddChild(StaminaText);
-
-		StaminaBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("StaminaBar"));
-		VBox->AddChild(StaminaBar);
-	}
 
 	if (!CachedPlayer.IsValid())
 	{

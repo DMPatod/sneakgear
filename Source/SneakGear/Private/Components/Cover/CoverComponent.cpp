@@ -83,7 +83,6 @@ FCoverHit UCoverComponent::FindCover() const
 	const float CapsuleHalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 96.f;
 	const float FeetZ = ActorLocation.Z - CapsuleHalfHeight;
 	float ObstacleHeight = 0.f;
-	bool bIsCrouchHeightCover = false;
 
 	{
 		FCollisionQueryParams TopParams(SCENE_QUERY_STAT(CoverTopScan), false);
@@ -103,7 +102,6 @@ FCoverHit UCoverComponent::FindCover() const
 		if (bTopHit)
 		{
 			ObstacleHeight = FMath::Max(0.f, TopHit.ImpactPoint.Z - FeetZ);
-			bIsCrouchHeightCover = ObstacleHeight >= CrouchCoverMinHeight && ObstacleHeight <= CrouchCoverMaxHeight;
 		}
 	}
 
@@ -115,7 +113,6 @@ FCoverHit UCoverComponent::FindCover() const
 	Out.SnapRotation = Tangent.Rotation();
 	Out.DistanceToWall = FVector::Dist(Hit.ImpactPoint, Start);
 	Out.ObstacleHeight = ObstacleHeight;
-	Out.bIsCrouchHeightCover = bIsCrouchHeightCover;
 
 	if (bDrawDebug)
 	{

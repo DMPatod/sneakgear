@@ -4,11 +4,80 @@
 
 #include "Items/MedkitItemDefinition.h"
 #include "Items/ScannerItemDefinition.h"
+#include "Components/Cover/CoverStateComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "Game/GAS/HealthAttributeSet.h"
 
 #include "SneakGearTestTypes.h"
+#include "TestCharacters.h"
 #include "TestWorldHelpers.h"
+
+namespace
+{
+void TickWorld(UWorld* World, int32 TickCount = 1, float DeltaSeconds = 1.f / 60.f)
+{
+	if (!World)
+	{
+		return;
+	}
+
+	for (int32 Index = 0; Index < TickCount; ++Index)
+	{
+		World->Tick(LEVELTICK_All, DeltaSeconds);
+	}
+}
+
+bool ConfigureCharacterForVaultTest(UWorld* World, ASneakGearPlayerCharacter* Character, FAutomationTestBase& Test,
+	float ObstacleHeight = 70.f, float StandingMaxHeight = 60.f, float CrouchingMaxHeight = 80.f)
+{
+	Test.TestNotNull(TEXT("Test world should exist for cover setup"), World);
+	Test.TestNotNull(TEXT("Player character should exist for cover setup"), Character);
+	if (!World || !Character)
+	{
+		return false;
+	}
+
+	ATestCoverObstacle* Floor = World->SpawnActor<ATestCoverObstacle>(FVector(230.f, 0.f, -25.f), FRotator::ZeroRotator);
+	Test.TestNotNull(TEXT("Test floor should spawn"), Floor);
+	if (!Floor)
+	{
+		return false;
+	}
+
+	Floor->SetBoxExtent(FVector(160.f, 160.f, 25.f));
+
+	Character->SetActorLocation(FVector(0.f, 0.f, 96.f));
+	Character->SetActorRotation(FRotator::ZeroRotator);
+
+	if (UCharacterMovementComponent* Move = Character->GetCharacterMovement())
+	{
+		Move->SetMovementMode(MOVE_Walking);
+	}
+
+	UCoverStateComponent* CoverState = Character->FindComponentByClass<UCoverStateComponent>();
+	Test.TestNotNull(TEXT("Cover state component should exist"), CoverState);
+	if (!CoverState)
+	{
+		return false;
+	}
+
+	FCoverHit CoverHit;
+	CoverHit.bValid = true;
+	CoverHit.ImpactPoint = FVector(100.f, 0.f, 0.f);
+	CoverHit.Normal = FVector(-1.f, 0.f, 0.f);
+	CoverHit.Tangent = FVector(0.f, 1.f, 0.f);
+	CoverHit.SnapLocation = FVector(58.f, 0.f, 96.f);
+	CoverHit.SnapRotation = FRotator::ZeroRotator;
+	CoverHit.ObstacleHeight = ObstacleHeight;
+	CoverState->TestSetLockedCover(CoverHit);
+	CoverState->TestSetVaultMaxObstacleHeights(StandingMaxHeight, CrouchingMaxHeight);
+
+	TickWorld(World, 2);
+	Test.TestTrue(TEXT("Character should report locked cover after test setup"), Character->IsInCover());
+	return Character->IsInCover();
+}
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBaseCharacterDeathOnlyRunsOnceTest,
 	"SneakGear.Characters.BaseCharacter.DeathOnlyRunsOnce",
@@ -266,6 +335,114 @@ bool FSneakGearPlayerCharacterFullInputFlowTest::RunTest(const FString& Paramete
 		EPlayerItemSlot::PrimaryWeapon);
 	TestTrue(TEXT("Weapon-state delegate should have fired during the input flow"), WeaponStateBroadcasts > 0);
 	TestNotNull(TEXT("Primary weapon input should leave an active runtime weapon"), Character->GetCurrentWeapon());
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerCharacterStandingCoverAllowsVaultTest,
+	"SneakGear.Player.SneakGearPlayerCharacter.StandingCoverAllowsVault",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSneakGearPlayerCharacterStandingCoverAllowsVaultTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Player character should spawn"), Character);
+	if (!World || !Character)
+	{
+		return false;
+	}
+
+	if (!ConfigureCharacterForVaultTest(World, Character, *this, 50.f, 60.f, 80.f))
+	{
+		return false;
+	}
+
+	TestEqual(TEXT("Character should still be standing before the vault check"), Character->Stance, EStance::Standing);
+	TestTrue(TEXT("Standing cover should expose vault availability when the obstacle is under the standing max height"),
+		Character->IsVaultAvailable());
+
+	Character->TestTriggerJumpInput();
+
+	TestTrue(TEXT("Jump input should start vaulting from standing when the obstacle fits the standing max"),
+		Character->IsVaulting());
+	TestEqual(TEXT("Standing vault should keep the stance on standing"), Character->Stance, EStance::Standing);
+	TestFalse(TEXT("Vaulting from standing should exit locked cover"), Character->IsInCover());
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerCharacterCrouchCoverAllowsVaultTest,
+	"SneakGear.Player.SneakGearPlayerCharacter.CrouchCoverAllowsVault",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSneakGearPlayerCharacterCrouchCoverAllowsVaultTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Player character should spawn"), Character);
+	if (!World || !Character)
+	{
+		return false;
+	}
+
+	if (!ConfigureCharacterForVaultTest(World, Character, *this, 70.f, 60.f, 80.f))
+	{
+		return false;
+	}
+
+	TestFalse(TEXT("Standing should not be able to vault an obstacle above the standing max height"),
+		Character->IsVaultAvailable());
+
+	Character->SetStance(EStance::Crouching);
+	TickWorld(World, 2);
+
+	TestEqual(TEXT("Character should be crouching before the vault attempt"), Character->Stance, EStance::Crouching);
+	TestTrue(TEXT("Crouching should expose vault availability when the obstacle fits the crouching max height"),
+		Character->IsVaultAvailable());
+
+	Character->TestTriggerJumpInput();
+
+	TestTrue(TEXT("Jump input should start vaulting when crouched in valid cover"), Character->IsVaulting());
+	TestEqual(TEXT("Vault takeoff should force the player back to standing"), Character->Stance, EStance::Standing);
+	TestFalse(TEXT("Vaulting should exit the locked cover state"), Character->IsInCover());
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerCharacterProneCannotVaultTest,
+	"SneakGear.Player.SneakGearPlayerCharacter.ProneCannotVault",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSneakGearPlayerCharacterProneCannotVaultTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Player character should spawn"), Character);
+	if (!World || !Character)
+	{
+		return false;
+	}
+
+	if (!ConfigureCharacterForVaultTest(World, Character, *this, 50.f, 60.f, 80.f))
+	{
+		return false;
+	}
+
+	Character->SetStance(EStance::Prone);
+
+	TestEqual(TEXT("Character should be prone before the vault check"), Character->Stance, EStance::Prone);
+	TestFalse(TEXT("Prone should never expose vault availability"), Character->IsVaultAvailable());
+
+	Character->TestTriggerJumpInput();
+
+	TestFalse(TEXT("Jump input while prone should not start vaulting"), Character->IsVaulting());
 
 	return true;
 }

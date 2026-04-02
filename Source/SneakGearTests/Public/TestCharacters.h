@@ -9,6 +9,7 @@
 #include "TestCharacters.generated.h"
 
 class AWeaponBase;
+class UBoxComponent;
 class UTestPlayerInventoryComponent;
 
 UCLASS()
@@ -81,4 +82,19 @@ class SNEAKGEARTESTS_API ATestGuardCharacter : public AGuardCharacter
 
 protected:
 	virtual void BeginPlay() override;
+};
+
+UCLASS()
+class SNEAKGEARTESTS_API ATestCoverObstacle : public AActor
+{
+	GENERATED_BODY()
+
+public:
+	ATestCoverObstacle();
+
+	void SetBoxExtent(const FVector& NewExtent);
+
+private:
+	UPROPERTY(VisibleAnywhere, Category="Tests")
+	TObjectPtr<UBoxComponent> BoxComponent;
 };

@@ -15,6 +15,7 @@ public:
 	UCrosshairNativeWidget(const FObjectInitializer& ObjectInitializer);
 
 protected:
+	virtual bool Initialize() override;
 	virtual void NativeConstruct() override;
 
 	UPROPERTY(EditDefaultsOnly, Category="Crosshair|Style")

@@ -23,6 +23,8 @@ public:
 	bool IsInCover() const;
 	float GetCoverMoveAxis() const;
 	bool IsVaultAvailable() const;
+	float GetCoverObstacleHeight() const;
+	float GetCurrentVaultMaxObstacleHeight() const;
 
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	UPlayerInventoryComponent* GetItemComponent() const
@@ -53,6 +55,7 @@ public:
 	void TestTriggerUseSupportItemInput();
 	void TestTriggerUseUtilityItemInput();
 	void TestTriggerPrimaryWeaponInput();
+	void TestTriggerJumpInput();
 #endif
 
 protected:

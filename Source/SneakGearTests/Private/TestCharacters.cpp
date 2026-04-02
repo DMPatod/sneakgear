@@ -1,6 +1,7 @@
 #include "TestCharacters.h"
 
 #include "AbilitySystemComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Game/GAS/AmmoAttributeSet.h"
 #include "Game/GAS/HealthAttributeSet.h"
@@ -89,4 +90,23 @@ UGuardPatrolComponent* ATestPatrolPawn::GetPatrolComponent() const
 
 void ATestGuardCharacter::BeginPlay()
 {
+}
+
+ATestCoverObstacle::ATestCoverObstacle()
+{
+	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
+	SetRootComponent(BoxComponent);
+
+	BoxComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	BoxComponent->SetCollisionObjectType(ECC_WorldStatic);
+	BoxComponent->SetCollisionResponseToAllChannels(ECR_Block);
+	BoxComponent->SetGenerateOverlapEvents(false);
+}
+
+void ATestCoverObstacle::SetBoxExtent(const FVector& NewExtent)
+{
+	if (BoxComponent)
+	{
+		BoxComponent->SetBoxExtent(NewExtent);
+	}
 }

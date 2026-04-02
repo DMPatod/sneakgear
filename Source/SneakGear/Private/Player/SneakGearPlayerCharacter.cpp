@@ -30,6 +30,16 @@ float ASneakGearPlayerCharacter::GetCoverMoveAxis() const
 	return CoverStateComponent ? CoverStateComponent->GetCoverMoveAxis() : 0.f;
 }
 
+float ASneakGearPlayerCharacter::GetCoverObstacleHeight() const
+{
+	return CoverStateComponent ? CoverStateComponent->GetCurrentCoverObstacleHeight() : 0.f;
+}
+
+float ASneakGearPlayerCharacter::GetCurrentVaultMaxObstacleHeight() const
+{
+	return CoverStateComponent ? CoverStateComponent->GetCurrentVaultMaxObstacleHeight(this) : 0.f;
+}
+
 // Lifecycle
 void ASneakGearPlayerCharacter::BeginPlay()
 {
@@ -451,6 +461,11 @@ void ASneakGearPlayerCharacter::TestTriggerPrimaryWeaponInput()
 		InventoryInteractionComponent->HandlePrimaryWeaponPressed();
 		InventoryInteractionComponent->HandlePrimaryWeaponReleased();
 	}
+}
+
+void ASneakGearPlayerCharacter::TestTriggerJumpInput()
+{
+	OnJumpPressed();
 }
 #endif
 

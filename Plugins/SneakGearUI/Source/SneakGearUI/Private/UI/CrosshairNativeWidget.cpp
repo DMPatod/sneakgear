@@ -9,34 +9,41 @@
 
 namespace
 {
-void ConfigureCanvasSlot(UCanvasPanelSlot* Slot, const FVector2D& Size, const FVector2D& Position)
-{
-	if (!Slot)
+	void ConfigureCanvasSlot(UCanvasPanelSlot* Slot, const FVector2D& Size, const FVector2D& Position)
 	{
-		return;
-	}
+		if (!Slot)
+		{
+			return;
+		}
 
-	Slot->SetAutoSize(false);
-	Slot->SetAnchors(FAnchors(0.5f, 0.5f));
-	Slot->SetAlignment(FVector2D(0.5f, 0.5f));
-	Slot->SetSize(Size);
-	Slot->SetPosition(Position);
-}
+		Slot->SetAutoSize(false);
+		Slot->SetAnchors(FAnchors(0.5f, 0.5f));
+		Slot->SetAlignment(FVector2D(0.5f, 0.5f));
+		Slot->SetSize(Size);
+		Slot->SetPosition(Position);
+	}
 }
 
 UCrosshairNativeWidget::UCrosshairNativeWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	static ConstructorHelpers::FObjectFinder<UTexture2D> WhiteTextureFinder(TEXT("/Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"));
+	static ConstructorHelpers::FObjectFinder<UTexture2D> WhiteTextureFinder(
+		TEXT("/Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"));
 	if (WhiteTextureFinder.Succeeded())
 	{
 		WhiteTexture = WhiteTextureFinder.Object;
 	}
 }
 
+bool UCrosshairNativeWidget::Initialize()
+{
+	const bool Result = Super::Initialize();
+	BuildWidgetTree();
+	return Result;
+}
+
 void UCrosshairNativeWidget::NativeConstruct()
 {
-	BuildWidgetTree();
 	Super::NativeConstruct();
 }
 
@@ -99,3 +106,5 @@ void UCrosshairNativeWidget::BuildWidgetTree()
 		                    FVector2D(0.f, 0.f));
 	}
 }
+
+

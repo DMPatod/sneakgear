@@ -63,6 +63,7 @@ private:
 	void UpdateRadarWidget();
 	void UpdateCrosshairWidget(float DeltaSeconds);
 	void UpdateVaultPromptWidget();
+	void UpdateCoverDebugWidget();
 	ASneakGearPlayerController* GetOwningSneakGearPlayerController() const;
 	ASneakGearPlayerCharacter* GetOwningSneakGearPlayerCharacter() const;
 	URadarWidget* GetRadarWidget() const;
@@ -88,11 +89,16 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UInfoPromptNativeWidget> VaultPromptWidget;
 
+	TObjectPtr<UInfoPromptNativeWidget> CoverDebugWidget;
+
 	FCrosshairSpreadConfig CrosshairSpread;
 	TArray<FRadarContact> RadarContactsCache;
 	float RadarRefreshCooldown = 0.f;
 	float RadarRefreshInterval = 0.1f;
 	int32 VaultPromptZOrder = 6;
+	int32 CoverDebugWidgetZOrder = 7;
+	UPROPERTY(EditAnywhere, Category="Debug")
+	bool bShowCoverDebugWidget = false;
 	float SpreadCurrent = 0.f;
 	float SpreadTarget = 0.f;
 	bool bShowCrosshairOnlyWhenAiming = false;

@@ -3,6 +3,7 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Widget.h"
 #include "UI/EventFeedWidget.h"
+#include "UI/PlayerVitalsNativeWidget.h"
 #include "UI/PlayerVitalsWidget.h"
 #include "UI/RadarWidget.h"
 #include "UI/PlayerDebugWidget.h"
@@ -48,6 +49,12 @@ void UPlayerHUDWidget::NativeConstruct()
 
 void UPlayerHUDWidget::NativeDestruct()
 {
+	if (RuntimePlayerVitalsWidget)
+	{
+		RuntimePlayerVitalsWidget->RemoveFromParent();
+		RuntimePlayerVitalsWidget = nullptr;
+	}
+
 	if (RuntimeStealthDebugWidget)
 	{
 		RuntimeStealthDebugWidget->RemoveFromParent();
@@ -73,7 +80,35 @@ void UPlayerHUDWidget::ApplyDisplaySettings()
 			RuntimeStealthDebugWidget->RemoveFromParent();
 			RuntimeStealthDebugWidget = nullptr;
 		}
-		return;
+	}
+
+	if (PlayerVitalsWidget)
+	{
+		if (RuntimePlayerVitalsWidget)
+		{
+			RuntimePlayerVitalsWidget->RemoveFromParent();
+			RuntimePlayerVitalsWidget = nullptr;
+		}
+	}
+	else if (DisplaySettings.bShowPlayerVitals)
+	{
+		if (!RuntimePlayerVitalsWidget && GetOwningPlayer())
+		{
+			RuntimePlayerVitalsWidget = CreateWidget<UPlayerVitalsWidget>(
+				GetOwningPlayer(),
+				UPlayerVitalsNativeWidget::StaticClass()
+			);
+
+			if (RuntimePlayerVitalsWidget)
+			{
+				RuntimePlayerVitalsWidget->AddToViewport(PlayerVitalsZOrder);
+			}
+		}
+	}
+	else if (RuntimePlayerVitalsWidget)
+	{
+		RuntimePlayerVitalsWidget->RemoveFromParent();
+		RuntimePlayerVitalsWidget = nullptr;
 	}
 
 	if (DisplaySettings.bShowStealthDebug)

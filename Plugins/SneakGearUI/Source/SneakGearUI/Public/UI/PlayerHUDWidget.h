@@ -7,6 +7,7 @@
 class UStanceWidget;
 class URadarWidget;
 class UPlayerVitalsWidget;
+class UPlayerVitalsNativeWidget;
 class UWeaponStatusWidget;
 class UEventFeedWidget;
 class UPlayerDebugWidget;
@@ -80,6 +81,9 @@ protected:
 
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UPlayerVitalsWidget> PlayerVitalsWidget;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UPlayerVitalsWidget> RuntimePlayerVitalsWidget;
 
 	UPROPERTY(meta=(BindWidgetOptional))
 	TObjectPtr<UWeaponStatusWidget> WeaponStatusWidget;

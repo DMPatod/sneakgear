@@ -141,6 +141,12 @@ bool UCoverStateComponent::CanVault(const ACharacter* OwnerCharacter) const
 	return FindVaultLandingLocation(OwnerCharacter, LandingLocation);
 }
 
+float UCoverStateComponent::GetCurrentVaultMaxObstacleHeight(const ACharacter* OwnerCharacter) const
+{
+	const APlayerCharacterBase* ThirdPersonCharacter = Cast<APlayerCharacterBase>(OwnerCharacter);
+	return GetVaultMaxObstacleHeightForStance(ThirdPersonCharacter);
+}
+
 void UCoverStateComponent::HandleLanded(ACharacter* OwnerCharacter)
 {
 	if (!OwnerCharacter)
@@ -162,13 +168,19 @@ bool UCoverStateComponent::FindVaultLandingLocation(const ACharacter* OwnerChara
 {
 	OutLandingLocation = FVector::ZeroVector;
 
-	if (!OwnerCharacter || CoverState != ECoverState::Locked || !CurrentCover.bValid || !CurrentCover.bIsCrouchHeightCover)
+	if (!OwnerCharacter || CoverState != ECoverState::Locked || !CurrentCover.bValid)
 	{
 		return false;
 	}
 
 	const APlayerCharacterBase* ThirdPersonCharacter = Cast<APlayerCharacterBase>(OwnerCharacter);
-	if (!ThirdPersonCharacter || ThirdPersonCharacter->Stance != EStance::Crouching)
+	if (!ThirdPersonCharacter)
+	{
+		return false;
+	}
+
+	const float MaxVaultObstacleHeight = GetVaultMaxObstacleHeightForStance(ThirdPersonCharacter);
+	if (MaxVaultObstacleHeight <= 0.f || CurrentCover.ObstacleHeight <= 0.f || CurrentCover.ObstacleHeight > MaxVaultObstacleHeight)
 	{
 		return false;
 	}
@@ -229,6 +241,25 @@ bool UCoverStateComponent::FindVaultLandingLocation(const ACharacter* OwnerChara
 	return true;
 }
 
+float UCoverStateComponent::GetVaultMaxObstacleHeightForStance(const APlayerCharacterBase* PlayerCharacter) const
+{
+	if (!PlayerCharacter)
+	{
+		return 0.f;
+	}
+
+	switch (PlayerCharacter->Stance)
+	{
+	case EStance::Standing:
+		return StandingVaultMaxObstacleHeight;
+	case EStance::Crouching:
+		return CrouchingVaultMaxObstacleHeight;
+	case EStance::Prone:
+	default:
+		return 0.f;
+	}
+}
+
 void UCoverStateComponent::EnterCover(ACharacter* OwnerCharacter, const FCoverHit& Hit)
 {
 	if (!OwnerCharacter || CoverState != ECoverState::None)
@@ -284,6 +315,23 @@ void UCoverStateComponent::RequestExitCover()
 		ExitCover(OwnerCharacter);
 	}
 }
+
+#if WITH_DEV_AUTOMATION_TESTS
+void UCoverStateComponent::TestSetLockedCover(const FCoverHit& Hit)
+{
+	CurrentCover = Hit;
+	CoverState = Hit.bValid ? ECoverState::Locked : ECoverState::None;
+	CoverApproachTime = 0.f;
+	CoverMoveAxis = 0.f;
+	CoverFacingSign = 1.f;
+}
+
+void UCoverStateComponent::TestSetVaultMaxObstacleHeights(float InStandingMaxHeight, float InCrouchingMaxHeight)
+{
+	StandingVaultMaxObstacleHeight = InStandingMaxHeight;
+	CrouchingVaultMaxObstacleHeight = InCrouchingMaxHeight;
+}
+#endif
 
 void UCoverStateComponent::ExitCover(ACharacter* OwnerCharacter)
 {

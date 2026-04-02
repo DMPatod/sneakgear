@@ -47,6 +47,7 @@ void UPlayerHUDComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 	UpdateCrosshairWidget(DeltaTime);
 	UpdateVaultPromptWidget();
+	UpdateCoverDebugWidget();
 }
 
 void UPlayerHUDComponent::OnWeaponFired()
@@ -145,6 +146,16 @@ void UPlayerHUDComponent::CreateHUDWidgets()
 			VaultPromptWidget->SetPromptVisible(false);
 		}
 	}
+
+	if (!CoverDebugWidget && VaultPromptWidgetClass)
+	{
+		CoverDebugWidget = CreateWidget<UInfoPromptNativeWidget>(Controller, VaultPromptWidgetClass);
+		if (CoverDebugWidget)
+		{
+			CoverDebugWidget->AddToViewport(CoverDebugWidgetZOrder);
+			CoverDebugWidget->SetPromptVisible(false);
+		}
+	}
 }
 
 void UPlayerHUDComponent::UpdateRadarWidget()
@@ -213,6 +224,52 @@ void UPlayerHUDComponent::UpdateVaultPromptWidget()
 	const bool bShowVaultPrompt = Player && Player->IsVaultAvailable() && !Player->IsVaulting();
 	VaultPromptWidget->SetPromptText(NSLOCTEXT("SneakGearUI", "VaultPromptText", "Space to vault"));
 	VaultPromptWidget->SetPromptVisible(bShowVaultPrompt);
+}
+
+void UPlayerHUDComponent::UpdateCoverDebugWidget()
+{
+	if (!CoverDebugWidget)
+	{
+		return;
+	}
+
+	if (!bShowCoverDebugWidget)
+	{
+		CoverDebugWidget->SetPromptVisible(false);
+		return;
+	}
+
+	const ASneakGearPlayerCharacter* Player = GetOwningSneakGearPlayerCharacter();
+	if (!Player)
+	{
+		CoverDebugWidget->SetPromptVisible(false);
+		return;
+	}
+
+	const UEnum* StanceEnum = StaticEnum<EStance>();
+	const FString StanceLabel = StanceEnum
+		? StanceEnum->GetDisplayNameTextByValue(static_cast<int64>(Player->Stance)).ToString()
+		: TEXT("Unknown");
+
+	const FString DebugText = FString::Printf(
+		TEXT("Cover Debug\n")
+		TEXT("Stance: %s\n")
+		TEXT("LockedCover: %s\n")
+		TEXT("VaultAvailable: %s\n")
+		TEXT("Vaulting: %s\n")
+		TEXT("ObstacleHeight: %.1f\n")
+		TEXT("VaultMaxHeight: %.1f\n")
+		TEXT("CoverMoveAxis: %.2f"),
+		*StanceLabel,
+		Player->IsInCover() ? TEXT("true") : TEXT("false"),
+		Player->IsVaultAvailable() ? TEXT("true") : TEXT("false"),
+		Player->IsVaulting() ? TEXT("true") : TEXT("false"),
+		Player->GetCoverObstacleHeight(),
+		Player->GetCurrentVaultMaxObstacleHeight(),
+		Player->GetCoverMoveAxis());
+
+	CoverDebugWidget->SetPromptText(FText::FromString(DebugText));
+	CoverDebugWidget->SetPromptVisible(true);
 }
 
 ASneakGearPlayerController* UPlayerHUDComponent::GetOwningSneakGearPlayerController() const
