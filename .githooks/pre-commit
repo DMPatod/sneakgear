@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "${ROOT_DIR}"
+
+REPORT_MD="Docs/AutomationReports/TestStatus.md"
+
+echo "pre-commit: running Unreal automation tests"
+
+if ./Scripts/run-tests.sh SneakGear.; then
+  if [[ -f "${REPORT_MD}" ]]; then
+    git add "${REPORT_MD}"
+    echo "pre-commit: staged ${REPORT_MD}"
+  fi
+  echo "pre-commit: tests passed"
+  exit 0
+fi
+
+echo "pre-commit: blocked because tests failed" >&2
+if [[ -f "${REPORT_MD}" ]]; then
+  git add "${REPORT_MD}" || true
+  echo "pre-commit: latest report is in ${REPORT_MD}" >&2
+fi
+exit 1
