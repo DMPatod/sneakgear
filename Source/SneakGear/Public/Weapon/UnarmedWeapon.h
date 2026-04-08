@@ -14,6 +14,7 @@ public:
 
 	virtual void StartFire() override;
 	virtual void StopFire() override;
+	virtual float Reload() override;
 
 protected:
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;

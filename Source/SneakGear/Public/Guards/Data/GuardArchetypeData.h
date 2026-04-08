@@ -28,5 +28,11 @@ public:
 	UPROPERTY(EditAnywhere, Category="Stealth|Awareness", meta=(ClampMin="0.0"))
 	float AwarenessDecayPerSecond = 0.35f;
 
+	UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0.0"))
+	float ReactionTimeSeconds = 0.2f;
+
+	UPROPERTY(EditAnywhere, Category="Combat", meta=(ClampMin="0.0", ClampMax="45.0"))
+	float AimErrorDegrees = 2.0f;
+
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 };

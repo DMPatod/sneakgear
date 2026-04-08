@@ -13,6 +13,22 @@
 #include "SneakGearTestTypes.h"
 #include "TestWorldHelpers.h"
 
+namespace
+{
+void TickWorld(UWorld* World, int32 TickCount = 1, float DeltaSeconds = 1.f / 60.f)
+{
+	if (!World)
+	{
+		return;
+	}
+
+	for (int32 Index = 0; Index < TickCount; ++Index)
+	{
+		World->Tick(LEVELTICK_All, DeltaSeconds);
+	}
+}
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentCannotSelectEmptyWeaponSlotTest,
 	"SneakGear.Inventory.PlayerInventoryComponent.CannotSelectEmptyWeaponSlot",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -73,6 +89,70 @@ bool FPlayerInventoryComponentReloadConsumesReserveAmmoTest::RunTest(const FStri
 	TestTrue(TEXT("Reload should succeed when reserve ammo is available"), ItemComponent->ReloadActiveWeapon());
 	TestEqual(TEXT("Reload should refill the missing round"), ItemComponent->GetActiveWeaponInClip(), 3);
 	TestEqual(TEXT("Reload should consume the last reserve round"), ItemComponent->GetReserveAmmoCount(), 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentReloadWaitsForWeaponDelayTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.ReloadWaitsForWeaponDelay",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentReloadWaitsForWeaponDelayTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	TestNotNull(TEXT("Inventory test character should spawn"), Character);
+
+	UTestPlayerInventoryComponent* ItemComponent = Character->GetTestItemComponent();
+	TestNotNull(TEXT("Test item component should exist"), ItemComponent);
+
+	ItemComponent->ConfigureWeaponClasses(ATestDelayedReloadWeapon::StaticClass());
+	ItemComponent->RunBeginPlayForTest();
+	ItemComponent->SetAmmoReserve(EAmmoType::Light, 3, 10);
+
+	FPlayerInventoryItem PrimaryWeaponItem;
+	PrimaryWeaponItem.ItemId = TEXT("PrimaryDelayedReloadWeapon");
+	PrimaryWeaponItem.DisplayName = FText::FromString(TEXT("Primary Delayed Reload Weapon"));
+	PrimaryWeaponItem.SlotType = EPlayerItemSlot::PrimaryWeapon;
+
+	TestTrue(TEXT("Primary weapon item should be added"), ItemComponent->AddItem(PrimaryWeaponItem));
+
+	AWeaponBase* PrimaryWeapon = ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon);
+	TestNotNull(TEXT("Primary weapon runtime should exist after item assignment"), PrimaryWeapon);
+	PrimaryWeapon->DispatchBeginPlay();
+
+	TestTrue(TEXT("Primary slot should become active"), ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon));
+
+	ItemComponent->StartActiveWeaponFire();
+	ItemComponent->StopActiveWeaponFire();
+	ItemComponent->StartActiveWeaponFire();
+	ItemComponent->StopActiveWeaponFire();
+	ItemComponent->StartActiveWeaponFire();
+	ItemComponent->StopActiveWeaponFire();
+
+	TestEqual(TEXT("Three shots should empty the clip"), ItemComponent->GetActiveWeaponInClip(), 0);
+	TestEqual(TEXT("Reserve ammo should remain untouched before reload completes"), ItemComponent->GetReserveAmmoCount(), 3);
+
+	TestTrue(TEXT("Reload should start when reserve ammo is available"), ItemComponent->ReloadActiveWeapon());
+	TestEqual(TEXT("Reload should not refill the clip immediately"), ItemComponent->GetActiveWeaponInClip(), 0);
+	TestEqual(TEXT("Reserve ammo should not be consumed immediately"), ItemComponent->GetReserveAmmoCount(), 3);
+
+	for (int32 Index = 0; Index < 99; ++Index)
+	{
+		World->Tick(LEVELTICK_All, 0.1f);
+		PrimaryWeapon->Tick(0.1f);
+	}
+	TestEqual(TEXT("Clip should stay empty before the 10 second reload completes"), ItemComponent->GetActiveWeaponInClip(), 0);
+	TestEqual(TEXT("Reserve ammo should stay unchanged before the reload finishes"), ItemComponent->GetReserveAmmoCount(), 3);
+
+	for (int32 Index = 0; Index < 2; ++Index)
+	{
+		World->Tick(LEVELTICK_All, 0.1f);
+		PrimaryWeapon->Tick(0.1f);
+	}
+	TestEqual(TEXT("Clip should be refilled after the 10 second reload completes"), ItemComponent->GetActiveWeaponInClip(), 3);
+	TestEqual(TEXT("Reload should consume reserve ammo after completion"), ItemComponent->GetReserveAmmoCount(), 0);
 	return true;
 }
 

@@ -60,6 +60,9 @@ public:
 	void ReportGuardAwarenessChanged(AActor* GuardActor, const FText& NewState);
 
 	UFUNCTION(BlueprintCallable, Category="Event Log")
+	void ReportGuardStartedFiring(AActor* GuardActor, AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable, Category="Event Log")
 	void GetEventsAfter(int32 LastSeenEventId, TArray<FGameEventEntry>& OutEvents) const;
 
 	FOnGameEventAdded& OnEventAddedEvent()

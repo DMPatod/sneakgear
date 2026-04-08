@@ -1,13 +1,12 @@
 #include "Player/Components/PlayerInventoryComponent.h"
 
-#include "CollisionQueryParams.h"
-#include "Engine/OverlapResult.h"
-#include "GameFramework/Character.h"
 #include "Items/PlayerItemDefinition.h"
 #include "Items/PlayerItemPickupComponent.h"
 #include "Items/WorldItemPickup.h"
 #include "Misc/DataValidation.h"
 #include "Player/PlayerCharacterBase.h"
+#include "Player/Components/PlayerInventoryPickupQuery.h"
+#include "Player/Components/PlayerInventoryWeaponRuntime.h"
 #include "UI/EventLogSubsystem.h"
 #include "Weapon/UnarmedWeapon.h"
 #include "Weapon/WeaponBase.h"
@@ -45,21 +44,7 @@ void UPlayerInventoryComponent::BeginPlay()
 		Entry.Value.Current = FMath::Clamp(Entry.Value.Current, 0, Entry.Value.Max);
 	}
 
-	PrimaryWeaponRuntime.WeaponActor = SpawnWeapon(PrimaryWeaponClass);
-	SecondaryWeaponRuntime.WeaponActor = SpawnWeapon(SecondaryWeaponClass);
-	UnarmedWeapon = SpawnWeapon(UnarmedWeaponClass);
-	PrimaryWeaponRuntime.InClip = PrimaryWeaponRuntime.WeaponActor ? FMath::Max(PrimaryWeaponRuntime.WeaponActor->ClipSize, 0) : -1;
-	SecondaryWeaponRuntime.InClip = SecondaryWeaponRuntime.WeaponActor ? FMath::Max(SecondaryWeaponRuntime.WeaponActor->ClipSize, 0) : -1;
-
-	if (PrimaryWeaponRuntime.WeaponActor)
-	{
-		BindRuntimeWeaponDelegates(EPlayerItemSlot::PrimaryWeapon, PrimaryWeaponRuntime.WeaponActor);
-	}
-
-	if (SecondaryWeaponRuntime.WeaponActor)
-	{
-		BindRuntimeWeaponDelegates(EPlayerItemSlot::SecondaryWeapon, SecondaryWeaponRuntime.WeaponActor);
-	}
+	FPlayerInventoryWeaponRuntime::Initialize(*this);
 
 	if (PrimaryWeaponItem.IsValid() && !PrimaryWeaponRuntime.WeaponActor)
 	{
@@ -79,28 +64,12 @@ void UPlayerInventoryComponent::BeginPlay()
 			*GetName(), *GetNameSafe(UnarmedWeaponClass));
 	}
 
-	SyncWeaponAttachments();
 }
 
 void UPlayerInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	DeactivateCurrentEquippedItem();
-
-	if (PrimaryWeaponRuntime.WeaponActor)
-	{
-		ClearRuntimeWeapon(PrimaryWeaponRuntime);
-	}
-
-	if (SecondaryWeaponRuntime.WeaponActor)
-	{
-		ClearRuntimeWeapon(SecondaryWeaponRuntime);
-	}
-
-	if (UnarmedWeapon)
-	{
-		UnarmedWeapon->Destroy();
-		UnarmedWeapon = nullptr;
-	}
+	FPlayerInventoryWeaponRuntime::Shutdown(*this);
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -267,7 +236,7 @@ bool UPlayerInventoryComponent::RemoveItem(EPlayerItemSlot Slot, FPlayerInventor
 	if (Slot == EPlayerItemSlot::PrimaryWeapon || Slot == EPlayerItemSlot::SecondaryWeapon)
 	{
 		SetItemDefinitionForSlot(Slot, nullptr);
-		SetWeaponClassForSlot(Slot, nullptr);
+		FPlayerInventoryWeaponRuntime::SetWeaponClassForSlot(*this, Slot, nullptr);
 	}
 	OnItemSlotUpdated.Broadcast(Slot);
 	OnInventoryStateChanged.Broadcast();
@@ -332,7 +301,7 @@ bool UPlayerInventoryComponent::PickUpFromFloor(AActor* PickupActor, bool bAllow
 	if (PickupItem.SlotType == EPlayerItemSlot::PrimaryWeapon || PickupItem.SlotType == EPlayerItemSlot::SecondaryWeapon)
 	{
 		SetItemDefinitionForSlot(PickupItem.SlotType, PickupComponent->GetItemDefinition());
-		if (!SetWeaponClassForSlot(PickupItem.SlotType, PickupComponent->GetPickupWeaponClass()))
+		if (!FPlayerInventoryWeaponRuntime::SetWeaponClassForSlot(*this, PickupItem.SlotType, PickupComponent->GetPickupWeaponClass()))
 		{
 			return false;
 		}
@@ -352,20 +321,20 @@ bool UPlayerInventoryComponent::PickUpFromFloor(AActor* PickupActor, bool bAllow
 
 bool UPlayerInventoryComponent::TryPickUpNearbyFloorItem(float SearchRadius, bool bAllowReplace)
 {
-	AActor* BestPickup = FindBestNearbyFloorPickup(SearchRadius);
+	AActor* BestPickup = FPlayerInventoryPickupQuery::FindBestNearbyFloorPickup(*this, SearchRadius);
 	return BestPickup ? PickUpFromFloor(BestPickup, bAllowReplace) : false;
 }
 
 bool UPlayerInventoryComponent::RequiresHoldToSwapNearbyFloorItem(float SearchRadius) const
 {
-	AActor* BestPickup = FindBestNearbyFloorPickup(SearchRadius);
+	AActor* BestPickup = FPlayerInventoryPickupQuery::FindBestNearbyFloorPickup(*this, SearchRadius);
 	if (!BestPickup)
 	{
 		return false;
 	}
 
 	const UPlayerItemPickupComponent* PickupComponent = BestPickup->FindComponentByClass<UPlayerItemPickupComponent>();
-	return PickupRequiresWeaponSwap(PickupComponent);
+	return FPlayerInventoryPickupQuery::PickupRequiresWeaponSwap(*this, PickupComponent);
 }
 
 bool UPlayerInventoryComponent::RequiresHoldToSwapItem(const FPlayerInventoryItem& Item) const
@@ -381,14 +350,14 @@ bool UPlayerInventoryComponent::RequiresHoldToSwapItem(const FPlayerInventoryIte
 
 bool UPlayerInventoryComponent::SwapNearbyFloorWeaponItem(float SearchRadius)
 {
-	AActor* BestPickup = FindBestNearbyFloorPickup(SearchRadius);
+	AActor* BestPickup = FPlayerInventoryPickupQuery::FindBestNearbyFloorPickup(*this, SearchRadius);
 	if (!BestPickup)
 	{
 		return false;
 	}
 
 	UPlayerItemPickupComponent* PickupComponent = BestPickup->FindComponentByClass<UPlayerItemPickupComponent>();
-	if (!PickupRequiresWeaponSwap(PickupComponent))
+	if (!FPlayerInventoryPickupQuery::PickupRequiresWeaponSwap(*this, PickupComponent))
 	{
 		return false;
 	}
@@ -409,11 +378,11 @@ bool UPlayerInventoryComponent::SwapNearbyFloorWeaponItem(float SearchRadius)
 
 	*ExistingItem = PickupItem;
 	SetItemDefinitionForSlot(Slot, PickupDefinition);
-	if (!SetWeaponClassForSlot(Slot, PickupComponent->GetPickupWeaponClass()))
+	if (!FPlayerInventoryWeaponRuntime::SetWeaponClassForSlot(*this, Slot, PickupComponent->GetPickupWeaponClass()))
 	{
 		*ExistingItem = PreviousItem;
 		SetItemDefinitionForSlot(Slot, PreviousDefinition);
-		SetWeaponClassForSlot(Slot, PreviousWeaponClass);
+		FPlayerInventoryWeaponRuntime::SetWeaponClassForSlot(*this, Slot, PreviousWeaponClass);
 		return false;
 	}
 
@@ -599,7 +568,7 @@ bool UPlayerInventoryComponent::SetActiveWeaponSlot(EPlayerItemSlot WeaponSlot, 
 
 	ActiveWeaponSlot = WeaponSlot;
 	bWeaponEquipped = bEquipInHand;
-	SyncWeaponAttachments();
+	FPlayerInventoryWeaponRuntime::SyncAttachments(*this);
 	OnItemSlotUpdated.Broadcast(WeaponSlot);
 	OnInventoryStateChanged.Broadcast();
 	return true;
@@ -618,7 +587,7 @@ bool UPlayerInventoryComponent::SetWeaponEquipped(bool bNewEquipped)
 	}
 
 	bWeaponEquipped = bNewEquipped;
-	SyncWeaponAttachments();
+	FPlayerInventoryWeaponRuntime::SyncAttachments(*this);
 	OnItemSlotUpdated.Broadcast(ActiveWeaponSlot);
 	OnInventoryStateChanged.Broadcast();
 	return true;
@@ -631,7 +600,7 @@ AWeaponBase* UPlayerInventoryComponent::GetWeaponInSlot(EPlayerItemSlot WeaponSl
 		return nullptr;
 	}
 
-	const FWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
+	const FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
 	return Runtime ? Runtime->WeaponActor.Get() : nullptr;
 }
 
@@ -661,8 +630,8 @@ void UPlayerInventoryComponent::StartActiveWeaponFire()
 		return;
 	}
 
-	const FWeaponSlotRuntime* ActiveRuntime = ResolveWeaponRuntime(ActiveWeaponSlot);
-	if (!ActiveRuntime || ActiveRuntime->InClip <= 0 || !ActiveRuntime->WeaponActor)
+	const FPlayerInventoryWeaponSlotRuntime* ActiveRuntime = ResolveWeaponRuntime(ActiveWeaponSlot);
+	if (!ActiveRuntime || ActiveRuntime->bIsReloading || ActiveRuntime->InClip <= 0 || !ActiveRuntime->WeaponActor)
 	{
 		return;
 	}
@@ -686,13 +655,18 @@ bool UPlayerInventoryComponent::ReloadActiveWeapon()
 		return false;
 	}
 
-	FWeaponSlotRuntime* ActiveRuntime = ResolveWeaponRuntimeMutable(ActiveWeaponSlot);
+	FPlayerInventoryWeaponSlotRuntime* ActiveRuntime = ResolveWeaponRuntimeMutable(ActiveWeaponSlot);
 	if (!ActiveRuntime || !ActiveRuntime->WeaponActor)
 	{
 		return false;
 	}
 
-	const int32 ClipSize = FMath::Max(ActiveRuntime->WeaponActor->ClipSize, 0);
+	if (ActiveRuntime->bIsReloading)
+	{
+		return false;
+	}
+
+	const int32 ClipSize = FMath::Max(ActiveRuntime->WeaponActor->GetClipSize(), 0);
 	const int32 MissingAmmo = FMath::Max(ClipSize - ActiveRuntime->InClip, 0);
 	if (MissingAmmo <= 0)
 	{
@@ -707,25 +681,22 @@ bool UPlayerInventoryComponent::ReloadActiveWeapon()
 		return false;
 	}
 
-	const int32 LoadedAmmo = FMath::Clamp(ConsumeReserveAmmo(AmmoType, AmmoToLoad), 0, AmmoToLoad);
-	ActiveRuntime->InClip = FMath::Clamp(ActiveRuntime->InClip + LoadedAmmo, 0, ClipSize);
-	if (LoadedAmmo > 0)
-	{
-		OnInventoryStateChanged.Broadcast();
-	}
-	return LoadedAmmo > 0;
+	ActiveRuntime->WeaponActor->StopFire();
+	ActiveRuntime->bIsReloading = true;
+	ActiveRuntime->WeaponActor->Reload();
+	return true;
 }
 
 int32 UPlayerInventoryComponent::GetInClip(EPlayerItemSlot WeaponSlot) const
 {
-	const FWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
+	const FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
 	return Runtime ? Runtime->InClip : -1;
 }
 
 int32 UPlayerInventoryComponent::GetClipSize(EPlayerItemSlot WeaponSlot) const
 {
-	const FWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
-	return (Runtime && Runtime->WeaponActor) ? FMath::Max(Runtime->WeaponActor->ClipSize, 0) : -1;
+	const FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
+	return (Runtime && Runtime->WeaponActor) ? FMath::Max(Runtime->WeaponActor->GetClipSize(), 0) : -1;
 }
 
 bool UPlayerInventoryComponent::HasValidWeaponItem(EPlayerItemSlot Slot) const
@@ -744,38 +715,6 @@ EAmmoType UPlayerInventoryComponent::GetAmmoTypeForSlot(EPlayerItemSlot Slot) co
 {
 	const AWeaponBase* Weapon = GetWeaponInSlot(Slot);
 	return Weapon ? Weapon->GetAmmoType() : EAmmoType::None;
-}
-
-bool UPlayerInventoryComponent::SetWeaponClassForSlot(EPlayerItemSlot Slot, TSubclassOf<AWeaponBase> WeaponClass)
-{
-	FWeaponSlotRuntime* Runtime = ResolveWeaponRuntimeMutable(Slot);
-	if (!Runtime)
-	{
-		return false;
-	}
-
-	if (Slot == EPlayerItemSlot::PrimaryWeapon)
-	{
-		PrimaryWeaponClass = WeaponClass;
-	}
-	else if (Slot == EPlayerItemSlot::SecondaryWeapon)
-	{
-		SecondaryWeaponClass = WeaponClass;
-	}
-
-	ClearRuntimeWeapon(*Runtime);
-	Runtime->WeaponActor = SpawnWeapon(WeaponClass);
-	Runtime->InClip = Runtime->WeaponActor ? FMath::Max(Runtime->WeaponActor->ClipSize, 0) : -1;
-
-	if (Runtime->WeaponActor)
-	{
-		BindRuntimeWeaponDelegates(Slot, Runtime->WeaponActor);
-	}
-
-	SyncWeaponAttachments();
-	OnItemSlotUpdated.Broadcast(Slot);
-	OnInventoryStateChanged.Broadcast();
-	return Runtime->WeaponActor != nullptr || !WeaponClass;
 }
 
 int32 UPlayerInventoryComponent::GetActiveWeaponInClip() const
@@ -1081,7 +1020,7 @@ const FPlayerInventoryItem* UPlayerInventoryComponent::ResolveSlot(EPlayerItemSl
 	}
 }
 
-UPlayerInventoryComponent::FWeaponSlotRuntime* UPlayerInventoryComponent::ResolveWeaponRuntimeMutable(EPlayerItemSlot Slot)
+FPlayerInventoryWeaponSlotRuntime* UPlayerInventoryComponent::ResolveWeaponRuntimeMutable(EPlayerItemSlot Slot)
 {
 	switch (Slot)
 	{
@@ -1094,7 +1033,7 @@ UPlayerInventoryComponent::FWeaponSlotRuntime* UPlayerInventoryComponent::Resolv
 	}
 }
 
-const UPlayerInventoryComponent::FWeaponSlotRuntime* UPlayerInventoryComponent::ResolveWeaponRuntime(EPlayerItemSlot Slot) const
+const FPlayerInventoryWeaponSlotRuntime* UPlayerInventoryComponent::ResolveWeaponRuntime(EPlayerItemSlot Slot) const
 {
 	switch (Slot)
 	{
@@ -1104,150 +1043,12 @@ const UPlayerInventoryComponent::FWeaponSlotRuntime* UPlayerInventoryComponent::
 		return &SecondaryWeaponRuntime;
 	default:
 		return nullptr;
-	}
-}
-
-AWeaponBase* UPlayerInventoryComponent::SpawnWeapon(TSubclassOf<AWeaponBase> WeaponClass) const
-{
-	if (!WeaponClass)
-	{
-		return nullptr;
-	}
-
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	UWorld* World = GetWorld();
-	if (!OwnerCharacter || !World)
-	{
-		return nullptr;
-	}
-
-	AWeaponBase* SpawnedWeapon = World->SpawnActor<AWeaponBase>(WeaponClass);
-	if (!SpawnedWeapon)
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerInventoryComponent '%s' failed to spawn weapon class '%s'."),
-			*GetName(), *GetNameSafe(WeaponClass));
-		return nullptr;
-	}
-
-	SpawnedWeapon->SetOwner(OwnerCharacter);
-	return SpawnedWeapon;
-}
-
-void UPlayerInventoryComponent::BindRuntimeWeaponDelegates(EPlayerItemSlot Slot, AWeaponBase* WeaponActor)
-{
-	if (!WeaponActor)
-	{
-		return;
-	}
-
-	WeaponActor->OnWeaponFiredEvent().RemoveAll(this);
-	if (Slot == EPlayerItemSlot::PrimaryWeapon)
-	{
-		WeaponActor->OnWeaponFiredEvent().AddUObject(this, &UPlayerInventoryComponent::OnPrimaryWeaponFired);
-	}
-	else if (Slot == EPlayerItemSlot::SecondaryWeapon)
-	{
-		WeaponActor->OnWeaponFiredEvent().AddUObject(this, &UPlayerInventoryComponent::OnSecondaryWeaponFired);
-	}
-}
-
-void UPlayerInventoryComponent::ClearRuntimeWeapon(FWeaponSlotRuntime& Runtime) const
-{
-	if (!Runtime.WeaponActor)
-	{
-		return;
-	}
-
-	Runtime.WeaponActor->OnWeaponFiredEvent().RemoveAll(this);
-	Runtime.WeaponActor->Destroy();
-	Runtime.WeaponActor = nullptr;
-	Runtime.InClip = -1;
-}
-
-void UPlayerInventoryComponent::AttachWeapon(AWeaponBase* Weapon, FName SocketName, bool bUseHolsterOffset) const
-{
-	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
-	if (!Weapon || !OwnerCharacter || !OwnerCharacter->GetMesh())
-	{
-		return;
-	}
-
-	Weapon->AttachToCharacter(OwnerCharacter->GetMesh(), SocketName, bUseHolsterOffset);
-}
-
-FName UPlayerInventoryComponent::GetHolsterSocketForSlot(EPlayerItemSlot WeaponSlot) const
-{
-	switch (WeaponSlot)
-	{
-	case EPlayerItemSlot::PrimaryWeapon:
-		return PrimaryWeaponHolsterSocketName;
-	case EPlayerItemSlot::SecondaryWeapon:
-		return SecondaryWeaponHolsterSocketName;
-	default:
-		return NAME_None;
-	}
-}
-
-void UPlayerInventoryComponent::SyncWeaponAttachments() const
-{
-	const FName PrimaryHolsterSocket = GetHolsterSocketForSlot(EPlayerItemSlot::PrimaryWeapon);
-	const FName SecondaryHolsterSocket = GetHolsterSocketForSlot(EPlayerItemSlot::SecondaryWeapon);
-	const bool bHasPrimaryItem = HasValidWeaponItem(EPlayerItemSlot::PrimaryWeapon);
-	const bool bHasSecondaryItem = HasValidWeaponItem(EPlayerItemSlot::SecondaryWeapon);
-	const bool bHasActiveSlottedWeapon = HasValidWeaponSelection(ActiveWeaponSlot);
-
-	auto SyncWeaponPresentation = [](AWeaponBase* Weapon, bool bShouldShow)
-	{
-		if (!Weapon)
-		{
-			return;
-		}
-
-		Weapon->SetActorHiddenInGame(!bShouldShow);
-		Weapon->SetActorEnableCollision(bShouldShow);
-		if (!bShouldShow)
-		{
-			Weapon->StopFire();
-		}
-	};
-
-	if (!bWeaponEquipped)
-	{
-		SyncWeaponPresentation(PrimaryWeaponRuntime.WeaponActor, bHasPrimaryItem);
-		SyncWeaponPresentation(SecondaryWeaponRuntime.WeaponActor, bHasSecondaryItem);
-		SyncWeaponPresentation(UnarmedWeapon, false);
-		if (bHasPrimaryItem)
-		{
-			AttachWeapon(PrimaryWeaponRuntime.WeaponActor, PrimaryHolsterSocket, true);
-		}
-		if (bHasSecondaryItem)
-		{
-			AttachWeapon(SecondaryWeaponRuntime.WeaponActor, SecondaryHolsterSocket, true);
-		}
-		return;
-	}
-
-	const bool bPrimaryActive = ActiveWeaponSlot == EPlayerItemSlot::PrimaryWeapon;
-	SyncWeaponPresentation(PrimaryWeaponRuntime.WeaponActor, bHasPrimaryItem);
-	SyncWeaponPresentation(SecondaryWeaponRuntime.WeaponActor, bHasSecondaryItem);
-	SyncWeaponPresentation(UnarmedWeapon, !bHasActiveSlottedWeapon);
-	if (bHasPrimaryItem)
-	{
-		AttachWeapon(PrimaryWeaponRuntime.WeaponActor, bPrimaryActive ? WeaponHandSocketName : PrimaryHolsterSocket, !bPrimaryActive);
-	}
-	if (bHasSecondaryItem)
-	{
-		AttachWeapon(SecondaryWeaponRuntime.WeaponActor, bPrimaryActive ? SecondaryWeaponHolsterSocketName : WeaponHandSocketName, bPrimaryActive);
-	}
-	if (!bHasActiveSlottedWeapon && UnarmedWeapon)
-	{
-		AttachWeapon(UnarmedWeapon, WeaponHandSocketName, false);
 	}
 }
 
 void UPlayerInventoryComponent::HandleWeaponFired(EPlayerItemSlot Slot)
 {
-	FWeaponSlotRuntime* Runtime = ResolveWeaponRuntimeMutable(Slot);
+	FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntimeMutable(Slot);
 	if (!Runtime)
 	{
 		return;
@@ -1278,6 +1079,49 @@ void UPlayerInventoryComponent::OnSecondaryWeaponFired()
 	HandleWeaponFired(EPlayerItemSlot::SecondaryWeapon);
 }
 
+void UPlayerInventoryComponent::HandleWeaponReloaded(EPlayerItemSlot Slot)
+{
+	FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntimeMutable(Slot);
+	if (!Runtime || !Runtime->WeaponActor || !Runtime->bIsReloading)
+	{
+		return;
+	}
+
+	Runtime->bIsReloading = false;
+
+	const int32 ClipSize = FMath::Max(Runtime->WeaponActor->GetClipSize(), 0);
+	const int32 MissingAmmo = FMath::Max(ClipSize - Runtime->InClip, 0);
+	if (MissingAmmo <= 0)
+	{
+		return;
+	}
+
+	const EAmmoType AmmoType = GetAmmoTypeForSlot(Slot);
+	const int32 AvailableReserve = GetReserveAmmoCountForType(AmmoType);
+	const int32 AmmoToLoad = FMath::Min(MissingAmmo, AvailableReserve);
+	if (AmmoToLoad <= 0)
+	{
+		return;
+	}
+
+	const int32 LoadedAmmo = FMath::Clamp(ConsumeReserveAmmo(AmmoType, AmmoToLoad), 0, AmmoToLoad);
+	Runtime->InClip = FMath::Clamp(Runtime->InClip + LoadedAmmo, 0, ClipSize);
+	if (LoadedAmmo > 0)
+	{
+		OnInventoryStateChanged.Broadcast();
+	}
+}
+
+void UPlayerInventoryComponent::OnPrimaryWeaponReloaded()
+{
+	HandleWeaponReloaded(EPlayerItemSlot::PrimaryWeapon);
+}
+
+void UPlayerInventoryComponent::OnSecondaryWeaponReloaded()
+{
+	HandleWeaponReloaded(EPlayerItemSlot::SecondaryWeapon);
+}
+
 FAmmoReserve* UPlayerInventoryComponent::FindAmmoReserveMutable(EAmmoType AmmoType)
 {
 	return AmmoType == EAmmoType::None ? nullptr : AmmoReserves.Find(AmmoType);
@@ -1299,82 +1143,4 @@ int32 UPlayerInventoryComponent::ConsumeReserveAmmo(EAmmoType AmmoType, int32 Am
 	const int32 Consumed = FMath::Clamp(Amount, 0, FMath::Max(Reserve->Current, 0));
 	Reserve->Current = FMath::Max(Reserve->Current - Consumed, 0);
 	return Consumed;
-}
-
-AActor* UPlayerInventoryComponent::FindBestNearbyFloorPickup(float SearchRadius) const
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return nullptr;
-	}
-
-	const AActor* OwnerActor = GetOwner();
-	if (!OwnerActor)
-	{
-		return nullptr;
-	}
-
-	TArray<FOverlapResult> Overlaps;
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(FloorItemPickup), false, OwnerActor);
-	const FVector Center = OwnerActor->GetActorLocation();
-	const FCollisionShape Shape = FCollisionShape::MakeSphere(FMath::Max(SearchRadius, 1.f));
-
-	const bool bHasOverlaps = World->OverlapMultiByObjectType(
-		Overlaps,
-		Center,
-		FQuat::Identity,
-		FCollisionObjectQueryParams::AllDynamicObjects,
-		Shape,
-		QueryParams
-	);
-
-	if (!bHasOverlaps)
-	{
-		return nullptr;
-	}
-
-	AActor* BestPickup = nullptr;
-	float BestDistanceSq = TNumericLimits<float>::Max();
-
-	for (const FOverlapResult& Result : Overlaps)
-	{
-		AActor* PickupActor = Result.GetActor();
-		if (!PickupActor)
-		{
-			continue;
-		}
-
-		const UPlayerItemPickupComponent* PickupComponent = PickupActor->FindComponentByClass<UPlayerItemPickupComponent>();
-		if (!PickupComponent || !PickupComponent->GetItemDefinition())
-		{
-			continue;
-		}
-
-		const float DistanceSq = FVector::DistSquared(Center, PickupActor->GetActorLocation());
-		if (DistanceSq < BestDistanceSq)
-		{
-			BestDistanceSq = DistanceSq;
-			BestPickup = PickupActor;
-		}
-	}
-
-	return BestPickup;
-}
-
-bool UPlayerInventoryComponent::PickupRequiresWeaponSwap(const UPlayerItemPickupComponent* PickupComponent) const
-{
-	if (!PickupComponent)
-	{
-		return false;
-	}
-
-	const FPlayerInventoryItem PickupItem = PickupComponent->GetPickupItem();
-	if (PickupItem.SlotType != EPlayerItemSlot::PrimaryWeapon && PickupItem.SlotType != EPlayerItemSlot::SecondaryWeapon)
-	{
-		return false;
-	}
-
-	const FPlayerInventoryItem* ExistingItem = ResolveSlot(PickupItem.SlotType);
-	return ExistingItem && ExistingItem->IsValid();
 }

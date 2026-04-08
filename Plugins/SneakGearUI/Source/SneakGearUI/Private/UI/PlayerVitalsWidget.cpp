@@ -1,7 +1,10 @@
 #include "UI/PlayerVitalsWidget.h"
 
+#include "Blueprint/WidgetTree.h"
+#include "Components/VerticalBox.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "UI/PlayerUIDataSource.h"
 
@@ -9,44 +12,57 @@ void UPlayerVitalsWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (!CachedPlayer.IsValid())
+	if (!HealthBar && !StaminaBar && !HealthText && !StaminaText && WidgetTree)
 	{
-		CachedPlayer = GetOwningPlayerPawn();
-	}
-	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
-	{
-		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIVitalsChangedEvent().AddUObject(
-			this, &UPlayerVitalsWidget::HandleVitalsChanged);
+		UVerticalBox* Root = Cast<UVerticalBox>(WidgetTree->RootWidget);
+		if (!Root)
+		{
+			Root = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("VitalsRoot"));
+			WidgetTree->RootWidget = Root;
+		}
+
+		if (Root)
+		{
+			HealthText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("HealthText"));
+			Root->AddChild(HealthText);
+
+			HealthBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("HealthBar"));
+			Root->AddChild(HealthBar);
+
+			StaminaText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("StaminaText"));
+			Root->AddChild(StaminaText);
+
+			StaminaBar = WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(), TEXT("StaminaBar"));
+			Root->AddChild(StaminaBar);
+		}
 	}
 
+	TryCachePlayer();
 	UpdateFromPlayer();
 }
 
 void UPlayerVitalsWidget::NativeDestruct()
 {
-	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+	if (IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
 	{
-		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIVitalsChangedEvent().RemoveAll(this);
+		PlayerUIDataSource->OnPlayerUIVitalsChangedEvent().RemoveAll(this);
 	}
+
+	CachedPlayer.Reset();
 
 	Super::NativeDestruct();
 }
 
 void UPlayerVitalsWidget::SetObservedPlayer(APawn* InPawn)
 {
-	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+	if (IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
 	{
-		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIVitalsChangedEvent().RemoveAll(this);
+		PlayerUIDataSource->OnPlayerUIVitalsChangedEvent().RemoveAll(this);
 	}
 
 	CachedPlayer = InPawn;
 
-	if (const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
-	{
-		const_cast<IPlayerUIDataSource*>(PlayerUIDataSource)->OnPlayerUIVitalsChangedEvent().AddUObject(
-			this, &UPlayerVitalsWidget::HandleVitalsChanged);
-	}
-
+	TryCachePlayer();
 	UpdateFromPlayer();
 }
 
@@ -55,14 +71,52 @@ void UPlayerVitalsWidget::HandleVitalsChanged()
 	UpdateFromPlayer();
 }
 
-const IPlayerUIDataSource* UPlayerVitalsWidget::GetPlayerUIDataSource() const
+bool UPlayerVitalsWidget::TryCachePlayer()
+{
+	if (CachedPlayer.IsValid())
+	{
+		if (IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+		{
+			PlayerUIDataSource->OnPlayerUIVitalsChangedEvent().RemoveAll(this);
+			PlayerUIDataSource->OnPlayerUIVitalsChangedEvent().AddUObject(this, &UPlayerVitalsWidget::HandleVitalsChanged);
+		}
+		return true;
+	}
+
+	CachedPlayer = GetOwningPlayerPawn();
+	if (!CachedPlayer.IsValid())
+	{
+		if (const APlayerController* OwningController = GetOwningPlayer())
+		{
+			CachedPlayer = OwningController->GetPawn();
+		}
+	}
+
+	if (CachedPlayer.IsValid())
+	{
+		if (IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource())
+		{
+			PlayerUIDataSource->OnPlayerUIVitalsChangedEvent().RemoveAll(this);
+			PlayerUIDataSource->OnPlayerUIVitalsChangedEvent().AddUObject(this, &UPlayerVitalsWidget::HandleVitalsChanged);
+		}
+	}
+
+	return CachedPlayer.IsValid();
+}
+
+IPlayerUIDataSource* UPlayerVitalsWidget::GetPlayerUIDataSource() const
 {
 	return CachedPlayer.IsValid() ? Cast<IPlayerUIDataSource>(CachedPlayer.Get()) : nullptr;
 }
 
 void UPlayerVitalsWidget::UpdateFromPlayer()
 {
-	const IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource();
+	if (!TryCachePlayer())
+	{
+		return;
+	}
+
+	IPlayerUIDataSource* PlayerUIDataSource = GetPlayerUIDataSource();
 	if (!PlayerUIDataSource)
 	{
 		return;

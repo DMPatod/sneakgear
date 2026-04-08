@@ -1,11 +1,49 @@
 #include "TestCharacters.h"
 
 #include "AbilitySystemComponent.h"
+#include "Components/CharacterWeaponComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Game/GAS/AmmoAttributeSet.h"
 #include "Game/GAS/HealthAttributeSet.h"
 #include "TestInventory.h"
+#include "TestWeapons.h"
+
+namespace
+{
+void EnsureTestGuardWeaponRuntime(AGuardCharacter* GuardCharacter, UCharacterWeaponComponent* WeaponComponent, TSubclassOf<AWeaponBase> WeaponClass)
+{
+	if (!GuardCharacter || !WeaponComponent || WeaponComponent->GetCurrentWeapon() || !WeaponClass)
+	{
+		return;
+	}
+
+	UWorld* World = GuardCharacter->GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	AWeaponBase* SpawnedWeapon = World->SpawnActor<AWeaponBase>(WeaponClass);
+	if (!SpawnedWeapon)
+	{
+		return;
+	}
+
+	SpawnedWeapon->SetOwner(GuardCharacter);
+	SpawnedWeapon->DispatchBeginPlay();
+
+	FObjectProperty* CurrentWeaponProperty = FindFProperty<FObjectProperty>(UCharacterWeaponComponent::StaticClass(), TEXT("CurrentWeapon"));
+	FIntProperty* InClipProperty = FindFProperty<FIntProperty>(UCharacterWeaponComponent::StaticClass(), TEXT("InClip"));
+	if (!CurrentWeaponProperty || !InClipProperty)
+	{
+		return;
+	}
+
+	CurrentWeaponProperty->SetObjectPropertyValue_InContainer(WeaponComponent, SpawnedWeapon);
+	InClipProperty->SetPropertyValue_InContainer(WeaponComponent, FMath::Max(SpawnedWeapon->GetClipSize(), 0));
+}
+}
 
 void ATestDeathCharacter::InitializeAbilitySystemForTest(float InitialHealth)
 {
@@ -88,8 +126,35 @@ UGuardPatrolComponent* ATestPatrolPawn::GetPatrolComponent() const
 	return PatrolComponent;
 }
 
+ATestGuardCharacter::ATestGuardCharacter()
+{
+	SetActorTickEnabled(true);
+	if (UCharacterWeaponComponent* WeaponComponent = Cast<UCharacterWeaponComponent>(GetDefaultSubobjectByName(TEXT("WeaponComponent"))))
+	{
+		WeaponComponent->SetStartedWeaponClassForTesting(ATestDamageWeapon::StaticClass());
+	}
+}
+
 void ATestGuardCharacter::BeginPlay()
 {
+	Super::BeginPlay();
+
+	UCharacterWeaponComponent* WeaponComponent = FindComponentByClass<UCharacterWeaponComponent>();
+	if (WeaponComponent)
+	{
+		WeaponComponent->SetStartedWeaponClassForTesting(ATestDamageWeapon::StaticClass());
+		WeaponComponent->InitializeWeaponForTesting();
+	}
+	if (WeaponComponent && !WeaponComponent->GetCurrentWeapon())
+	{
+		WeaponComponent->InitializeWeaponForTesting();
+	}
+
+	EnsureTestGuardWeaponRuntime(this, WeaponComponent, ATestDamageWeapon::StaticClass());
+	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
+	{
+		WeaponComponent->ToggleEquip();
+	}
 }
 
 ATestCoverObstacle::ATestCoverObstacle()

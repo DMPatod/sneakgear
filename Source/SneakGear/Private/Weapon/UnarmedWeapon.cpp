@@ -17,6 +17,13 @@ void AUnarmedWeapon::StopFire()
 {
 }
 
+float AUnarmedWeapon::Reload()
+{
+	StopFire();
+	HandleReloadFinished();
+	return 0.f;
+}
+
 EDataValidationResult AUnarmedWeapon::IsDataValid(FDataValidationContext& Context) const
 {
 	(void)Context;

@@ -19,6 +19,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+	void UpdatePerception(float DeltaTime);
 	void InitializeFromArchetype(const UGuardArchetypeData* ArchetypeData);
 	void SetTargetActor(AActor* NewTarget);
 	void AddAwareness(float DeltaAwareness);

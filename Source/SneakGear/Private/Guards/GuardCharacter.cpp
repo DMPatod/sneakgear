@@ -11,6 +11,7 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "Radar/RadarRegistrySubsystem.h"
 #include "Misc/DataValidation.h"
+#include "UI/EventLogSubsystem.h"
 
 AGuardCharacter::AGuardCharacter()
 {
@@ -48,6 +49,12 @@ void AGuardCharacter::BeginPlay()
 		AwarenessComponent->InitializeFromArchetype(ArchetypeData);
 	}
 
+	if (ArchetypeData)
+	{
+		ReactionTimeSeconds = FMath::Max(ArchetypeData->ReactionTimeSeconds, 0.f);
+		AimErrorDegrees = FMath::Clamp(ArchetypeData->AimErrorDegrees, 0.f, 45.f);
+	}
+
 	if (!ensureAlwaysMsgf(BehaviorTreeAsset, TEXT("Guard '%s' must have a BehaviorTreeAsset assigned."), *GetName()))
 	{
 		return;
@@ -80,7 +87,27 @@ void AGuardCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	UpdateCombatFromAwareness();
+	UpdateCombatState(DeltaSeconds);
+}
+
+void AGuardCharacter::UpdateCombatState(float DeltaSeconds)
+{
+	if (AwarenessComponent)
+	{
+		AwarenessComponent->UpdatePerception(DeltaSeconds);
+	}
+
+	const bool bHasLineOfSight = HasLineOfSight();
+	if (bHasLineOfSight && !bHadLineOfSightLastTick)
+	{
+		LastLineOfSightAcquiredTimestamp = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+	}
+	else if (!bHasLineOfSight)
+	{
+		LastLineOfSightAcquiredTimestamp = -1.f;
+	}
+
+	bHadLineOfSightLastTick = bHasLineOfSight;
 }
 
 #if WITH_EDITOR
@@ -147,20 +174,27 @@ EDataValidationResult AGuardCharacter::IsDataValid(FDataValidationContext& Conte
 	return Result;
 }
 
-void AGuardCharacter::UpdateCombatFromAwareness()
+void AGuardCharacter::SetCombatFiringEnabled(bool bEnabled)
 {
-	if (!AwarenessComponent || !WeaponComponent)
+	if (!WeaponComponent)
 	{
 		return;
 	}
 
-	const bool bCanShootTarget = AwarenessComponent->HasLineOfSight();
-
-	if (bCanShootTarget)
+	if (bEnabled)
 	{
+		if (!CanStartCombatFiring())
+		{
+			return;
+		}
+
 		if (!bIsFiringAtTarget)
 		{
 			WeaponComponent->StartFire();
+			if (UEventLogSubsystem* EventLog = GetWorld() ? GetWorld()->GetSubsystem<UEventLogSubsystem>() : nullptr)
+			{
+				EventLog->ReportGuardStartedFiring(this, GetTargetActor());
+			}
 			bIsFiringAtTarget = true;
 		}
 	}
@@ -171,12 +205,64 @@ void AGuardCharacter::UpdateCombatFromAwareness()
 	}
 }
 
+bool AGuardCharacter::CanStartCombatFiring() const
+{
+	if (!WeaponComponent || !WeaponComponent->GetCurrentWeapon() || !HasLineOfSight())
+	{
+		return false;
+	}
+
+	if (ReactionTimeSeconds <= 0.f)
+	{
+		return true;
+	}
+
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	if (LastLineOfSightAcquiredTimestamp < 0.f)
+	{
+		return HasLineOfSight();
+	}
+
+	return (World->GetTimeSeconds() - LastLineOfSightAcquiredTimestamp) >= ReactionTimeSeconds;
+}
+
+bool AGuardCharacter::IsWeaponClipEmpty() const
+{
+	return WeaponComponent && WeaponComponent->GetCurrentWeapon() && WeaponComponent->GetInClip() <= 0;
+}
+
+bool AGuardCharacter::ReloadWeaponIfNeeded()
+{
+	if (!WeaponComponent || !WeaponComponent->GetCurrentWeapon())
+	{
+		return false;
+	}
+
+	if (!IsWeaponClipEmpty())
+	{
+		return false;
+	}
+
+	WeaponComponent->StopFire();
+	bIsFiringAtTarget = false;
+	WeaponComponent->Reload();
+	return true;
+}
+
 void AGuardCharacter::SetTargetActor(AActor* NewTarget)
 {
 	if (AwarenessComponent)
 	{
 		AwarenessComponent->SetTargetActor(NewTarget);
 	}
+
+	bHadLineOfSightLastTick = false;
+	LastLineOfSightAcquiredTimestamp = -1.f;
 }
 
 void AGuardCharacter::SetPatrolPath(APatrolPath* NewPatrolPath)
@@ -243,6 +329,11 @@ bool AGuardCharacter::GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDir
 			OutAimDirection = (TargetPoint - OutAimOrigin).GetSafeNormal();
 			if (!OutAimDirection.IsNearlyZero())
 			{
+				if (AimErrorDegrees > KINDA_SMALL_NUMBER)
+				{
+					OutAimDirection = FMath::VRandCone(OutAimDirection,
+						FMath::DegreesToRadians(AimErrorDegrees));
+				}
 				return true;
 			}
 		}

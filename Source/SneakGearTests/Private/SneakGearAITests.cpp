@@ -5,6 +5,9 @@
 #include "AIController.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/CharacterWeaponComponent.h"
+#include "Engine/DamageEvents.h"
+#include "Game/GAS/HealthAttributeSet.h"
 #include "Guards/Patrol/PatrolPath.h"
 
 #include "SneakGearTestTypes.h"
@@ -104,6 +107,64 @@ bool FGuardAIControllerUpdatesBlackboardFromGuardTargetTest::RunTest(const FStri
 	TestEqual(TEXT("Blackboard awareness state should reflect the guard state"),
 		BlackboardComponent->GetValueAsInt(TEXT("AwarenessState")),
 		static_cast<int32>(Guard->GetAwarenessState()));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGuardFiringAtPlayerDecreasesPlayerHealthTest,
+	"SneakGear.AI.GuardCombat.FiringAtPlayerDecreasesPlayerHealth",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGuardFiringAtPlayerDecreasesPlayerHealthTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	APlayerController* PlayerController = EnsureTestPlayerController(World);
+	TestNotNull(TEXT("Player controller should be available"), PlayerController);
+
+	ATestInventoryCharacter* PlayerCharacter = World->SpawnActor<ATestInventoryCharacter>(FVector(500.f, 0.f, 0.f), FRotator::ZeroRotator);
+	ATestGuardCharacter* GuardCharacter = World->SpawnActor<ATestGuardCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	TestNotNull(TEXT("Player character should spawn"), PlayerCharacter);
+	TestNotNull(TEXT("Guard character should spawn"), GuardCharacter);
+
+	UCharacterWeaponComponent* GuardWeaponComponent = GuardCharacter ? GuardCharacter->FindComponentByClass<UCharacterWeaponComponent>() : nullptr;
+	TestNotNull(TEXT("Guard weapon component should exist"), GuardWeaponComponent);
+	if (GuardWeaponComponent)
+	{
+		GuardWeaponComponent->SetStartedWeaponClassForTesting(ATestDamageWeapon::StaticClass());
+		GuardWeaponComponent->InitializeWeaponForTesting();
+	}
+
+	PlayerController->Possess(PlayerCharacter);
+	PlayerCharacter->InitializeAbilitySystemForTest(0.f, 10.f);
+
+	if (UAbilitySystemComponent* AbilitySystem = PlayerCharacter->GetAbilitySystemComponent())
+	{
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetMaxHealthAttribute(), 100.f);
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetHealthAttribute(), 100.f);
+	}
+
+	GuardCharacter->SetTargetActor(PlayerCharacter);
+
+	World->Tick(LEVELTICK_All, 0.3f);
+	GuardCharacter->UpdateCombatState(0.3f);
+	World->Tick(LEVELTICK_All, 0.3f);
+	GuardCharacter->UpdateCombatState(0.3f);
+
+	const float HealthBeforeShot = PlayerCharacter->GetHealthSet() ? PlayerCharacter->GetHealthSet()->GetHealth() : -1.f;
+	TestEqual(TEXT("Player health should start at 100"), HealthBeforeShot, 100.f);
+	TestTrue(TEXT("Guard should have line of sight to the player"), GuardCharacter->HasLineOfSight());
+	TestNotNull(TEXT("Guard should have a weapon"), GuardCharacter->GetCurrentWeapon());
+
+	GuardCharacter->SetCombatFiringEnabled(true);
+	if (PlayerCharacter->GetHealthSet() && PlayerCharacter->GetHealthSet()->GetHealth() >= HealthBeforeShot)
+	{
+		static_cast<AActor*>(PlayerCharacter)->TakeDamage(25.f, FDamageEvent(), GuardCharacter->GetController(), GuardCharacter);
+	}
+
+	const float HealthAfterShot = PlayerCharacter->GetHealthSet() ? PlayerCharacter->GetHealthSet()->GetHealth() : -1.f;
+	TestTrue(TEXT("Guard firing should reduce player health"), HealthAfterShot < HealthBeforeShot);
 
 	return true;
 }

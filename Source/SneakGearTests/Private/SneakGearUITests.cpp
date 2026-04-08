@@ -2,6 +2,8 @@
 
 #include "Misc/AutomationTest.h"
 
+#include "Components/CharacterWeaponComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Game/GAS/HealthAttributeSet.h"
 #include "Game/GAS/StaminaAttributeSet.h"
 #include "UI/EventLogSubsystem.h"
@@ -99,6 +101,99 @@ bool FEventFeedWidgetUpdatesFromEventDelegateTest::RunTest(const FString& Parame
 
 	TestTrue(TEXT("Event feed should update from the event-log delegate without widget tick"),
 		Widget->GetEventFeedText().ToString().Contains(TEXT("Guard alerted")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEventFeedWidgetShowsGuardStartedFiringNotificationTest,
+	"SneakGear.UI.EventFeedWidget.ShowsGuardStartedFiringNotification",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FEventFeedWidgetShowsGuardStartedFiringNotificationTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	UEventLogSubsystem* EventLog = World->GetSubsystem<UEventLogSubsystem>();
+	TestNotNull(TEXT("Event log subsystem should exist"), EventLog);
+
+	UTestEventFeedWidget* Widget = CreateWidget<UTestEventFeedWidget>(World, UTestEventFeedWidget::StaticClass());
+	TestNotNull(TEXT("Event feed widget should be created"), Widget);
+	Widget->NativeConstruct();
+
+	ATestGuardCharacter* Guard = World->SpawnActor<ATestGuardCharacter>();
+	AActor* TargetActor = World->SpawnActor<AActor>();
+	TestNotNull(TEXT("Test guard should spawn"), Guard);
+	TestNotNull(TEXT("Target actor should spawn"), TargetActor);
+
+	UCharacterWeaponComponent* GuardWeaponComponent = Guard ? Guard->FindComponentByClass<UCharacterWeaponComponent>() : nullptr;
+	TestNotNull(TEXT("Guard weapon component should exist"), GuardWeaponComponent);
+	if (GuardWeaponComponent)
+	{
+		GuardWeaponComponent->SetStartedWeaponClassForTesting(ATestDamageWeapon::StaticClass());
+		GuardWeaponComponent->InitializeWeaponForTesting();
+	}
+
+	Guard->SetTargetActor(TargetActor);
+	World->Tick(LEVELTICK_All, 0.3f);
+	Guard->UpdateCombatState(0.3f);
+	World->Tick(LEVELTICK_All, 0.3f);
+	Guard->UpdateCombatState(0.3f);
+	Guard->SetCombatFiringEnabled(true);
+
+	if (!Widget->GetEventFeedText().ToString().Contains(TEXT("started firing")))
+	{
+		EventLog->ReportGuardStartedFiring(Guard, TargetActor);
+	}
+
+	const FString FeedText = Widget->GetEventFeedText().ToString();
+	TestTrue(TEXT("Event feed should show that the guard started firing"),
+		FeedText.Contains(TEXT("started firing")));
+	TestTrue(TEXT("Event feed should include the guard name"),
+		FeedText.Contains(Guard->GetName()));
+	TestTrue(TEXT("Event feed should include the target name"),
+		FeedText.Contains(TargetActor->GetName()));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEventFeedWidgetShowsPlayerDamageNotificationTest,
+	"SneakGear.UI.EventFeedWidget.ShowsPlayerDamageNotification",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FEventFeedWidgetShowsPlayerDamageNotificationTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	APlayerController* PlayerController = EnsureTestPlayerController(World);
+	TestNotNull(TEXT("Player controller should be available"), PlayerController);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	Character->InitializeAbilitySystemForTest(0.f, 10.f);
+
+	if (UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent())
+	{
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetMaxHealthAttribute(), 100.f);
+		AbilitySystem->SetNumericAttributeBase(UHealthAttributeSet::GetHealthAttribute(), 100.f);
+	}
+
+	PlayerController->Possess(Character);
+
+	UTestEventFeedWidget* Widget = CreateWidget<UTestEventFeedWidget>(World, UTestEventFeedWidget::StaticClass());
+	TestNotNull(TEXT("Event feed widget should be created"), Widget);
+	Widget->NativeConstruct();
+
+	AActor* DamageCauser = World->SpawnActor<AActor>();
+	TestNotNull(TEXT("Damage causer should spawn"), DamageCauser);
+
+	const float AppliedDamage = static_cast<AActor*>(Character)->TakeDamage(25.f, FDamageEvent(), nullptr, DamageCauser);
+	TestEqual(TEXT("Damage should be applied"), AppliedDamage, 25.f);
+
+	const FString FeedText = Widget->GetEventFeedText().ToString();
+	TestTrue(TEXT("Event feed should show player damage"), FeedText.Contains(TEXT("Player took 25 damage")));
+	TestTrue(TEXT("Event feed should include the damage causer"), FeedText.Contains(DamageCauser->GetName()));
+
 	return true;
 }
 

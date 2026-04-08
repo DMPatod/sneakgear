@@ -21,14 +21,17 @@ void AHitscanWeaponBase::Tick(float DeltaSeconds)
 
 void AHitscanWeaponBase::StartFire()
 {
-	const auto Interval = FireRate > 0.f ? 1.f / FireRate : 0.1f;
-	GetWorldTimerManager().SetTimer(FireTimer, this, &AHitscanWeaponBase::FireOnce, Interval, true);
-	FireOnce();
+	Super::StartFire();
 }
 
 void AHitscanWeaponBase::StopFire()
 {
 	Super::StopFire();
+}
+
+float AHitscanWeaponBase::Reload()
+{
+	return Super::Reload();
 }
 
 EDataValidationResult AHitscanWeaponBase::IsDataValid(FDataValidationContext& Context) const

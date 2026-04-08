@@ -2,6 +2,7 @@
 
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 void UEventLogSubsystem::AddEvent(const FText& Message, EGameEventCategory Category)
 {
@@ -31,7 +32,10 @@ void UEventLogSubsystem::ReportDamageTaken(AActor* Victim, float DamageAmount, A
 	const FText VictimName = FText::FromString(GetNameSafe(Victim));
 	const FText CauserName = FText::FromString(GetNameSafe(DamageCauser));
 	const APawn* VictimPawn = Cast<APawn>(Victim);
-	const bool bVictimIsPlayer = VictimPawn ? VictimPawn->IsPlayerControlled() : false;
+	const AController* VictimController = VictimPawn ? VictimPawn->GetController() : nullptr;
+	const bool bVictimIsPlayer = VictimPawn
+		? (VictimPawn->IsPlayerControlled() || (VictimController && VictimController->IsA<APlayerController>()))
+		: false;
 
 	if (DamageCauser)
 	{
@@ -80,6 +84,23 @@ void UEventLogSubsystem::ReportGuardAwarenessChanged(AActor* GuardActor, const F
 	const FText GuardName = FText::FromString(GetNameSafe(GuardActor));
 	AddEvent(FText::Format(NSLOCTEXT("SneakGear", "EventAwareness", "{0} awareness is now {1}"), GuardName, NewState),
 	         EGameEventCategory::Awareness);
+}
+
+void UEventLogSubsystem::ReportGuardStartedFiring(AActor* GuardActor, AActor* TargetActor)
+{
+	const FText GuardName = FText::FromString(GetNameSafe(GuardActor));
+	const FText TargetName = FText::FromString(GetNameSafe(TargetActor));
+
+	if (TargetActor)
+	{
+		AddEvent(FText::Format(NSLOCTEXT("SneakGear", "EventGuardStartedFiringAtTarget", "{0} started firing at {1}"),
+				GuardName, TargetName),
+			EGameEventCategory::Awareness);
+		return;
+	}
+
+	AddEvent(FText::Format(NSLOCTEXT("SneakGear", "EventGuardStartedFiring", "{0} started firing"), GuardName),
+		EGameEventCategory::Awareness);
 }
 
 void UEventLogSubsystem::GetEventsAfter(int32 LastSeenEventId, TArray<FGameEventEntry>& OutEvents) const

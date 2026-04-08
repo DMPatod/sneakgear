@@ -11,15 +11,27 @@ class AActor;
 class UPlayerItemPickupComponent;
 class UPlayerItemDefinition;
 class APlayerCharacterBase;
+class FPlayerInventoryPickupQuery;
+class FPlayerInventoryWeaponRuntime;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemSlotUpdated, EPlayerItemSlot, Slot);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveWeaponFired, EPlayerItemSlot);
 DECLARE_MULTICAST_DELEGATE(FOnInventoryStateChanged);
 
+struct FPlayerInventoryWeaponSlotRuntime
+{
+	TObjectPtr<AWeaponBase> WeaponActor = nullptr;
+	int32 InClip = -1;
+	bool bIsReloading = false;
+};
+
 UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
 class SNEAKGEAR_API UPlayerInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
+
+	friend class FPlayerInventoryPickupQuery;
+	friend class FPlayerInventoryWeaponRuntime;
 
 public:
 	UPlayerInventoryComponent();
@@ -205,14 +217,8 @@ protected:
 	TMap<EAmmoType, FAmmoReserve> AmmoReserves;
 
 private:
-	struct FWeaponSlotRuntime
-	{
-		TObjectPtr<AWeaponBase> WeaponActor = nullptr;
-		int32 InClip = -1;
-	};
-
-	FWeaponSlotRuntime PrimaryWeaponRuntime;
-	FWeaponSlotRuntime SecondaryWeaponRuntime;
+	FPlayerInventoryWeaponSlotRuntime PrimaryWeaponRuntime;
+	FPlayerInventoryWeaponSlotRuntime SecondaryWeaponRuntime;
 	UPROPERTY(Transient)
 	TObjectPtr<AWeaponBase> UnarmedWeapon = nullptr;
 	FOnActiveWeaponFired OnActiveWeaponFired;
@@ -246,24 +252,18 @@ private:
 	int32 ResolveActiveItemIndex(EPlayerItemSlot Slot) const;
 	FPlayerInventoryItem* ResolveMutableSlot(EPlayerItemSlot Slot);
 	const FPlayerInventoryItem* ResolveSlot(EPlayerItemSlot Slot) const;
-	FWeaponSlotRuntime* ResolveWeaponRuntimeMutable(EPlayerItemSlot Slot);
-	const FWeaponSlotRuntime* ResolveWeaponRuntime(EPlayerItemSlot Slot) const;
+	FPlayerInventoryWeaponSlotRuntime* ResolveWeaponRuntimeMutable(EPlayerItemSlot Slot);
+	const FPlayerInventoryWeaponSlotRuntime* ResolveWeaponRuntime(EPlayerItemSlot Slot) const;
 	bool HasValidWeaponItem(EPlayerItemSlot Slot) const;
 	bool HasValidWeaponSelection(EPlayerItemSlot Slot) const;
 	EAmmoType GetAmmoTypeForSlot(EPlayerItemSlot Slot) const;
-	bool SetWeaponClassForSlot(EPlayerItemSlot Slot, TSubclassOf<AWeaponBase> WeaponClass);
-	AWeaponBase* SpawnWeapon(TSubclassOf<AWeaponBase> WeaponClass) const;
-	void AttachWeapon(AWeaponBase* Weapon, FName SocketName, bool bUseHolsterOffset) const;
-	FName GetHolsterSocketForSlot(EPlayerItemSlot WeaponSlot) const;
-	void SyncWeaponAttachments() const;
 	void HandleWeaponFired(EPlayerItemSlot Slot);
-	void BindRuntimeWeaponDelegates(EPlayerItemSlot Slot, AWeaponBase* WeaponActor);
-	void ClearRuntimeWeapon(FWeaponSlotRuntime& Runtime) const;
+	void HandleWeaponReloaded(EPlayerItemSlot Slot);
 	void OnPrimaryWeaponFired();
 	void OnSecondaryWeaponFired();
+	void OnPrimaryWeaponReloaded();
+	void OnSecondaryWeaponReloaded();
 	FAmmoReserve* FindAmmoReserveMutable(EAmmoType AmmoType);
 	const FAmmoReserve* FindAmmoReserve(EAmmoType AmmoType) const;
 	int32 ConsumeReserveAmmo(EAmmoType AmmoType, int32 Amount);
-	AActor* FindBestNearbyFloorPickup(float SearchRadius) const;
-	bool PickupRequiresWeaponSwap(const UPlayerItemPickupComponent* PickupComponent) const;
 };

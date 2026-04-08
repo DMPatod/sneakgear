@@ -51,6 +51,21 @@ public:
 	UFUNCTION(BlueprintPure, Category="Stealth")
 	AActor* GetTargetActor() const;
 
+	UFUNCTION(BlueprintCallable, Category="AI|Combat")
+	void SetCombatFiringEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintCallable, Category="AI|Combat")
+	void UpdateCombatState(float DeltaSeconds);
+
+	UFUNCTION(BlueprintPure, Category="AI|Combat")
+	bool CanStartCombatFiring() const;
+
+	UFUNCTION(BlueprintPure, Category="AI|Combat")
+	bool IsWeaponClipEmpty() const;
+
+	UFUNCTION(BlueprintCallable, Category="AI|Combat")
+	bool ReloadWeaponIfNeeded();
+
 	virtual AWeaponBase* GetCurrentWeapon() const override;
 	virtual bool GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDirection) const override;
 
@@ -78,7 +93,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="AI|BehaviorTree")
 	TObjectPtr<UBlackboardData> BlackboardAsset;
-	
+
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -99,6 +114,8 @@ private:
 	TObjectPtr<UCharacterWeaponComponent> WeaponComponent;
 
 	bool bIsFiringAtTarget = false;
-
-	void UpdateCombatFromAwareness();
+	bool bHadLineOfSightLastTick = false;
+	float LastLineOfSightAcquiredTimestamp = -1.f;
+	float ReactionTimeSeconds = 0.2f;
+	float AimErrorDegrees = 2.0f;
 };

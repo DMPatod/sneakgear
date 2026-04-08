@@ -24,5 +24,17 @@ EDataValidationResult UGuardArchetypeData::IsDataValid(FDataValidationContext& C
 		Result = EDataValidationResult::Invalid;
 	}
 
+	if (ReactionTimeSeconds < 0.f)
+	{
+		Context.AddError(FText::FromString(TEXT("ReactionTimeSeconds must be greater than or equal to 0.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (AimErrorDegrees < 0.f || AimErrorDegrees > 45.f)
+	{
+		Context.AddError(FText::FromString(TEXT("AimErrorDegrees must be in the range [0, 45].")));
+		Result = EDataValidationResult::Invalid;
+	}
+
 	return Result;
 }

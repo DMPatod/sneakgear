@@ -10,6 +10,8 @@
 
 ABaseCharacter::ABaseCharacter()
 {
+	SetCanBeDamaged(true);
+
 	AbilitySystem = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
 	AbilitySystem->SetIsReplicated(true);
 	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
@@ -104,7 +106,9 @@ void ABaseCharacter::OnCharacterDeath()
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
                                  AController* EventInstigator, AActor* DamageCauser)
 {
-	const float AppliedDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	const float AppliedDamage = FMath::Max(DamageAmount, 0.f);
 	if (AppliedDamage <= 0.f || !AbilitySystem)
 	{
 		return AppliedDamage;

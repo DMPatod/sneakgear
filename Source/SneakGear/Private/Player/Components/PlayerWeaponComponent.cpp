@@ -6,21 +6,27 @@ UPlayerWeaponComponent::UPlayerWeaponComponent()
 {
 }
 
-void UPlayerWeaponComponent::Reload()
+bool UPlayerWeaponComponent::CanReload() const
+{
+	if (!Super::CanReload())
+	{
+		return false;
+	}
+
+	const int32 MissingAmmo = FMath::Max(GetClipSize() - InClip, 0);
+	return MissingAmmo > 0 && FMath::FloorToInt(GetPlayerArmor()) > 0;
+}
+
+void UPlayerWeaponComponent::FinishReload()
 {
 	auto* PlayerCharacter = Cast<APlayerCharacterBase>(GetOwner());
 	if (!PlayerCharacter)
 	{
-		Super::Reload();
+		Super::FinishReload();
 		return;
 	}
 
 	const int32 MissingAmmo = FMath::Max(GetClipSize() - InClip, 0);
-	if (MissingAmmo <= 0)
-	{
-		return;
-	}
-
 	const int32 AvailableFromArmor = FMath::Max(FMath::FloorToInt(GetPlayerArmor()), 0);
 	const int32 AmmoToLoad = FMath::Min(MissingAmmo, AvailableFromArmor);
 	if (AmmoToLoad <= 0)

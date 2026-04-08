@@ -35,6 +35,7 @@ private:
 	TWeakObjectPtr<APawn> CachedPlayer;
 
 	void HandleVitalsChanged();
-	const class IPlayerUIDataSource* GetPlayerUIDataSource() const;
+	bool TryCachePlayer();
+	class IPlayerUIDataSource* GetPlayerUIDataSource() const;
 	void UpdateFromPlayer();
 };

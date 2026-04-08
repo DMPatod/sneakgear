@@ -25,6 +25,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Weapon|Ammo")
 	virtual void Reload();
 
+#if WITH_DEV_AUTOMATION_TESTS
+	void SetStartedWeaponClassForTesting(TSubclassOf<AWeaponBase> InWeaponClass);
+	void InitializeWeaponForTesting();
+#endif
+
 	AWeaponBase* GetCurrentWeapon() const
 	{
 		return CurrentWeapon;
@@ -40,6 +45,9 @@ public:
 	int32 GetClipSize() const;
 
 protected:
+	virtual bool CanReload() const;
+	virtual void FinishReload();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon", meta=(AllowPrivateAccess="true"))
 	TSubclassOf<AWeaponBase> StartedWeaponClass;
 
@@ -50,6 +58,7 @@ protected:
 	FName HolsterSocketName = "spine_socket";
 
 	int32 InClip = -1;
+	bool bIsReloading = false;
 
 private:
 	UPROPERTY()
@@ -57,4 +66,5 @@ private:
 
 	void AttachWeaponToSocket(FName SocketName) const;
 	void HandleWeaponFired();
+	void HandleWeaponReloaded();
 };

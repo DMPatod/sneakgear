@@ -12,8 +12,10 @@ class SNEAKGEAR_API UPlayerWeaponComponent : public UCharacterWeaponComponent
 public:
 	UPlayerWeaponComponent();
 
-	virtual void Reload() override;
-
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	float GetPlayerArmor() const;
+
+protected:
+	virtual bool CanReload() const override;
+	virtual void FinishReload() override;
 };

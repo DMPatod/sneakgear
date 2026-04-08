@@ -11,6 +11,7 @@
 class AWeaponBase;
 class UBoxComponent;
 class UTestPlayerInventoryComponent;
+class ATestDamageWeapon;
 
 UCLASS()
 class SNEAKGEARTESTS_API ATestDeathCharacter : public ABaseCharacter
@@ -80,7 +81,9 @@ class SNEAKGEARTESTS_API ATestGuardCharacter : public AGuardCharacter
 {
 	GENERATED_BODY()
 
+public:
 protected:
+	ATestGuardCharacter();
 	virtual void BeginPlay() override;
 };
 

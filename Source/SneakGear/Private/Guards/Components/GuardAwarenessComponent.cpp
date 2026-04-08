@@ -27,6 +27,11 @@ void UGuardAwarenessComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	UpdatePerception(DeltaTime);
+}
+
+void UGuardAwarenessComponent::UpdatePerception(float DeltaTime)
+{
 	if (!TargetActor)
 	{
 		bHasLineOfSight = false;

@@ -1,5 +1,7 @@
 #include "Weapon/WeaponBase.h"
 
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "GameFramework/Character.h"
 #include "Misc/DataValidation.h"
 #include "Weapon/WeaponAimProvider.h"
@@ -8,34 +10,63 @@
 AWeaponBase::AWeaponBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
+	SetActorTickEnabled(true);
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	SetRootComponent(WeaponMesh);
 }
 
-void AWeaponBase::AttachToCharacter(USkeletalMeshComponent* CharacterMesh, FName SocketName, bool bUseHolsterOffset)
+void AWeaponBase::Tick(float DeltaSeconds)
 {
-	if (!CharacterMesh)
+	Super::Tick(DeltaSeconds);
+
+	const UWorld* World = GetWorld();
+	if (!World)
 	{
 		return;
 	}
 
-	auto Rules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true);
-	AttachToComponent(CharacterMesh, Rules, SocketName);
-	SetActorRelativeTransform(bUseHolsterOffset ? HolsterOffset : GripOffset);
+	const float CurrentTimeSeconds = World->GetTimeSeconds();
+	if (bReloadPending && ReloadCompleteTimeSeconds >= 0.f && CurrentTimeSeconds >= ReloadCompleteTimeSeconds)
+	{
+		HandleReloadFinished();
+	}
+
+	if (bWantsToFire && !bReloadPending && NextFireTimeSeconds >= 0.f && CurrentTimeSeconds >= NextFireTimeSeconds)
+	{
+		FireAndScheduleNextShot();
+	}
 }
 
 void AWeaponBase::StartFire()
 {
-	auto Interval = FireRate > 0.f ? 1.f / FireRate : 0.1f;
-
-	GetWorldTimerManager().SetTimer(FireTimer, this, &AWeaponBase::FireOnce, Interval, true);
-	FireOnce();
+	bWantsToFire = true;
+	NextFireTimeSeconds = -1.f;
+	FireAndScheduleNextShot();
 }
 
 void AWeaponBase::StopFire()
 {
-	GetWorldTimerManager().ClearTimer(FireTimer);
+	bWantsToFire = false;
+	NextFireTimeSeconds = -1.f;
+}
+
+float AWeaponBase::Reload()
+{
+	StopFire();
+	const float PlayedDuration = PlayReloadAnimation();
+	const float ReloadDuration = PlayedDuration > 0.f
+		? PlayedDuration
+		: (ReloadMontage ? ReloadMontage->GetPlayLength() : 0.f);
+	if (ReloadDuration <= 0.f)
+	{
+		HandleReloadFinished();
+		return 0.f;
+	}
+
+	ScheduleReloadCompletion(ReloadDuration);
+	return ReloadDuration;
 }
 
 void AWeaponBase::BeginPlay()
@@ -64,13 +95,28 @@ EDataValidationResult AWeaponBase::IsDataValid(FDataValidationContext& Context) 
 
 	if (FireRate <= 0.f)
 	{
-		Context.AddError(FText::FromString(TEXT("FireRate must be greater than 0.")));
+		Context.AddWarning(FText::FromString(TEXT("FireRate should be greater than 0 when FireMontage is not configured.")));
+		if (Result == EDataValidationResult::NotValidated)
+		{
+			Result = EDataValidationResult::Valid;
+		}
+	}
+
+	if (FireRate <= 0.f && !FireMontage)
+	{
+		Context.AddError(FText::FromString(TEXT("FireMontage or a positive FireRate must be set.")));
 		Result = EDataValidationResult::Invalid;
 	}
 
 	if (MuzzleSocketName.IsNone())
 	{
 		Context.AddError(FText::FromString(TEXT("MuzzleSocketName must be set.")));
+		Result = EDataValidationResult::Invalid;
+	}
+
+	if (AmmoType != EAmmoType::None && !ReloadMontage)
+	{
+		Context.AddError(FText::FromString(TEXT("ReloadMontage must be set for weapons that use ammo.")));
 		Result = EDataValidationResult::Invalid;
 	}
 
@@ -129,4 +175,69 @@ void AWeaponBase::FireOnce()
 
 	PrimaryFireMode->FireOnce(Context);
 	OnWeaponFiredEvent().Broadcast();
+}
+
+void AWeaponBase::HandleReloadFinished()
+{
+	bReloadPending = false;
+	ReloadCompleteTimeSeconds = -1.f;
+	OnWeaponReloadedEvent().Broadcast();
+}
+
+float AWeaponBase::GetFireInterval() const
+{
+	if (FireMontage)
+	{
+		const float MontageLength = FireMontage->GetPlayLength();
+		if (MontageLength > 0.f)
+		{
+			return MontageLength;
+		}
+	}
+
+	return FireRate > 0.f ? 1.f / FireRate : 0.f;
+}
+
+float AWeaponBase::PlayFireAnimation() const
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	USkeletalMeshComponent* OwnerMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	UAnimInstance* AnimInstance = OwnerMesh ? OwnerMesh->GetAnimInstance() : nullptr;
+	return (AnimInstance && FireMontage) ? AnimInstance->Montage_Play(FireMontage) : 0.f;
+}
+
+float AWeaponBase::PlayReloadAnimation() const
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	USkeletalMeshComponent* OwnerMesh = OwnerCharacter ? OwnerCharacter->GetMesh() : nullptr;
+	UAnimInstance* AnimInstance = OwnerMesh ? OwnerMesh->GetAnimInstance() : nullptr;
+	return (AnimInstance && ReloadMontage) ? AnimInstance->Montage_Play(ReloadMontage) : 0.f;
+}
+
+void AWeaponBase::FireAndScheduleNextShot()
+{
+	PlayFireAnimation();
+	FireOnce();
+
+	const float FireInterval = GetFireInterval();
+	if (FireInterval > 0.f)
+	{
+		if (const UWorld* World = GetWorld())
+		{
+			NextFireTimeSeconds = World->GetTimeSeconds() + FireInterval;
+		}
+	}
+	else
+	{
+		NextFireTimeSeconds = -1.f;
+	}
+}
+
+void AWeaponBase::ScheduleReloadCompletion(float Duration)
+{
+	if (const UWorld* World = GetWorld())
+	{
+		bReloadPending = true;
+		ReloadCompleteTimeSeconds = World->GetTimeSeconds() + Duration;
+	}
 }

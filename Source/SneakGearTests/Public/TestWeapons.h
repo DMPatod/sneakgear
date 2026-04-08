@@ -17,6 +17,18 @@ public:
 	FWeaponFireContext LastContext;
 };
 
+UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
+class SNEAKGEARTESTS_API UTestDamageWeaponFireModeComponent : public UWeaponFireModeComponent
+{
+	GENERATED_BODY()
+
+public:
+	virtual void FireOnce(const FWeaponFireContext& Context) override;
+
+	UPROPERTY(EditAnywhere, Category="Fire")
+	float Damage = 25.f;
+};
+
 UCLASS()
 class SNEAKGEARTESTS_API ATestWeapon : public AWeaponBase
 {
@@ -26,4 +38,36 @@ public:
 	ATestWeapon();
 
 	UTestWeaponFireModeComponent* GetTestFireMode() const;
+};
+
+UCLASS()
+class SNEAKGEARTESTS_API ATestDelayedReloadWeapon : public ATestWeapon
+{
+	GENERATED_BODY()
+
+public:
+	ATestDelayedReloadWeapon();
+
+	virtual float Reload() override;
+
+protected:
+	float DelayedReloadDuration = 10.f;
+};
+
+UCLASS()
+class SNEAKGEARTESTS_API ATestDelayedFireWeapon : public ATestWeapon
+{
+	GENERATED_BODY()
+
+public:
+	virtual float GetFireInterval() const override;
+};
+
+UCLASS()
+class SNEAKGEARTESTS_API ATestDamageWeapon : public AWeaponBase
+{
+	GENERATED_BODY()
+
+public:
+	ATestDamageWeapon();
 };
