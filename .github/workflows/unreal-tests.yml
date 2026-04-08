@@ -1,0 +1,57 @@
+name: Unreal Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: Unreal automation filter
+        required: false
+        default: SneakGear.
+        type: string
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  automation-tests:
+    runs-on:
+      - self-hosted
+      - macOS
+    env:
+      TEST_FILTER: ${{ github.event.inputs.test_filter || 'SneakGear.' }}
+      REPORT_DIR: Docs/AutomationReports
+      REPORT_JSON: Docs/AutomationReports/index.json
+      REPORT_MD: Docs/AutomationReports/TestStatus.md
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Unreal test runner
+        run: test -x Scripts/run-tests.sh
+
+      - name: Run Unreal automation tests
+        id: run_tests
+        continue-on-error: true
+        run: ./Scripts/run-tests.sh "${TEST_FILTER}"
+
+      - name: Publish workflow summary
+        if: always()
+        run: cat "${REPORT_MD}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload automation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unreal-automation-reports
+          path: |
+            Docs/AutomationReports/index.json
+            Docs/AutomationReports/index.html
+            Docs/AutomationReports/TestStatus.md
+          if-no-files-found: error
+
+      - name: Fail job when tests fail
+        if: steps.run_tests.outcome != 'success'
+        run: exit 1

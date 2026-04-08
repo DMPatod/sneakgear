@@ -93,7 +93,8 @@ Run a narrower subset:
 
 Notes:
 - The script builds `SneakGearEditor` first unless `--no-build` is passed
-- Reports are exported to `Saved/AutomationReports`
+- Reports are exported to `Docs/AutomationReports`
+- The generated Markdown summary is `Docs/AutomationReports/TestStatus.md`
 - Override `UE_EDITOR_BIN` or `UE_BUILD_SH` if Unreal is installed in a different location
 
 ## Guard Setup

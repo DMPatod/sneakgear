@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "${ROOT_DIR}"
+
+HEAD_SHA="$(git rev-parse HEAD)"
+STATE_DIR="${ROOT_DIR}/.git/hooks-state"
+LAST_PASS_FILE="${STATE_DIR}/last-passing-pre-push-tests"
+mkdir -p "${STATE_DIR}"
+
+if [[ -f "${LAST_PASS_FILE}" ]] && [[ "$(cat "${LAST_PASS_FILE}")" == "${HEAD_SHA}" ]]; then
+  echo "pre-push: tests already passed for ${HEAD_SHA}"
+  exit 0
+fi
+
+echo "pre-push: running Unreal automation tests for ${HEAD_SHA}"
+
+if ./Scripts/run-tests.sh SneakGear.; then
+  printf '%s\n' "${HEAD_SHA}" > "${LAST_PASS_FILE}"
+  echo "pre-push: tests passed"
+  echo "pre-push: report written to Docs/AutomationReports/TestStatus.md"
+  exit 0
+fi
+
+echo "pre-push: blocked because tests failed for ${HEAD_SHA}" >&2
+if [[ -f "${ROOT_DIR}/Docs/AutomationReports/TestStatus.md" ]]; then
+  echo "pre-push: see Docs/AutomationReports/TestStatus.md for details" >&2
+fi
+exit 1

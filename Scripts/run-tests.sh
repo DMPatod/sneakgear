@@ -3,7 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_PATH="${ROOT_DIR}/SneakGear.uproject"
-REPORT_DIR="${ROOT_DIR}/Saved/AutomationReports"
+REPORT_DIR="${ROOT_DIR}/Docs/AutomationReports"
+REPORT_JSON="${REPORT_DIR}/index.json"
+REPORT_MD="${REPORT_DIR}/TestStatus.md"
 TEST_FILTER="SneakGear."
 SKIP_BUILD=0
 
@@ -21,6 +23,12 @@ Environment overrides:
   UE_EDITOR_BIN  Full path to the UnrealEditor binary
   UE_BUILD_SH    Full path to Unreal's Build.sh
 EOF
+}
+
+generate_markdown_report() {
+  if [[ -f "${REPORT_JSON}" ]]; then
+    python3 "${ROOT_DIR}/Scripts/generate-test-status-md.py" "${REPORT_JSON}" "${REPORT_MD}" || true
+  fi
 }
 
 resolve_editor_bin() {
@@ -99,6 +107,7 @@ if [[ "${SKIP_BUILD}" -eq 0 ]]; then
 fi
 
 echo "Running automation tests: ${TEST_FILTER}"
+set +e
 "${EDITOR_BIN}" \
   "${PROJECT_PATH}" \
   -ExecCmds="Automation RunTests ${TEST_FILTER}" \
@@ -109,3 +118,13 @@ echo "Running automation tests: ${TEST_FILTER}"
   -NoSound \
   -ReportExportPath="${REPORT_DIR}" \
   -Log
+TEST_EXIT_CODE=$?
+set -e
+
+generate_markdown_report
+
+if [[ -f "${REPORT_MD}" ]]; then
+  echo "Markdown report written to ${REPORT_MD}"
+fi
+
+exit "${TEST_EXIT_CODE}"

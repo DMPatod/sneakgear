@@ -1,0 +1,2350 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "Daniels-MacBook-Pro.local",
+			"instance": "A119A3628440A97D8F7508A03909229A",
+			"instanceName": "Daniels-MacBook-Pro.local-34839",
+			"platform": "MacEditor",
+			"oSVersion": "macOS 26.3.1 25D2128",
+			"model": "Default",
+			"gPU": "Apple M4 Max",
+			"cPUModel": "Apple M4 Max",
+			"rAMInGB": 48,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.04.08-13.55.23",
+	"succeeded": 7,
+	"succeededWithWarnings": 23,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 1.3908534049987793,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "AdvancesAndLoops",
+			"fullTestPath": "SneakGear.AI.BehaviorTree.BTTaskSetNextPatrolPoint.AdvancesAndLoops",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.074938997626304626,
+			"dateTime": "2026.04.08-13.55.21",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogCrowdFollowing: Unable to find RecastNavMesh instance while trying to create UCrowdManager instance",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.21"
+				}
+			],
+			"warnings": 1,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UpdatesBlackboardFromGuardTarget",
+			"fullTestPath": "SneakGear.AI.GuardAIController.UpdatesBlackboardFromGuardTarget",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.045844711363315582,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FiringAtPlayerDecreasesPlayerHealth",
+			"fullTestPath": "SneakGear.AI.GuardCombat.FiringAtPlayerDecreasesPlayerHealth",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.04695545881986618,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_3.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_3.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_3.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_3.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestGuardCharacter /Temp/Untitled_3.Untitled:PersistentLevel.TestGuardCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestGuardCharacter /Temp/Untitled_3.Untitled:PersistentLevel.TestGuardCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestGuardCharacter /Temp/Untitled_3.Untitled:PersistentLevel.TestGuardCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 7,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DeathOnlyRunsOnce",
+			"fullTestPath": "SneakGear.Characters.BaseCharacter.DeathOnlyRunsOnce",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046469289809465408,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CannotSelectEmptyWeaponSlot",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.CannotSelectEmptyWeaponSlot",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.0083491243422031403,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ConsumableUseRestoresHealthConsumesAndLogs",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.ConsumableUseRestoresHealthConsumesAndLogs",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.047070290893316269,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_5.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_5.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_5.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_5.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EquippedItemSwitchLogsAndActivates",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.EquippedItemSwitchLogsAndActivates",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046283040195703506,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_6.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_6.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_6.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_6.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NearbyPickupRespectsRange",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.NearbyPickupRespectsRange",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.053880207240581512,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_7.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_7.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_7.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_7.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NearbyWeaponPickupHoldSwapsWithFloorItem",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.NearbyWeaponPickupHoldSwapsWithFloorItem",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046698376536369324,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_8.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 10,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NearbyWeaponPickupRequiresHoldToSwap",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.NearbyWeaponPickupRequiresHoldToSwap",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046515874564647675,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_9.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_9.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_9.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_9.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_9.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_9.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_9.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 7,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PickupReportsEventAndStoresUtilityItem",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.PickupReportsEventAndStoresUtilityItem",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046840541064739227,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_10.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_10.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_10.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_10.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReloadConsumesReserveAmmo",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.ReloadConsumesReserveAmmo",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046202413737773895,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_11.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 10,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReloadWaitsForWeaponDelay",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.ReloadWaitsForWeaponDelay",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.047590333968400955,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: Destroying /Temp/Untitled_11.Untitled:PersistentLevel.None, which doesn't have a valid world pointer",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: Destroying /Temp/Untitled_11.Untitled:PersistentLevel.None, which doesn't have a valid world pointer",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_12.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 12,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UtilityScannerReportsNearbyGuards",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.UtilityScannerReportsNearbyGuards",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046957500278949738,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: Destroying /Temp/Untitled_12.Untitled:PersistentLevel.None, which doesn't have a valid world pointer",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSpawn: Destroying /Temp/Untitled_12.Untitled:PersistentLevel.None, which doesn't have a valid world pointer",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_13.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_13.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_13.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_13.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 6,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponPickupSpawnsAndSelectsRuntimeWeapon",
+			"fullTestPath": "SneakGear.Inventory.PlayerInventoryComponent.WeaponPickupSpawnsAndSelectsRuntimeWeapon",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.04644949734210968,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_14.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 8,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CrouchCoverAllowsVault",
+			"fullTestPath": "SneakGear.Player.SneakGearPlayerCharacter.CrouchCoverAllowsVault",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046472497284412384,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_15.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_15.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_15.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_15.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_15.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_15.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_15.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 7,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "FullInputFlow",
+			"fullTestPath": "SneakGear.Player.SneakGearPlayerCharacter.FullInputFlow",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046554122120141983,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(back_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(back_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(back_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_16.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.22"
+				}
+			],
+			"warnings": 10,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PrimarySwapEquipsPickedUpWeapon",
+			"fullTestPath": "SneakGear.Player.SneakGearPlayerCharacter.PrimarySwapEquipsPickedUpWeapon",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.047436419874429703,
+			"dateTime": "2026.04.08-13.55.22",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_17.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 15,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ProneCannotVault",
+			"fullTestPath": "SneakGear.Player.SneakGearPlayerCharacter.ProneCannotVault",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046049457043409348,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_18.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_18.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_18.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_18.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_18.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_18.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 6,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SecondaryPickupKeepsPrimaryActive",
+			"fullTestPath": "SneakGear.Player.SneakGearPlayerCharacter.SecondaryPickupKeepsPrimaryActive",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046556957066059113,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_w_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_19.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 11,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StandingCoverAllowsVault",
+			"fullTestPath": "SneakGear.Player.SneakGearPlayerCharacter.StandingCoverAllowsVault",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046348247677087784,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_20.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_20.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_20.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_20.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_20.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 5,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WeaponPickupEquipsWeapon",
+			"fullTestPath": "SneakGear.Player.SneakGearPlayerCharacter.WeaponPickupEquipsWeapon",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.045782335102558136,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_21.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_21.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_21.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_21.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_21.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_21.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(hand_r_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(SneakGearPlayerCharacter /Temp/Untitled_21.Untitled:PersistentLevel.SneakGearPlayerCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 7,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ShowsGuardStartedFiringNotification",
+			"fullTestPath": "SneakGear.UI.EventFeedWidget.ShowsGuardStartedFiringNotification",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.045671790838241577,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestGuardCharacter /Temp/Untitled_22.Untitled:PersistentLevel.TestGuardCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestGuardCharacter /Temp/Untitled_22.Untitled:PersistentLevel.TestGuardCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(spine_socket): No SkeletalMesh for Component(CharacterMesh0) Actor(TestGuardCharacter /Temp/Untitled_22.Untitled:PersistentLevel.TestGuardCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 3,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ShowsPlayerDamageNotification",
+			"fullTestPath": "SneakGear.UI.EventFeedWidget.ShowsPlayerDamageNotification",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046787165105342865,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_23.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_23.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_23.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_23.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UpdatesFromEventDelegate",
+			"fullTestPath": "SneakGear.UI.EventFeedWidget.UpdatesFromEventDelegate",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046083707362413406,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ShowsSwapMessageAndHoldProgress",
+			"fullTestPath": "SneakGear.UI.PickupPromptWidget.ShowsSwapMessageAndHoldProgress",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.045546207576990128,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UpdatesFromAttributeDelegates",
+			"fullTestPath": "SneakGear.UI.PlayerVitalsWidget.UpdatesFromAttributeDelegates",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.045042794197797775,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_26.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_26.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_26.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_26.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 4,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UpdatesFromStanceDelegate",
+			"fullTestPath": "SneakGear.UI.StanceWidget.UpdatesFromStanceDelegate",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046853955835103989,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_27.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_27.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_27.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_27.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				},
+				{
+					"event":
+					{
+						"type": "Warning",
+						"message": "LogSkinnedMeshComp: GetSocketInfoByName(first_person_camera_attachment): No SkeletalMesh for Component(CharacterMesh0) Actor(TestInventoryCharacter /Temp/Untitled_27.Untitled:PersistentLevel.TestInventoryCharacter_0)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.04.08-13.55.23"
+				}
+			],
+			"warnings": 5,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UsesAimProviderWithoutCamera",
+			"fullTestPath": "SneakGear.Weapon.WeaponBase.UsesAimProviderWithoutCamera",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.046498917043209076,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UsesAnimationDrivenFireInterval",
+			"fullTestPath": "SneakGear.Weapon.WeaponBase.UsesAnimationDrivenFireInterval",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"A119A3628440A97D8F7508A03909229A"
+			],
+			"duration": 0.04612325131893158,
+			"dateTime": "2026.04.08-13.55.23",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}
