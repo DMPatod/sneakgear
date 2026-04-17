@@ -1,6 +1,5 @@
 #include "Guards/GuardCharacter.h"
 
-#include "AbilitySystemComponent.h"
 #include "Guards/GuardAIController.h"
 #include "Guards/GuardManagerSubsystem.h"
 #include "Guards/Patrol/PatrolPath.h"
@@ -8,17 +7,13 @@
 #include "Guards/Components/GuardPatrolComponent.h"
 #include "Components/CharacterWeaponComponent.h"
 #include "Guards/Data/GuardArchetypeData.h"
-#include "BehaviorTree/BehaviorTree.h"
 #include "Radar/RadarRegistrySubsystem.h"
 #include "Misc/DataValidation.h"
 #include "UI/EventLogSubsystem.h"
 
 AGuardCharacter::AGuardCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
 	AIControllerClass = AGuardAIController::StaticClass();
-	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	AwarenessComponent = CreateDefaultSubobject<UGuardAwarenessComponent>(TEXT("AwarenessComponent"));
 	PatrolComponent = CreateDefaultSubobject<UGuardPatrolComponent>(TEXT("PatrolComponent"));
@@ -29,18 +24,8 @@ void AGuardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!bSpawnAtLevelStart)
+	if (!bSpawnAtLevelStart || IsActorBeingDestroyed())
 	{
-		if (HasAuthority())
-		{
-			Destroy();
-		}
-		else
-		{
-			SetActorHiddenInGame(true);
-			SetActorEnableCollision(false);
-			SetActorTickEnabled(false);
-		}
 		return;
 	}
 
@@ -53,16 +38,6 @@ void AGuardCharacter::BeginPlay()
 	{
 		ReactionTimeSeconds = FMath::Max(ArchetypeData->ReactionTimeSeconds, 0.f);
 		AimErrorDegrees = FMath::Clamp(ArchetypeData->AimErrorDegrees, 0.f, 45.f);
-	}
-
-	if (!ensureAlwaysMsgf(BehaviorTreeAsset, TEXT("Guard '%s' must have a BehaviorTreeAsset assigned."), *GetName()))
-	{
-		return;
-	}
-
-	if (HasAuthority() && Controller == nullptr)
-	{
-		SpawnDefaultController();
 	}
 
 	if (auto W = GetWorld())
@@ -149,18 +124,6 @@ void AGuardCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 EDataValidationResult AGuardCharacter::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
-
-	if (!BehaviorTreeAsset)
-	{
-		Context.AddError(FText::FromString(TEXT("Guard must have a BehaviorTreeAsset assigned.")));
-		Result = EDataValidationResult::Invalid;
-	}
-
-	if (!BlackboardAsset && (!BehaviorTreeAsset || !BehaviorTreeAsset->BlackboardAsset))
-	{
-		Context.AddError(FText::FromString(TEXT("Guard must define a blackboard either explicitly or through its BehaviorTreeAsset.")));
-		Result = EDataValidationResult::Invalid;
-	}
 
 	if (!ArchetypeData)
 	{

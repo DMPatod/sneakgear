@@ -32,6 +32,7 @@ void USneakGearPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsVaulting = StealthCharacter->IsVaulting();
 	bInCover = StealthCharacter->IsInCover();
 	CoverMove = StealthCharacter->GetCoverMoveAxis();
+	AimPitch = FRotator::NormalizeAxis(StealthCharacter->GetBaseAimRotation().Pitch);
 
 	if (AWeaponBase* CurrentWeapon = StealthCharacter->GetCurrentWeapon())
 	{

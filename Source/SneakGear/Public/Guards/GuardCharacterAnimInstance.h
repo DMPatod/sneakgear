@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Types/GuardAwarenessTypes.h"
-#include "Player/BaseCharacterAnimInstance.h"
+#include "Characters/BaseCharacterAnimInstance.h"
 #include "GuardCharacterAnimInstance.generated.h"
 
 class AGuardCharacter;

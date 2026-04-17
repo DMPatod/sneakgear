@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Characters/BaseCharacterAnimInstance.h"
 #include "Player/Components/PlayerInventoryComponent.h"
 #include "Types/PlayerMovementTypes.h"
-#include "Player/BaseCharacterAnimInstance.h"
 #include "SneakGearPlayerAnimInstance.generated.h"
 
 class ASneakGearPlayerCharacter;

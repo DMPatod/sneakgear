@@ -2,22 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "Types/GuardAwarenessTypes.h"
-#include "Characters/BaseCharacter.h"
+#include "Characters/NonPlayerCharacter.h"
 #include "Weapon/WeaponAimProvider.h"
 #include "GuardCharacter.generated.h"
 
-class UGameplayEffect;
-class UHealthAttributeSet;
 class APatrolPath;
 class UGuardArchetypeData;
 class UGuardAwarenessComponent;
 class UGuardPatrolComponent;
 class UCharacterWeaponComponent;
-class UBehaviorTree;
-class UBlackboardData;
 
 UCLASS()
-class SNEAKGEAR_API AGuardCharacter : public ABaseCharacter, public IWeaponAimProvider
+class SNEAKGEAR_API AGuardCharacter : public ANonPlayerCharacter, public IWeaponAimProvider
 {
 	GENERATED_BODY()
 
@@ -69,30 +65,9 @@ public:
 	virtual AWeaponBase* GetCurrentWeapon() const override;
 	virtual bool GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDirection) const override;
 
-	UFUNCTION(BlueprintPure, Category="AI|BehaviorTree")
-	UBehaviorTree* GetBehaviorTreeAsset() const
-	{
-		return BehaviorTreeAsset;
-	}
-
-	UFUNCTION(BlueprintPure, Category="AI|BehaviorTree")
-	UBlackboardData* GetBlackboardAsset() const
-	{
-		return BlackboardAsset;
-	}
-
 protected:
-	UPROPERTY(EditInstanceOnly, Category="Spawn")
-	bool bSpawnAtLevelStart = true;
-
 	UPROPERTY(EditDefaultsOnly, Category="Stealth|Archetype")
 	TObjectPtr<UGuardArchetypeData> ArchetypeData;
-
-	UPROPERTY(EditDefaultsOnly, Category="AI|BehaviorTree")
-	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
-
-	UPROPERTY(EditDefaultsOnly, Category="AI|BehaviorTree")
-	TObjectPtr<UBlackboardData> BlackboardAsset;
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
