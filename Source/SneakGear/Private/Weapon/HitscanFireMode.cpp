@@ -1,20 +1,8 @@
 #include "Weapon/HitscanFireMode.h"
 
-#include "Player/SneakGearPlayerCharacter.h"
 #include "Player/SneakGearPlayerController.h"
 #include "Kismet/GameplayStatics.h"
-
-namespace
-{
-FCollisionObjectQueryParams BuildWeaponTraceObjectParams()
-{
-	FCollisionObjectQueryParams ObjectParams;
-	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
-	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
-	return ObjectParams;
-}
-}
+#include "Weapon/HitscanWeaponBase.h"
 
 void UHitscanFireMode::FireOnce(const FWeaponFireContext& Context)
 {
@@ -57,13 +45,12 @@ void UHitscanFireMode::FireOnce(const FWeaponFireContext& Context)
 		{
 			Controller->NotifyHitMarker();
 		}
-
 	}
 
 	if (bDrawDebug)
 	{
 		DrawDebugLine(World, MuzzleLocation, bHit ? FireHit.ImpactPoint : ShotEnd,
-					  bHit ? FColor::Red : FColor::Green, false, 1.f, 0, 1.f);
+		              bHit ? FColor::Red : FColor::Green, false, 1.f, 0, 1.f);
 		if (bHit)
 		{
 			DrawDebugSphere(World, FireHit.ImpactPoint, 7.5f, 12, FColor::Red, false, 1.f);

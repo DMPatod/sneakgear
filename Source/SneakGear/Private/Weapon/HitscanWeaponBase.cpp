@@ -6,18 +6,6 @@
 #include "Misc/DataValidation.h"
 #include "Weapon/WeaponFireModeComponent.h"
 
-namespace
-{
-FCollisionObjectQueryParams BuildWeaponTraceObjectParams()
-{
-	FCollisionObjectQueryParams ObjectParams;
-	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
-	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
-	return ObjectParams;
-}
-}
-
 AHitscanWeaponBase::AHitscanWeaponBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -64,7 +52,8 @@ EDataValidationResult AHitscanWeaponBase::IsDataValid(FDataValidationContext& Co
 
 	if (MaxSpreadDegrees < MinSpreadDegrees)
 	{
-		Context.AddError(FText::FromString(TEXT("MaxSpreadDegrees must be greater than or equal to MinSpreadDegrees.")));
+		Context.AddError(
+			FText::FromString(TEXT("MaxSpreadDegrees must be greater than or equal to MinSpreadDegrees.")));
 		Result = EDataValidationResult::Invalid;
 	}
 

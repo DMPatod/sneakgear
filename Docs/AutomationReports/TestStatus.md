@@ -11,9 +11,9 @@
 
 | Test | Status | Duration (s) | Warnings | Errors |
 | --- | --- | ---: | ---: | ---: |
-| `SneakGear.AI.BehaviorTree.BTTaskSetNextPatrolPoint.AdvancesAndLoops` | Passed | 0.072 | 1 | 0 |
-| `SneakGear.AI.GuardAIController.UpdatesBlackboardFromGuardTarget` | Passed | 0.043 | 0 | 0 |
-| `SneakGear.AI.GuardCombat.FiringAtPlayerDecreasesPlayerHealth` | Passed | 0.044 | 8 | 0 |
+| `SneakGear.AI.BehaviorTree.BTTaskSetNextPatrolPoint.AdvancesAndLoops` | Passed | 0.077 | 1 | 0 |
+| `SneakGear.AI.GuardAIController.UpdatesBlackboardFromGuardTarget` | Passed | 0.042 | 0 | 0 |
+| `SneakGear.AI.GuardCombat.FiringAtPlayerDecreasesPlayerHealth` | Passed | 0.042 | 8 | 0 |
 | `SneakGear.Characters.BaseCharacter.DeathOnlyRunsOnce` | Passed | 0.042 | 0 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.CannotSelectEmptyWeaponSlot` | Passed | 0.008 | 0 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.ConsumableUseRestoresHealthConsumesAndLogs` | Passed | 0.042 | 4 | 0 |
@@ -22,33 +22,33 @@
 | `SneakGear.Inventory.PlayerInventoryComponent.FailedUtilityUseDoesNotConsumeItem` | Passed | 0.042 | 4 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.NearbyPickupRespectsRange` | Passed | 0.042 | 4 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.NearbyWeaponPickupHoldSwapsWithFloorItem` | Passed | 0.042 | 11 | 0 |
-| `SneakGear.Inventory.PlayerInventoryComponent.NearbyWeaponPickupRequiresHoldToSwap` | Passed | 0.042 | 8 | 0 |
+| `SneakGear.Inventory.PlayerInventoryComponent.NearbyWeaponPickupRequiresHoldToSwap` | Passed | 0.043 | 8 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.NonWeaponPickupPreservesActiveWeapon` | Passed | 0.042 | 10 | 0 |
-| `SneakGear.Inventory.PlayerInventoryComponent.PickupReportsEventAndStoresUtilityItem` | Passed | 0.042 | 6 | 0 |
+| `SneakGear.Inventory.PlayerInventoryComponent.PickupReportsEventAndStoresUtilityItem` | Passed | 0.043 | 6 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.ReloadConsumesReserveAmmo` | Passed | 0.041 | 10 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.ReloadWaitsForWeaponDelay` | Passed | 0.042 | 12 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.SupportCollectionMaintainsActiveIndex` | Passed | 0.008 | 0 | 0 |
-| `SneakGear.Inventory.PlayerInventoryComponent.UtilityScannerReportsNearbyGuards` | Passed | 0.042 | 6 | 0 |
-| `SneakGear.Inventory.PlayerInventoryComponent.WeaponDoesNotAutoResumeFireAfterReload` | Passed | 0.041 | 10 | 0 |
+| `SneakGear.Inventory.PlayerInventoryComponent.UtilityScannerReportsNearbyGuards` | Passed | 0.043 | 6 | 0 |
+| `SneakGear.Inventory.PlayerInventoryComponent.WeaponDoesNotAutoResumeFireAfterReload` | Passed | 0.043 | 10 | 0 |
 | `SneakGear.Inventory.PlayerInventoryComponent.WeaponPickupSpawnsAndSelectsRuntimeWeapon` | Passed | 0.042 | 10 | 0 |
-| `SneakGear.Inventory.PlayerInventoryComponent.WeaponStateMachineTracksFireAndReload` | Passed | 0.041 | 10 | 0 |
+| `SneakGear.Inventory.PlayerInventoryComponent.WeaponStateMachineTracksFireAndReload` | Passed | 0.044 | 10 | 0 |
 | `SneakGear.Player.SneakGearPlayerAnimInstance.MirrorsWeaponState` | Passed | 0.043 | 10 | 0 |
-| `SneakGear.Player.SneakGearPlayerCharacter.CrouchCoverAllowsVault` | Passed | 0.042 | 8 | 0 |
-| `SneakGear.Player.SneakGearPlayerCharacter.FullInputFlow` | Passed | 0.043 | 11 | 0 |
-| `SneakGear.Player.SneakGearPlayerCharacter.PrimarySwapEquipsPickedUpWeapon` | Passed | 0.042 | 16 | 0 |
-| `SneakGear.Player.SneakGearPlayerCharacter.ProneCannotVault` | Passed | 0.042 | 7 | 0 |
+| `SneakGear.Player.SneakGearPlayerCharacter.CrouchCoverAllowsVault` | Passed | 0.043 | 8 | 0 |
+| `SneakGear.Player.SneakGearPlayerCharacter.FullInputFlow` | Passed | 0.044 | 11 | 0 |
+| `SneakGear.Player.SneakGearPlayerCharacter.PrimarySwapEquipsPickedUpWeapon` | Passed | 0.043 | 16 | 0 |
+| `SneakGear.Player.SneakGearPlayerCharacter.ProneCannotVault` | Passed | 0.041 | 7 | 0 |
 | `SneakGear.Player.SneakGearPlayerCharacter.SecondaryPickupKeepsPrimaryActive` | Passed | 0.042 | 12 | 0 |
-| `SneakGear.Player.SneakGearPlayerCharacter.StandingCoverAllowsVault` | Passed | 0.042 | 5 | 0 |
-| `SneakGear.Player.SneakGearPlayerCharacter.WeaponPickupEquipsWeapon` | Passed | 0.041 | 8 | 0 |
-| `SneakGear.UI.EventFeedWidget.ShowsGuardStartedFiringNotification` | Passed | 0.042 | 3 | 0 |
+| `SneakGear.Player.SneakGearPlayerCharacter.StandingCoverAllowsVault` | Passed | 0.043 | 5 | 0 |
+| `SneakGear.Player.SneakGearPlayerCharacter.WeaponPickupEquipsWeapon` | Passed | 0.042 | 8 | 0 |
+| `SneakGear.UI.EventFeedWidget.ShowsGuardStartedFiringNotification` | Passed | 0.041 | 3 | 0 |
 | `SneakGear.UI.EventFeedWidget.ShowsPlayerDamageNotification` | Passed | 0.042 | 6 | 0 |
 | `SneakGear.UI.EventFeedWidget.UpdatesFromEventDelegate` | Passed | 0.041 | 0 | 0 |
 | `SneakGear.UI.PickupPromptWidget.ShowsSwapMessageAndHoldProgress` | Passed | 0.041 | 0 | 0 |
-| `SneakGear.UI.PlayerVitalsWidget.UpdatesFromAttributeDelegates` | Passed | 0.041 | 4 | 0 |
+| `SneakGear.UI.PlayerVitalsWidget.UpdatesFromAttributeDelegates` | Passed | 0.042 | 4 | 0 |
 | `SneakGear.UI.StanceWidget.UpdatesFromStanceDelegate` | Passed | 0.042 | 7 | 0 |
 | `SneakGear.Weapon.HitscanWeaponBase.FireModeComponentIsBypassed` | Passed | 0.042 | 0 | 0 |
-| `SneakGear.Weapon.WeaponBase.UsesAimProviderWithoutCamera` | Passed | 0.041 | 0 | 0 |
-| `SneakGear.Weapon.WeaponBase.UsesAnimationDrivenFireNotifies` | Passed | 0.041 | 0 | 0 |
+| `SneakGear.Weapon.WeaponBase.UsesAimProviderWithoutCamera` | Passed | 0.042 | 0 | 0 |
+| `SneakGear.Weapon.WeaponBase.UsesAnimationDrivenFireNotifies` | Passed | 0.042 | 0 | 0 |
 
 ## Details
 

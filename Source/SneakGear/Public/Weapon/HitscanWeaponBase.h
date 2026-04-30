@@ -4,6 +4,15 @@
 #include "Weapon/WeaponBase.h"
 #include "HitscanWeaponBase.generated.h"
 
+inline FCollisionObjectQueryParams BuildWeaponTraceObjectParams()
+{
+	FCollisionObjectQueryParams ObjectParams;
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
+	return ObjectParams;
+}
+
 UCLASS()
 class SNEAKGEAR_API AHitscanWeaponBase : public AWeaponBase
 {
