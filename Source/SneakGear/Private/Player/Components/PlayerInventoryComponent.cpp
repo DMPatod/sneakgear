@@ -293,6 +293,8 @@ bool UPlayerInventoryComponent::PickUpFromFloor(AActor* PickupActor, bool bAllow
 		return false;
 	}
 
+	const bool bHadActiveWeaponSelection = HasValidWeaponSelection(ActiveWeaponSlot);
+
 	if (!AddItemInternal(PickupItem, PickupComponent->GetItemDefinition(), bAllowReplace))
 	{
 		return false;
@@ -304,6 +306,10 @@ bool UPlayerInventoryComponent::PickUpFromFloor(AActor* PickupActor, bool bAllow
 		if (!FPlayerInventoryWeaponRuntime::SetWeaponClassForSlot(*this, PickupItem.SlotType, PickupComponent->GetPickupWeaponClass()))
 		{
 			return false;
+		}
+		if (!bHadActiveWeaponSelection || PickupItem.SlotType == EPlayerItemSlot::PrimaryWeapon)
+		{
+			SetActiveWeaponSlot(PickupItem.SlotType, true);
 		}
 	}
 
@@ -556,147 +562,92 @@ bool UPlayerInventoryComponent::UseActiveUtilityItem()
 
 bool UPlayerInventoryComponent::SetActiveWeaponSlot(EPlayerItemSlot WeaponSlot, bool bEquipInHand)
 {
-	if (WeaponSlot != EPlayerItemSlot::PrimaryWeapon && WeaponSlot != EPlayerItemSlot::SecondaryWeapon)
-	{
-		return false;
-	}
-
-	if (!HasValidWeaponSelection(WeaponSlot))
-	{
-		return false;
-	}
-
-	ActiveWeaponSlot = WeaponSlot;
-	bWeaponEquipped = bEquipInHand;
-	FPlayerInventoryWeaponRuntime::SyncAttachments(*this);
-	OnItemSlotUpdated.Broadcast(WeaponSlot);
-	OnInventoryStateChanged.Broadcast();
-	return true;
+	return FPlayerInventoryWeaponRuntime::SetActiveWeaponSlot(*this, WeaponSlot, bEquipInHand);
 }
 
 bool UPlayerInventoryComponent::SetWeaponEquipped(bool bNewEquipped)
 {
-	if (!GetActiveWeapon())
-	{
-		return false;
-	}
+	return FPlayerInventoryWeaponRuntime::SetWeaponEquipped(*this, bNewEquipped);
+}
 
-	if (bWeaponEquipped == bNewEquipped)
-	{
-		return true;
-	}
+bool UPlayerInventoryComponent::IsWeaponEquipped() const
+{
+	return bWeaponEquipped;
+}
 
-	bWeaponEquipped = bNewEquipped;
-	FPlayerInventoryWeaponRuntime::SyncAttachments(*this);
-	OnItemSlotUpdated.Broadcast(ActiveWeaponSlot);
-	OnInventoryStateChanged.Broadcast();
-	return true;
+EPlayerItemSlot UPlayerInventoryComponent::GetActiveWeaponSlot() const
+{
+	return ActiveWeaponSlot;
+}
+
+FOnActiveWeaponFireRequested& UPlayerInventoryComponent::OnActiveWeaponFireRequestedEvent()
+{
+	return OnActiveWeaponFireRequested;
+}
+
+FOnActiveWeaponFired& UPlayerInventoryComponent::OnActiveWeaponFiredEvent()
+{
+	return OnActiveWeaponFired;
+}
+
+FOnInventoryStateChanged& UPlayerInventoryComponent::OnInventoryStateChangedEvent()
+{
+	return OnInventoryStateChanged;
 }
 
 AWeaponBase* UPlayerInventoryComponent::GetWeaponInSlot(EPlayerItemSlot WeaponSlot) const
 {
-	if (!HasValidWeaponItem(WeaponSlot))
-	{
-		return nullptr;
-	}
-
-	const FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
-	return Runtime ? Runtime->WeaponActor.Get() : nullptr;
+	return FPlayerInventoryWeaponRuntime::GetWeaponInSlot(*this, WeaponSlot);
 }
 
 AWeaponBase* UPlayerInventoryComponent::GetActiveWeapon() const
 {
-	if (AWeaponBase* ActiveWeapon = GetWeaponInSlot(ActiveWeaponSlot))
-	{
-		return ActiveWeapon;
-	}
+	return FPlayerInventoryWeaponRuntime::GetActiveWeapon(*this);
+}
 
-	return UnarmedWeapon;
+EPlayerInventoryWeaponState UPlayerInventoryComponent::GetWeaponState(EPlayerItemSlot WeaponSlot) const
+{
+	return FPlayerInventoryWeaponRuntime::GetWeaponState(*this, WeaponSlot);
+}
+
+EPlayerInventoryWeaponState UPlayerInventoryComponent::GetActiveWeaponState() const
+{
+	return FPlayerInventoryWeaponRuntime::GetActiveWeaponState(*this);
 }
 
 void UPlayerInventoryComponent::StartActiveWeaponFire()
 {
-	if (!bWeaponEquipped)
-	{
-		return;
-	}
-
-	if (!HasValidWeaponSelection(ActiveWeaponSlot))
-	{
-		if (UnarmedWeapon)
-		{
-			UnarmedWeapon->StartFire();
-		}
-		return;
-	}
-
-	const FPlayerInventoryWeaponSlotRuntime* ActiveRuntime = ResolveWeaponRuntime(ActiveWeaponSlot);
-	if (!ActiveRuntime || ActiveRuntime->bIsReloading || ActiveRuntime->InClip <= 0 || !ActiveRuntime->WeaponActor)
-	{
-		return;
-	}
-
-	ActiveRuntime->WeaponActor->StartFire();
+	FPlayerInventoryWeaponRuntime::StartFire(*this);
 }
 
 void UPlayerInventoryComponent::StopActiveWeaponFire()
 {
-	AWeaponBase* Weapon = GetActiveWeapon();
-	if (Weapon)
-	{
-		Weapon->StopFire();
-	}
+	FPlayerInventoryWeaponRuntime::StopFire(*this);
 }
 
 bool UPlayerInventoryComponent::ReloadActiveWeapon()
 {
-	if (!HasValidWeaponSelection(ActiveWeaponSlot))
-	{
-		return false;
-	}
+	return FPlayerInventoryWeaponRuntime::Reload(*this);
+}
 
-	FPlayerInventoryWeaponSlotRuntime* ActiveRuntime = ResolveWeaponRuntimeMutable(ActiveWeaponSlot);
-	if (!ActiveRuntime || !ActiveRuntime->WeaponActor)
-	{
-		return false;
-	}
+bool UPlayerInventoryComponent::NotifyActiveWeaponFireAnimation()
+{
+	return FPlayerInventoryWeaponRuntime::NotifyFireAnimation(*this);
+}
 
-	if (ActiveRuntime->bIsReloading)
-	{
-		return false;
-	}
-
-	const int32 ClipSize = FMath::Max(ActiveRuntime->WeaponActor->GetClipSize(), 0);
-	const int32 MissingAmmo = FMath::Max(ClipSize - ActiveRuntime->InClip, 0);
-	if (MissingAmmo <= 0)
-	{
-		return false;
-	}
-
-	const EAmmoType AmmoType = GetAmmoTypeForSlot(ActiveWeaponSlot);
-	const int32 AvailableReserve = GetReserveAmmoCountForType(AmmoType);
-	const int32 AmmoToLoad = FMath::Min(MissingAmmo, AvailableReserve);
-	if (AmmoToLoad <= 0)
-	{
-		return false;
-	}
-
-	ActiveRuntime->WeaponActor->StopFire();
-	ActiveRuntime->bIsReloading = true;
-	ActiveRuntime->WeaponActor->Reload();
-	return true;
+bool UPlayerInventoryComponent::NotifyActiveWeaponReloadAnimationFinished()
+{
+	return FPlayerInventoryWeaponRuntime::NotifyReloadAnimationFinished(*this);
 }
 
 int32 UPlayerInventoryComponent::GetInClip(EPlayerItemSlot WeaponSlot) const
 {
-	const FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
-	return Runtime ? Runtime->InClip : -1;
+	return FPlayerInventoryWeaponRuntime::GetInClip(*this, WeaponSlot);
 }
 
 int32 UPlayerInventoryComponent::GetClipSize(EPlayerItemSlot WeaponSlot) const
 {
-	const FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntime(WeaponSlot);
-	return (Runtime && Runtime->WeaponActor) ? FMath::Max(Runtime->WeaponActor->GetClipSize(), 0) : -1;
+	return FPlayerInventoryWeaponRuntime::GetClipSize(*this, WeaponSlot);
 }
 
 bool UPlayerInventoryComponent::HasValidWeaponItem(EPlayerItemSlot Slot) const
@@ -719,22 +670,17 @@ EAmmoType UPlayerInventoryComponent::GetAmmoTypeForSlot(EPlayerItemSlot Slot) co
 
 int32 UPlayerInventoryComponent::GetActiveWeaponInClip() const
 {
-	if (!HasValidWeaponSelection(ActiveWeaponSlot))
-	{
-		return 0;
-	}
+	return FPlayerInventoryWeaponRuntime::GetActiveWeaponInClip(*this);
+}
 
-	return FMath::Max(GetInClip(ActiveWeaponSlot), 0);
+bool UPlayerInventoryComponent::IsActiveWeaponReloading() const
+{
+	return FPlayerInventoryWeaponRuntime::IsActiveWeaponReloading(*this);
 }
 
 int32 UPlayerInventoryComponent::GetActiveWeaponClipSize() const
 {
-	if (!HasValidWeaponSelection(ActiveWeaponSlot))
-	{
-		return 0;
-	}
-
-	return FMath::Max(GetClipSize(ActiveWeaponSlot), 0);
+	return FPlayerInventoryWeaponRuntime::GetActiveWeaponClipSize(*this);
 }
 
 bool UPlayerInventoryComponent::SetAmmoReserve(EAmmoType AmmoType, int32 CurrentAmount, int32 MaxAmount)
@@ -762,16 +708,19 @@ int32 UPlayerInventoryComponent::GetReserveAmmoCount() const
 	return GetReserveAmmoCountForType(GetAmmoTypeForSlot(ActiveWeaponSlot));
 }
 
+bool UPlayerInventoryComponent::WasActiveWeaponFireRequestedRecently(float WindowSeconds) const
+{
+	return FPlayerInventoryWeaponRuntime::WasFireRequestedRecently(*this, WindowSeconds);
+}
+
+bool UPlayerInventoryComponent::IsActiveWeaponFireNotifyPending() const
+{
+	return FPlayerInventoryWeaponRuntime::IsFireNotifyPending(*this);
+}
+
 bool UPlayerInventoryComponent::WasActiveWeaponFiredRecently(float WindowSeconds) const
 {
-	const UWorld* World = GetWorld();
-	if (!World)
-	{
-		return false;
-	}
-
-	const float SafeWindow = FMath::Max(WindowSeconds, 0.01f);
-	return (World->GetTimeSeconds() - LastActiveWeaponFireTimestamp) <= SafeWindow;
+	return FPlayerInventoryWeaponRuntime::WasFiredRecently(*this, WindowSeconds);
 }
 
 TArray<FPlayerInventoryItem>* UPlayerInventoryComponent::ResolveMutableCollection(EPlayerItemSlot Slot)
@@ -1046,27 +995,24 @@ const FPlayerInventoryWeaponSlotRuntime* UPlayerInventoryComponent::ResolveWeapo
 	}
 }
 
+void UPlayerInventoryComponent::HandleWeaponFireRequested(EPlayerItemSlot Slot)
+{
+	FPlayerInventoryWeaponRuntime::HandleFireRequested(*this, Slot);
+}
+
 void UPlayerInventoryComponent::HandleWeaponFired(EPlayerItemSlot Slot)
 {
-	FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntimeMutable(Slot);
-	if (!Runtime)
-	{
-		return;
-	}
+	FPlayerInventoryWeaponRuntime::HandleFired(*this, Slot);
+}
 
-	Runtime->InClip = FMath::Max(Runtime->InClip - 1, 0);
-	if (Runtime->InClip <= 0 && Runtime->WeaponActor)
-	{
-		Runtime->WeaponActor->StopFire();
-	}
+void UPlayerInventoryComponent::OnPrimaryWeaponFireRequested()
+{
+	HandleWeaponFireRequested(EPlayerItemSlot::PrimaryWeapon);
+}
 
-	if (ActiveWeaponSlot == Slot)
-	{
-		LastActiveWeaponFireTimestamp = GetWorld() ? GetWorld()->GetTimeSeconds() : LastActiveWeaponFireTimestamp;
-		OnActiveWeaponFired.Broadcast(Slot);
-	}
-
-	OnInventoryStateChanged.Broadcast();
+void UPlayerInventoryComponent::OnSecondaryWeaponFireRequested()
+{
+	HandleWeaponFireRequested(EPlayerItemSlot::SecondaryWeapon);
 }
 
 void UPlayerInventoryComponent::OnPrimaryWeaponFired()
@@ -1081,35 +1027,7 @@ void UPlayerInventoryComponent::OnSecondaryWeaponFired()
 
 void UPlayerInventoryComponent::HandleWeaponReloaded(EPlayerItemSlot Slot)
 {
-	FPlayerInventoryWeaponSlotRuntime* Runtime = ResolveWeaponRuntimeMutable(Slot);
-	if (!Runtime || !Runtime->WeaponActor || !Runtime->bIsReloading)
-	{
-		return;
-	}
-
-	Runtime->bIsReloading = false;
-
-	const int32 ClipSize = FMath::Max(Runtime->WeaponActor->GetClipSize(), 0);
-	const int32 MissingAmmo = FMath::Max(ClipSize - Runtime->InClip, 0);
-	if (MissingAmmo <= 0)
-	{
-		return;
-	}
-
-	const EAmmoType AmmoType = GetAmmoTypeForSlot(Slot);
-	const int32 AvailableReserve = GetReserveAmmoCountForType(AmmoType);
-	const int32 AmmoToLoad = FMath::Min(MissingAmmo, AvailableReserve);
-	if (AmmoToLoad <= 0)
-	{
-		return;
-	}
-
-	const int32 LoadedAmmo = FMath::Clamp(ConsumeReserveAmmo(AmmoType, AmmoToLoad), 0, AmmoToLoad);
-	Runtime->InClip = FMath::Clamp(Runtime->InClip + LoadedAmmo, 0, ClipSize);
-	if (LoadedAmmo > 0)
-	{
-		OnInventoryStateChanged.Broadcast();
-	}
+	FPlayerInventoryWeaponRuntime::HandleReloaded(*this, Slot);
 }
 
 void UPlayerInventoryComponent::OnPrimaryWeaponReloaded()

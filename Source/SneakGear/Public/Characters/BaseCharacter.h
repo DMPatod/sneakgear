@@ -7,9 +7,7 @@
 
 class UAbilitySystemComponent;
 class UGameplayEffect;
-class UAmmoAttributeSet;
 class UHealthAttributeSet;
-class UStaminaAttributeSet;
 class AWeaponBase;
 
 UCLASS(Abstract)
@@ -26,16 +24,6 @@ public:
 	const UHealthAttributeSet* GetHealthSet() const
 	{
 		return HealthSet;
-	}
-
-	const UStaminaAttributeSet* GetStaminaSet() const
-	{
-		return StaminaSet;
-	}
-
-	const UAmmoAttributeSet* GetAmmoSet() const
-	{
-		return AmmoSet;
 	}
 
 protected:
@@ -55,20 +43,8 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
 	TObjectPtr<UHealthAttributeSet> HealthSet;
 
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<UStaminaAttributeSet> StaminaSet;
-
-	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
-	TObjectPtr<UAmmoAttributeSet> AmmoSet;
-
 	UPROPERTY(EditDefaultsOnly, Category="GAS")
 	TSubclassOf<UGameplayEffect> GE_DefaultHealth;
-
-	UPROPERTY(EditDefaultsOnly, Category="GAS")
-	TSubclassOf<UGameplayEffect> GE_DefaultStamina;
-
-	UPROPERTY(EditDefaultsOnly, Category="GAS")
-	TSubclassOf<UGameplayEffect> GE_DefaultAmmo;
 
 	UPROPERTY(Transient)
 	bool bHasDied = false;

@@ -8,7 +8,6 @@
 #include "Engine/Scene.h"
 #include "Player/Components/PlayerAimComponent.h"
 #include "Player/Components/PlayerLocomotionComponent.h"
-#include "Player/Components/PlayerWeaponComponent.h"
 #include "Player/SneakGearPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Game/GAS/AmmoAttributeSet.h"
@@ -24,6 +23,14 @@ APlayerCharacterBase::APlayerCharacterBase()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+
+	StaminaSet = CreateDefaultSubobject<UStaminaAttributeSet>(TEXT("StaminaSet"));
+	AmmoSet = CreateDefaultSubobject<UAmmoAttributeSet>(TEXT("AmmoSet"));
+	if (AbilitySystem)
+	{
+		AbilitySystem->AddAttributeSetSubobject(StaminaSet.Get());
+		AbilitySystem->AddAttributeSetSubobject(AmmoSet.Get());
+	}
 
 	SetupViewComponents();
 	SetupGameplayComponents();
@@ -41,7 +48,7 @@ bool APlayerCharacterBase::IsAiming() const
 
 AWeaponBase* APlayerCharacterBase::GetCurrentWeapon() const
 {
-	return WeaponComponent ? WeaponComponent->GetCurrentWeapon() : nullptr;
+	return nullptr;
 }
 
 bool APlayerCharacterBase::GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDirection) const
@@ -71,8 +78,8 @@ bool APlayerCharacterBase::GetWeaponAimData(FVector& OutAimOrigin, FVector& OutA
 
 float APlayerCharacterBase::GetAmmo() const
 {
-	const UAmmoAttributeSet* AmmoSet = GetAmmoSet();
-	return AmmoSet ? AmmoSet->GetAmmo() : 0.f;
+	const UAmmoAttributeSet* CurrentAmmoSet = GetAmmoSet();
+	return CurrentAmmoSet ? CurrentAmmoSet->GetAmmo() : 0.f;
 }
 
 float APlayerCharacterBase::ConsumeAmmo(float Amount)
@@ -83,13 +90,13 @@ float APlayerCharacterBase::ConsumeAmmo(float Amount)
 	}
 
 	UAbilitySystemComponent* AbilitySystemComponent = GetAbilitySystemComponent();
-	const UAmmoAttributeSet* AmmoSet = GetAmmoSet();
-	if (!AbilitySystemComponent || !AmmoSet)
+	const UAmmoAttributeSet* CurrentAmmoSet = GetAmmoSet();
+	if (!AbilitySystemComponent || !CurrentAmmoSet)
 	{
 		return 0.f;
 	}
 
-	const float UsedAmmo = FMath::Clamp(Amount, 0.f, AmmoSet->GetAmmo());
+	const float UsedAmmo = FMath::Clamp(Amount, 0.f, CurrentAmmoSet->GetAmmo());
 	if (UsedAmmo <= 0.f)
 	{
 		return 0.f;
@@ -159,6 +166,36 @@ bool APlayerCharacterBase::RemoveGameplayEffectFromSelf(FActiveGameplayEffectHan
 	return AbilitySystemComponent && AbilitySystemComponent->RemoveActiveGameplayEffect(EffectHandle) > 0;
 }
 
+void APlayerCharacterBase::InitGAS()
+{
+	Super::InitGAS();
+
+	if (!AbilitySystem)
+	{
+		return;
+	}
+
+	auto ApplyGE = [&](TSubclassOf<UGameplayEffect> EffectClass)
+	{
+		if (!EffectClass)
+		{
+			return;
+		}
+
+		FGameplayEffectContextHandle Context = AbilitySystem->MakeEffectContext();
+		Context.AddSourceObject(this);
+
+		FGameplayEffectSpecHandle Spec = AbilitySystem->MakeOutgoingSpec(EffectClass, 1.f, Context);
+		if (Spec.IsValid())
+		{
+			AbilitySystem->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+		}
+	};
+
+	ApplyGE(GE_DefaultStamina);
+	ApplyGE(GE_DefaultAmmo);
+}
+
 void APlayerCharacterBase::SetCameraPostProcessMaterialEnabled(UMaterialInterface* Material, bool bEnabled, float Weight)
 {
 	auto UpdateCameraBlendable = [Material, bEnabled, Weight](UCameraComponent* Camera)
@@ -214,16 +251,16 @@ float APlayerCharacterBase::GetMaxSpeed() const
 bool APlayerCharacterBase::GetPlayerVitalsViewData(FPlayerVitalsViewData& OutData) const
 {
 	const UHealthAttributeSet* HealthSet = GetHealthSet();
-	const UStaminaAttributeSet* StaminaSet = GetStaminaSet();
-	if (!HealthSet || !StaminaSet)
+	const UStaminaAttributeSet* CurrentStaminaSet = GetStaminaSet();
+	if (!HealthSet || !CurrentStaminaSet)
 	{
 		return false;
 	}
 
 	OutData.Health = HealthSet->GetHealth();
 	OutData.MaxHealth = HealthSet->GetMaxHealth();
-	OutData.Stamina = StaminaSet->GetStamina();
-	OutData.MaxStamina = StaminaSet->GetMaxStamina();
+	OutData.Stamina = CurrentStaminaSet->GetStamina();
+	OutData.MaxStamina = CurrentStaminaSet->GetMaxStamina();
 	return true;
 }
 
@@ -237,11 +274,7 @@ bool APlayerCharacterBase::GetWeaponStatusViewData(FWeaponStatusViewData& OutDat
 
 	OutData.bHasWeapon = true;
 	OutData.WeaponName = FText::FromString(Weapon->GetClass() ? Weapon->GetClass()->GetName() : Weapon->GetName());
-	OutData.FireRate = Weapon->GetFireRate();
-
-	const UPlayerWeaponComponent* PlayerWeaponComponent = FindComponentByClass<UPlayerWeaponComponent>();
-	OutData.InClip = PlayerWeaponComponent ? FMath::Max(PlayerWeaponComponent->GetInClip(), 0) : 0;
-	OutData.ClipSize = PlayerWeaponComponent ? FMath::Max(PlayerWeaponComponent->GetClipSize(), 0) : 0;
+	OutData.FireRate = 0.f;
 	OutData.ReserveAmmo = FMath::Max(FMath::FloorToInt(GetAmmo()), 0);
 	return true;
 }
@@ -338,7 +371,6 @@ void APlayerCharacterBase::SetupViewComponents()
 
 void APlayerCharacterBase::SetupGameplayComponents()
 {
-	WeaponComponent = CreateDefaultSubobject<UPlayerWeaponComponent>(TEXT("WeaponComponent"));
 	AimComponent = CreateDefaultSubobject<UPlayerAimComponent>(TEXT("AimComponent"));
 	LocomotionComponent = CreateDefaultSubobject<UPlayerLocomotionComponent>(TEXT("LocomotionComponent"));
 }
@@ -353,11 +385,6 @@ void APlayerCharacterBase::InitializeGameplayState()
 	if (AimComponent)
 	{
 		AimComponent->Initialize(CameraBoom, ThirdPersonCamera, FirstPersonCamera);
-	}
-
-	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
-	{
-		WeaponComponent->ToggleEquip();
 	}
 
 	if (LocomotionComponent)
@@ -554,12 +581,6 @@ void APlayerCharacterBase::ToggleAimView()
 
 void APlayerCharacterBase::ToggleEquip()
 {
-	if (!WeaponComponent)
-	{
-		return;
-	}
-
-	WeaponComponent->ToggleEquip();
 }
 
 void APlayerCharacterBase::ToggleSprint()
@@ -572,10 +593,6 @@ void APlayerCharacterBase::ToggleSprint()
 
 void APlayerCharacterBase::ReloadWeapon()
 {
-	if (WeaponComponent)
-	{
-		WeaponComponent->Reload();
-	}
 }
 
 void APlayerCharacterBase::OnJumpPressed()
@@ -655,16 +672,8 @@ void APlayerCharacterBase::HandleAmmoAttributeChanged(const FOnAttributeChangeDa
 
 void APlayerCharacterBase::StartFire()
 {
-	if (WeaponComponent && IsAiming())
-	{
-		WeaponComponent->StartFire();
-	}
 }
 
 void APlayerCharacterBase::StopFire()
 {
-	if (WeaponComponent)
-	{
-		WeaponComponent->StopFire();
-	}
 }

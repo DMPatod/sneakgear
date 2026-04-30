@@ -19,7 +19,7 @@ public:
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 
 protected:
-	void FireOnce();
+	virtual void FireOnce() override;
 	void ApplyRecoil() const;
 	FVector BuildShotDirection(const FVector& MuzzleLocation, const FVector& AimPoint) const;
 

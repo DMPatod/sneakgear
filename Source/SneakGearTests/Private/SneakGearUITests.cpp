@@ -6,6 +6,7 @@
 #include "Engine/DamageEvents.h"
 #include "Game/GAS/HealthAttributeSet.h"
 #include "Game/GAS/StaminaAttributeSet.h"
+#include "Player/Components/PlayerLocomotionComponent.h"
 #include "UI/EventLogSubsystem.h"
 
 #include "SneakGearTestTypes.h"
@@ -77,6 +78,16 @@ bool FStanceWidgetUpdatesFromStanceDelegateTest::RunTest(const FString& Paramete
 	TestEqual(TEXT("Stance widget should react to stance changes without widget tick"),
 		Widget->GetStanceDisplayText().ToString(),
 		StaticEnum<EStance>()->GetDisplayNameTextByValue(static_cast<int64>(EStance::Crouching)).ToString());
+
+	if (UPlayerLocomotionComponent* LocomotionComponent = Character->FindComponentByClass<UPlayerLocomotionComponent>())
+	{
+		LocomotionComponent->OnStancePressed();
+		LocomotionComponent->OnStanceReleased();
+	}
+
+	TestEqual(TEXT("Stance widget should react to input-driven stance changes without widget tick"),
+		Widget->GetStanceDisplayText().ToString(),
+		StaticEnum<EStance>()->GetDisplayNameTextByValue(static_cast<int64>(EStance::Standing)).ToString());
 
 	return true;
 }
@@ -192,6 +203,7 @@ bool FEventFeedWidgetShowsPlayerDamageNotificationTest::RunTest(const FString& P
 
 	const FString FeedText = Widget->GetEventFeedText().ToString();
 	TestTrue(TEXT("Event feed should show player damage"), FeedText.Contains(TEXT("Player took 25 damage")));
+	TestTrue(TEXT("Event feed should show current health after damage"), FeedText.Contains(TEXT("Health: 75")));
 	TestTrue(TEXT("Event feed should include the damage causer"), FeedText.Contains(DamageCauser->GetName()));
 
 	return true;

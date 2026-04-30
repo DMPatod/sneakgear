@@ -45,7 +45,7 @@ public:
 	void AddEvent(const FText& Message, EGameEventCategory Category = EGameEventCategory::Info);
 
 	UFUNCTION(BlueprintCallable, Category="Event Log")
-	void ReportDamageTaken(AActor* Victim, float DamageAmount, AActor* DamageCauser);
+	void ReportDamageTaken(AActor* Victim, float DamageAmount, float CurrentHealth, AActor* DamageCauser);
 
 	UFUNCTION(BlueprintCallable, Category="Event Log")
 	void ReportItemPickedUp(AActor* Picker, const FText& ItemName);

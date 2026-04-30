@@ -49,7 +49,6 @@ ATestWeapon::ATestWeapon()
 {
 	PrimaryFireModeClass = UTestWeaponFireModeComponent::StaticClass();
 	ClipSize = 3;
-	FireRate = 10.f;
 	AmmoType = EAmmoType::Light;
 }
 
@@ -62,22 +61,22 @@ ATestDelayedReloadWeapon::ATestDelayedReloadWeapon()
 {
 }
 
-float ATestDelayedReloadWeapon::Reload()
-{
-	StopFire();
-	ScheduleReloadCompletion(DelayedReloadDuration);
-	return DelayedReloadDuration;
-}
-
-float ATestDelayedFireWeapon::GetFireInterval() const
-{
-	return 10.f;
-}
-
 ATestDamageWeapon::ATestDamageWeapon()
 {
 	PrimaryFireModeClass = UTestDamageWeaponFireModeComponent::StaticClass();
 	ClipSize = 3;
-	FireRate = 10.f;
 	AmmoType = EAmmoType::Light;
+}
+
+ATestHitscanWeapon::ATestHitscanWeapon()
+{
+	PrimaryFireModeClass = UTestWeaponFireModeComponent::StaticClass();
+	ClipSize = 3;
+	AmmoType = EAmmoType::Light;
+	bDrawDebug = false;
+}
+
+UTestWeaponFireModeComponent* ATestHitscanWeapon::GetTestFireMode() const
+{
+	return Cast<UTestWeaponFireModeComponent>(PrimaryFireMode);
 }

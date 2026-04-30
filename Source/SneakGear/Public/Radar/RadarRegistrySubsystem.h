@@ -1,16 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InterchangeTranslatorBase.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Types/RadarTypes.h"
 #include "RadarRegistrySubsystem.generated.h"
 
-/**
- * 
- */
+DECLARE_MULTICAST_DELEGATE(FOnRadarContactsDirty);
+
 UCLASS()
 class SNEAKGEAR_API URadarRegistrySubsystem : public UWorldSubsystem
 {
@@ -29,7 +25,11 @@ public:
 		return Actors;
 	}
 
+	FOnRadarContactsDirty OnContactsDirty;
+
 private:
+	void HandleGuardAwarenessChanged();
+
 	UPROPERTY()
 	TArray<TWeakObjectPtr<AActor>> Actors;
 };

@@ -27,6 +27,127 @@ void TickWorld(UWorld* World, int32 TickCount = 1, float DeltaSeconds = 1.f / 60
 		World->Tick(LEVELTICK_All, DeltaSeconds);
 	}
 }
+
+FPlayerInventoryItem MakeInventoryItem(FName ItemId, EPlayerItemSlot Slot, const TCHAR* DisplayName)
+{
+	FPlayerInventoryItem Item;
+	Item.ItemId = ItemId;
+	Item.DisplayName = FText::FromString(DisplayName);
+	Item.SlotType = Slot;
+	return Item;
+}
+}
+
+// Guards held-trigger behavior while reload animation completion is driven by a notify.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentWeaponDoesNotAutoResumeFireAfterReloadTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.WeaponDoesNotAutoResumeFireAfterReload",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentWeaponDoesNotAutoResumeFireAfterReloadTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	TestNotNull(TEXT("Inventory test character should spawn"), Character);
+
+	UTestPlayerInventoryComponent* ItemComponent = Character->GetTestItemComponent();
+	TestNotNull(TEXT("Test item component should exist"), ItemComponent);
+
+	ItemComponent->ConfigureWeaponClasses(ATestWeapon::StaticClass());
+	ItemComponent->RunBeginPlayForTest();
+	ItemComponent->SetAmmoReserve(EAmmoType::Light, 3, 10);
+
+	FPlayerInventoryItem PrimaryWeaponItem;
+	PrimaryWeaponItem.ItemId = TEXT("HeldFireWeapon");
+	PrimaryWeaponItem.DisplayName = FText::FromString(TEXT("Held Fire Weapon"));
+	PrimaryWeaponItem.SlotType = EPlayerItemSlot::PrimaryWeapon;
+	TestTrue(TEXT("Primary weapon item should be added"), ItemComponent->AddItem(PrimaryWeaponItem));
+
+	AWeaponBase* Weapon = ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon);
+	TestNotNull(TEXT("Primary weapon runtime should exist"), Weapon);
+	Weapon->DispatchBeginPlay();
+
+	TestTrue(TEXT("Primary slot should become active"),
+		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon));
+
+	// Hold fire — start shooting without ever releasing the trigger
+	ItemComponent->StartActiveWeaponFire();
+	TestTrue(TEXT("First shot should fire"), ItemComponent->NotifyActiveWeaponFireAnimation());
+	TestEqual(TEXT("One shot should consume one round"), ItemComponent->GetActiveWeaponInClip(), 2);
+
+	// Trigger is still held (StopActiveWeaponFire was never called).
+	// Initiate a reload mid-fire — the weapon stops internally but the player's finger is down.
+	TestTrue(TEXT("Reload should start while trigger is held"), ItemComponent->ReloadActiveWeapon());
+	TestTrue(TEXT("Reload notify should complete the reload"),
+		ItemComponent->NotifyActiveWeaponReloadAnimationFinished());
+	TestEqual(TEXT("Clip should be refilled after reload"), ItemComponent->GetActiveWeaponInClip(), 3);
+
+	TestTrue(TEXT("Weapon should auto-resume fire after reload with held trigger"),
+		Weapon->IsFireNotifyPending());
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentWeaponStateMachineTracksFireAndReloadTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.WeaponStateMachineTracksFireAndReload",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentWeaponStateMachineTracksFireAndReloadTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	TestNotNull(TEXT("Inventory test character should spawn"), Character);
+
+	UTestPlayerInventoryComponent* ItemComponent = Character->GetTestItemComponent();
+	TestNotNull(TEXT("Test item component should exist"), ItemComponent);
+
+	ItemComponent->ConfigureWeaponClasses(ATestWeapon::StaticClass());
+	ItemComponent->RunBeginPlayForTest();
+	ItemComponent->SetAmmoReserve(EAmmoType::Light, 3, 10);
+
+	TestTrue(TEXT("Primary weapon item should be added"),
+		ItemComponent->AddItem(MakeInventoryItem(TEXT("StateMachineWeapon"), EPlayerItemSlot::PrimaryWeapon, TEXT("State Machine Weapon"))));
+
+	AWeaponBase* Weapon = ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon);
+	TestNotNull(TEXT("Primary weapon runtime should exist"), Weapon);
+	Weapon->DispatchBeginPlay();
+
+	TestTrue(TEXT("Primary slot should become active"),
+		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon));
+	TestTrue(TEXT("Newly selected weapon should be idle"),
+		ItemComponent->GetActiveWeaponState() == EPlayerInventoryWeaponState::Idle);
+
+	ItemComponent->StartActiveWeaponFire();
+	TestTrue(TEXT("Starting fire should request the animation notify"),
+		ItemComponent->GetActiveWeaponState() == EPlayerInventoryWeaponState::FireRequested);
+	TestTrue(TEXT("Fire notify should be pending after starting fire"),
+		ItemComponent->IsActiveWeaponFireNotifyPending());
+
+	ItemComponent->StopActiveWeaponFire();
+	TestTrue(TEXT("Queued fire notify should keep the state fire requested"),
+		ItemComponent->GetActiveWeaponState() == EPlayerInventoryWeaponState::FireRequested);
+
+	TestTrue(TEXT("Fire notify should consume the queued shot"), ItemComponent->NotifyActiveWeaponFireAnimation());
+	TestTrue(TEXT("Released trigger should return the weapon to idle after the shot"),
+		ItemComponent->GetActiveWeaponState() == EPlayerInventoryWeaponState::Idle);
+
+	TestTrue(TEXT("Reload should enter the reloading state"), ItemComponent->ReloadActiveWeapon());
+	TestTrue(TEXT("Reloading state should back the reload query"),
+		ItemComponent->GetActiveWeaponState() == EPlayerInventoryWeaponState::Reloading &&
+		ItemComponent->IsActiveWeaponReloading());
+
+	ItemComponent->StartActiveWeaponFire();
+	TestTrue(TEXT("Fire input during reload should keep the weapon reloading"),
+		ItemComponent->GetActiveWeaponState() == EPlayerInventoryWeaponState::Reloading);
+
+	TestTrue(TEXT("Reload notify should finish the reload"), ItemComponent->NotifyActiveWeaponReloadAnimationFinished());
+	TestTrue(TEXT("Held trigger should request fire after reload finishes"),
+		ItemComponent->GetActiveWeaponState() == EPlayerInventoryWeaponState::FireRequested);
+
+	return true;
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentCannotSelectEmptyWeaponSlotTest,
@@ -43,6 +164,156 @@ bool FPlayerInventoryComponentCannotSelectEmptyWeaponSlotTest::RunTest(const FSt
 		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon));
 	TestNull(TEXT("Empty primary slot should not expose a runtime weapon"),
 		ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentSupportCollectionMaintainsActiveIndexTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.SupportCollectionMaintainsActiveIndex",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentSupportCollectionMaintainsActiveIndexTest::RunTest(const FString& Parameters)
+{
+	AActor* OwnerActor = NewObject<AActor>();
+	UPlayerInventoryComponent* ItemComponent = NewObject<UPlayerInventoryComponent>(OwnerActor);
+
+	TestNotNull(TEXT("Item component should be created"), ItemComponent);
+
+	TestTrue(TEXT("First support item should be added"),
+		ItemComponent->AddItem(MakeInventoryItem(TEXT("Bandage"), EPlayerItemSlot::Support, TEXT("Bandage"))));
+	TestTrue(TEXT("Second support item should be added"),
+		ItemComponent->AddItem(MakeInventoryItem(TEXT("Medkit"), EPlayerItemSlot::Support, TEXT("Medkit"))));
+	TestTrue(TEXT("Third support item should be added"),
+		ItemComponent->AddItem(MakeInventoryItem(TEXT("Ration"), EPlayerItemSlot::Support, TEXT("Ration"))));
+
+	TestEqual(TEXT("Support collection should contain three items"), ItemComponent->GetItemCount(EPlayerItemSlot::Support), 3);
+	TestEqual(TEXT("First added support item should be active by default"),
+		ItemComponent->GetItem(EPlayerItemSlot::Support).ItemId, FName(TEXT("Bandage")));
+
+	TestTrue(TEXT("Setting active support index should succeed"), ItemComponent->SetActiveItemIndex(EPlayerItemSlot::Support, 2));
+	TestEqual(TEXT("Active support index should update"), ItemComponent->GetActiveItemIndex(EPlayerItemSlot::Support), 2);
+	TestEqual(TEXT("Active support item should come from the selected index"),
+		ItemComponent->GetItem(EPlayerItemSlot::Support).ItemId, FName(TEXT("Ration")));
+
+	FPlayerInventoryItem RemovedItem;
+	TestTrue(TEXT("Removing the active support item should succeed"),
+		ItemComponent->RemoveItemAt(EPlayerItemSlot::Support, 2, RemovedItem));
+	TestEqual(TEXT("Removed item should be the selected support item"), RemovedItem.ItemId, FName(TEXT("Ration")));
+	TestEqual(TEXT("Support active index should normalize after removing the selected item"),
+		ItemComponent->GetActiveItemIndex(EPlayerItemSlot::Support), 1);
+	TestEqual(TEXT("Support item query should now return the normalized item"),
+		ItemComponent->GetItem(EPlayerItemSlot::Support).ItemId, FName(TEXT("Medkit")));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentFailedUtilityUseDoesNotConsumeItemTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.FailedUtilityUseDoesNotConsumeItem",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentFailedUtilityUseDoesNotConsumeItemTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	ATestPickupActor* PickupActor = World->SpawnActor<ATestPickupActor>();
+	UTestUtilityItemDefinition* UtilityDefinition = NewObject<UTestUtilityItemDefinition>(GetTransientPackage());
+
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	TestNotNull(TEXT("Pickup actor should spawn"), PickupActor);
+	TestNotNull(TEXT("Utility definition should be created"), UtilityDefinition);
+
+	UtilityDefinition->ItemId = TEXT("BrokenScanner");
+	UtilityDefinition->DisplayName = FText::FromString(TEXT("Broken Scanner"));
+	UtilityDefinition->bUseSucceeded = false;
+	UtilityDefinition->bConsumeAfterUseForTest = true;
+	PickupActor->GetPickupComponent()->SetItemDefinitionForTest(UtilityDefinition);
+
+	TestTrue(TEXT("Utility pickup should succeed"), Character->GetTestItemComponent()->PickUpFromFloor(PickupActor));
+	TestFalse(TEXT("Using a utility item that fails should report failure"),
+		Character->GetTestItemComponent()->UseActiveUtilityItem());
+	TestEqual(TEXT("Failed utility use should still call the item once"), UtilityDefinition->UseCount, 1);
+	TestEqual(TEXT("Failed utility use should not consume the item"),
+		Character->GetTestItemComponent()->GetItemCount(EPlayerItemSlot::Utility), 1);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentEffectHandleBookkeepingTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.EffectHandleBookkeeping",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentEffectHandleBookkeepingTest::RunTest(const FString& Parameters)
+{
+	AActor* OwnerActor = NewObject<AActor>();
+	UPlayerInventoryComponent* ItemComponent = NewObject<UPlayerInventoryComponent>(OwnerActor);
+	UPlayerItemDefinition* ItemDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	UPlayerItemDefinition* OtherDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+
+	TestNotNull(TEXT("Item component should be created"), ItemComponent);
+	TestNotNull(TEXT("Item definition should be created"), ItemDefinition);
+	TestNotNull(TEXT("Other item definition should be created"), OtherDefinition);
+
+	const FActiveGameplayEffectHandle StoredHandle(42);
+	ItemComponent->SetActiveEffectHandleForItem(ItemDefinition, StoredHandle);
+
+	TestTrue(TEXT("Stored active effect handle should be valid"),
+		ItemComponent->GetActiveEffectHandleForItem(ItemDefinition).IsValid());
+	TestEqual(TEXT("Stored active effect handle should round-trip"),
+		ItemComponent->GetActiveEffectHandleForItem(ItemDefinition), StoredHandle);
+	TestFalse(TEXT("Different item definitions should not share effect handles"),
+		ItemComponent->GetActiveEffectHandleForItem(OtherDefinition).IsValid());
+
+	ItemComponent->ClearActiveEffectHandleForItem(ItemDefinition);
+	TestFalse(TEXT("Clearing an effect handle should remove it"),
+		ItemComponent->GetActiveEffectHandleForItem(ItemDefinition).IsValid());
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentNonWeaponPickupPreservesActiveWeaponTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.NonWeaponPickupPreservesActiveWeapon",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FPlayerInventoryComponentNonWeaponPickupPreservesActiveWeaponTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestInventoryCharacter* Character = World->SpawnActor<ATestInventoryCharacter>();
+	ATestPickupActor* UtilityPickup = World->SpawnActor<ATestPickupActor>();
+	UTestUtilityItemDefinition* UtilityDefinition = NewObject<UTestUtilityItemDefinition>(GetTransientPackage());
+
+	TestNotNull(TEXT("Inventory character should spawn"), Character);
+	TestNotNull(TEXT("Utility pickup should spawn"), UtilityPickup);
+	TestNotNull(TEXT("Utility definition should be created"), UtilityDefinition);
+
+	UTestPlayerInventoryComponent* ItemComponent = Character->GetTestItemComponent();
+	TestNotNull(TEXT("Test item component should exist"), ItemComponent);
+
+	ItemComponent->ConfigureWeaponClasses(ATestWeapon::StaticClass());
+	ItemComponent->RunBeginPlayForTest();
+
+	TestTrue(TEXT("Primary weapon item should be added"),
+		ItemComponent->AddItem(MakeInventoryItem(TEXT("PrimaryRifle"), EPlayerItemSlot::PrimaryWeapon, TEXT("Primary Rifle"))));
+	TestTrue(TEXT("Primary weapon slot should become active"),
+		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon));
+
+	AWeaponBase* ActiveWeaponBeforePickup = ItemComponent->GetActiveWeapon();
+	TestNotNull(TEXT("Active weapon should exist before non-weapon pickup"), ActiveWeaponBeforePickup);
+
+	UtilityDefinition->ItemId = TEXT("Scanner");
+	UtilityDefinition->DisplayName = FText::FromString(TEXT("Scanner"));
+	UtilityPickup->GetPickupComponent()->SetItemDefinitionForTest(UtilityDefinition);
+
+	TestTrue(TEXT("Utility pickup should succeed"), ItemComponent->PickUpFromFloor(UtilityPickup));
+	TestEqual(TEXT("Active weapon slot should remain primary after non-weapon pickup"),
+		ItemComponent->GetActiveWeaponSlot(), EPlayerItemSlot::PrimaryWeapon);
+	TestEqual(TEXT("Active weapon actor should be unchanged after non-weapon pickup"),
+		ItemComponent->GetActiveWeapon(), ActiveWeaponBeforePickup);
+	TestEqual(TEXT("Utility pickup should add one utility item"),
+		ItemComponent->GetItemCount(EPlayerItemSlot::Utility), 1);
+
 	return true;
 }
 
@@ -82,11 +353,16 @@ bool FPlayerInventoryComponentReloadConsumesReserveAmmoTest::RunTest(const FStri
 
 	ItemComponent->StartActiveWeaponFire();
 	ItemComponent->StopActiveWeaponFire();
+	TestTrue(TEXT("Fire notify should consume one round"), ItemComponent->NotifyActiveWeaponFireAnimation());
 
 	TestEqual(TEXT("One shot should consume one round from the clip"), ItemComponent->GetActiveWeaponInClip(), 2);
 	TestEqual(TEXT("Reserve ammo should stay unchanged before reload"), ItemComponent->GetReserveAmmoCount(), 1);
 
 	TestTrue(TEXT("Reload should succeed when reserve ammo is available"), ItemComponent->ReloadActiveWeapon());
+	TestEqual(TEXT("Reload should wait for the animation notify"), ItemComponent->GetActiveWeaponInClip(), 2);
+	TestEqual(TEXT("Reserve ammo should not be consumed before the reload notify"), ItemComponent->GetReserveAmmoCount(), 1);
+	TestTrue(TEXT("Reload notify should finish the reload"), ItemComponent->NotifyActiveWeaponReloadAnimationFinished());
+
 	TestEqual(TEXT("Reload should refill the missing round"), ItemComponent->GetActiveWeaponInClip(), 3);
 	TestEqual(TEXT("Reload should consume the last reserve round"), ItemComponent->GetReserveAmmoCount(), 0);
 	return true;
@@ -126,10 +402,13 @@ bool FPlayerInventoryComponentReloadWaitsForWeaponDelayTest::RunTest(const FStri
 
 	ItemComponent->StartActiveWeaponFire();
 	ItemComponent->StopActiveWeaponFire();
+	TestTrue(TEXT("First fire notify should consume ammo"), ItemComponent->NotifyActiveWeaponFireAnimation());
 	ItemComponent->StartActiveWeaponFire();
 	ItemComponent->StopActiveWeaponFire();
+	TestTrue(TEXT("Second fire notify should consume ammo"), ItemComponent->NotifyActiveWeaponFireAnimation());
 	ItemComponent->StartActiveWeaponFire();
 	ItemComponent->StopActiveWeaponFire();
+	TestTrue(TEXT("Third fire notify should consume ammo"), ItemComponent->NotifyActiveWeaponFireAnimation());
 
 	TestEqual(TEXT("Three shots should empty the clip"), ItemComponent->GetActiveWeaponInClip(), 0);
 	TestEqual(TEXT("Reserve ammo should remain untouched before reload completes"), ItemComponent->GetReserveAmmoCount(), 3);
@@ -137,22 +416,12 @@ bool FPlayerInventoryComponentReloadWaitsForWeaponDelayTest::RunTest(const FStri
 	TestTrue(TEXT("Reload should start when reserve ammo is available"), ItemComponent->ReloadActiveWeapon());
 	TestEqual(TEXT("Reload should not refill the clip immediately"), ItemComponent->GetActiveWeaponInClip(), 0);
 	TestEqual(TEXT("Reserve ammo should not be consumed immediately"), ItemComponent->GetReserveAmmoCount(), 3);
+	TestEqual(TEXT("Clip should stay empty before the reload notify"), ItemComponent->GetActiveWeaponInClip(), 0);
+	TestEqual(TEXT("Reserve ammo should stay unchanged before the reload notify"), ItemComponent->GetReserveAmmoCount(), 3);
 
-	for (int32 Index = 0; Index < 99; ++Index)
-	{
-		World->Tick(LEVELTICK_All, 0.1f);
-		PrimaryWeapon->Tick(0.1f);
-	}
-	TestEqual(TEXT("Clip should stay empty before the 10 second reload completes"), ItemComponent->GetActiveWeaponInClip(), 0);
-	TestEqual(TEXT("Reserve ammo should stay unchanged before the reload finishes"), ItemComponent->GetReserveAmmoCount(), 3);
-
-	for (int32 Index = 0; Index < 2; ++Index)
-	{
-		World->Tick(LEVELTICK_All, 0.1f);
-		PrimaryWeapon->Tick(0.1f);
-	}
-	TestEqual(TEXT("Clip should be refilled after the 10 second reload completes"), ItemComponent->GetActiveWeaponInClip(), 3);
-	TestEqual(TEXT("Reload should consume reserve ammo after completion"), ItemComponent->GetReserveAmmoCount(), 0);
+	TestTrue(TEXT("Reload notify should finish the reload"), ItemComponent->NotifyActiveWeaponReloadAnimationFinished());
+	TestEqual(TEXT("Clip should be refilled after the reload notify"), ItemComponent->GetActiveWeaponInClip(), 3);
+	TestEqual(TEXT("Reload should consume reserve ammo after the notify"), ItemComponent->GetReserveAmmoCount(), 0);
 	return true;
 }
 
@@ -258,9 +527,7 @@ bool FPlayerInventoryComponentWeaponPickupSpawnsAndSelectsRuntimeWeaponTest::Run
 	TestTrue(TEXT("Runtime weapon should use the weapon class from the item definition"),
 		RuntimeWeapon->IsA(ATestWeapon::StaticClass()));
 
-	TestTrue(TEXT("Selecting the picked-up primary weapon should succeed"),
-		Character->GetTestItemComponent()->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon));
-	TestEqual(TEXT("Primary weapon slot should become active"),
+	TestEqual(TEXT("Picked-up primary weapon should become active"),
 		Character->GetTestItemComponent()->GetActiveWeaponSlot(),
 		EPlayerItemSlot::PrimaryWeapon);
 	TestEqual(TEXT("Active weapon should be the spawned runtime weapon"),

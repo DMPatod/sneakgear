@@ -16,7 +16,7 @@ Current shortlist of project weaknesses worth addressing.
 
 ## Player / Inventory
 
-- `UPlayerInventoryComponent` owns inventory and weapon-slot state, but still handles runtime weapon spawning, ammo bookkeeping, and attachment presentation alongside slot management — pickup interaction was split into `UPlayerInventoryInteractionComponent` but further responsibility separation is still needed
+- `UPlayerInventoryComponent` (1064 LOC) still consolidates slot management, active-weapon state, reserve ammo, and attachment presentation — pickup interaction lives in `UPlayerInventoryInteractionComponent`, weapon firing in `UPlayerWeaponComponent`, and internal pickup/weapon-runtime logic is extracted into private helpers (`FPlayerInventoryPickupQuery`, `FPlayerInventoryWeaponRuntime`), but the public component surface is still too wide
 - Inventory content rules are still lightweight; there is no stronger item definition/data model yet for loadout validation or progression
 
 ## Combat

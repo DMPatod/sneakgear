@@ -1,6 +1,7 @@
 #include "Player/Components/PlayerHUDComponent.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Components/Cover/CoverStateComponent.h"
 #include "Guards/GuardCharacter.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "Player/SneakGearPlayerController.h"
@@ -32,6 +33,14 @@ void UPlayerHUDComponent::Initialize(TSubclassOf<UPlayerHUDWidget> InPlayerHUDWi
 void UPlayerHUDComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (UWorld* World = GetWorld())
+	{
+		if (URadarRegistrySubsystem* RadarSys = World->GetSubsystem<URadarRegistrySubsystem>())
+		{
+			RadarSys->OnContactsDirty.AddUObject(this, &UPlayerHUDComponent::HandleRadarContactsDirty);
+		}
+	}
 }
 
 void UPlayerHUDComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -40,13 +49,15 @@ void UPlayerHUDComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	RadarRefreshCooldown -= DeltaTime;
-	if (RadarRefreshCooldown <= 0.f)
+	if (bRadarDirty || RadarRefreshCooldown <= 0.f)
 	{
 		UpdateRadarWidget();
-		RadarRefreshCooldown = RadarRefreshInterval;
+		bRadarDirty = false;
+		RadarRefreshCooldown = RadarPositionRefreshInterval;
 	}
+
+	TryBindVaultPrompt();
 	UpdateCrosshairWidget(DeltaTime);
-	UpdateVaultPromptWidget();
 	UpdateCoverDebugWidget();
 }
 
@@ -213,17 +224,44 @@ void UPlayerHUDComponent::UpdateCrosshairWidget(float DeltaSeconds)
 	CrosshairWidget->SetSpread(SpreadCurrent);
 }
 
-void UPlayerHUDComponent::UpdateVaultPromptWidget()
+void UPlayerHUDComponent::HandleRadarContactsDirty()
+{
+	bRadarDirty = true;
+}
+
+void UPlayerHUDComponent::HandleVaultPromptChanged(bool bShow)
 {
 	if (!VaultPromptWidget)
 	{
 		return;
 	}
-
-	const ASneakGearPlayerCharacter* Player = GetOwningSneakGearPlayerCharacter();
-	const bool bShowVaultPrompt = Player && Player->IsVaultAvailable() && !Player->IsVaulting();
 	VaultPromptWidget->SetPromptText(NSLOCTEXT("SneakGearUI", "VaultPromptText", "Space to vault"));
-	VaultPromptWidget->SetPromptVisible(bShowVaultPrompt);
+	VaultPromptWidget->SetPromptVisible(bShow);
+}
+
+void UPlayerHUDComponent::TryBindVaultPrompt()
+{
+	if (bBoundToVaultPrompt)
+	{
+		return;
+	}
+
+	ASneakGearPlayerCharacter* Player = GetOwningSneakGearPlayerCharacter();
+	if (!Player)
+	{
+		return;
+	}
+
+	UCoverStateComponent* CoverState = Player->GetCoverStateComponent();
+	if (!CoverState)
+	{
+		return;
+	}
+
+	CoverState->OnVaultPromptChanged.AddUObject(this, &UPlayerHUDComponent::HandleVaultPromptChanged);
+	bBoundToVaultPrompt = true;
+
+	HandleVaultPromptChanged(Player->IsVaultAvailable() && !Player->IsVaulting());
 }
 
 void UPlayerHUDComponent::UpdateCoverDebugWidget()

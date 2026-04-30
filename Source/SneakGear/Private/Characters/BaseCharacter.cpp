@@ -3,9 +3,7 @@
 #include "AbilitySystemComponent.h"
 #include "DrawDebugHelpers.h"
 #include "GameplayEffectTypes.h"
-#include "Game/GAS/AmmoAttributeSet.h"
 #include "Game/GAS/HealthAttributeSet.h"
-#include "Game/GAS/StaminaAttributeSet.h"
 #include "UI/EventLogSubsystem.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -17,13 +15,9 @@ ABaseCharacter::ABaseCharacter()
 	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	HealthSet = CreateDefaultSubobject<UHealthAttributeSet>(TEXT("HealthSet"));
-	StaminaSet = CreateDefaultSubobject<UStaminaAttributeSet>(TEXT("StaminaSet"));
-	AmmoSet = CreateDefaultSubobject<UAmmoAttributeSet>(TEXT("AmmoSet"));
 
 	// GAS requires attribute sets to be registered on the ASC before attribute base values are mutated.
 	AbilitySystem->AddAttributeSetSubobject(HealthSet.Get());
-	AbilitySystem->AddAttributeSetSubobject(StaminaSet.Get());
-	AbilitySystem->AddAttributeSetSubobject(AmmoSet.Get());
 }
 
 UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
@@ -77,8 +71,6 @@ void ABaseCharacter::InitGAS()
 	};
 
 	ApplyGE(GE_DefaultHealth);
-	ApplyGE(GE_DefaultStamina);
-	ApplyGE(GE_DefaultAmmo);
 }
 
 void ABaseCharacter::BindHealthDeath()
@@ -101,6 +93,10 @@ void ABaseCharacter::BindHealthDeath()
 
 void ABaseCharacter::OnCharacterDeath()
 {
+	if (!IsActorBeingDestroyed())
+	{
+		Destroy();
+	}
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
@@ -109,17 +105,24 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	const float AppliedDamage = FMath::Max(DamageAmount, 0.f);
-	if (AppliedDamage <= 0.f || !AbilitySystem)
+	if (AppliedDamage <= 0.f)
 	{
 		return AppliedDamage;
 	}
 
-	AbilitySystem->ApplyModToAttribute(UHealthAttributeSet::GetHealthAttribute(), EGameplayModOp::Additive,
-	                                   -AppliedDamage);
+	if (AbilitySystem)
+	{
+		AbilitySystem->ApplyModToAttribute(UHealthAttributeSet::GetHealthAttribute(), EGameplayModOp::Additive,
+										   -AppliedDamage);
+	}
+
+	const float CurrentHealth = HealthSet ? HealthSet->GetHealth() : 0.f;
+	UE_LOG(LogTemp, Warning, TEXT("%s took %.0f damage from %s. Current health: %.0f"),
+		*GetName(), AppliedDamage, *GetNameSafe(DamageCauser), CurrentHealth);
 
 	if (auto* EventLog = GetWorld() ? GetWorld()->GetSubsystem<UEventLogSubsystem>() : nullptr)
 	{
-		EventLog->ReportDamageTaken(this, AppliedDamage, DamageCauser);
+		EventLog->ReportDamageTaken(this, AppliedDamage, CurrentHealth, DamageCauser);
 	}
 
 	return AppliedDamage;
@@ -128,7 +131,5 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 float ABaseCharacter::InternalTakePointDamage(float Damage, struct FPointDamageEvent const& PointDamageEvent,
 	class AController* EventInstigator, AActor* DamageCauser)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Point damage is not supported for %s"), *GetName());
-	
 	return Super::InternalTakePointDamage(Damage, PointDamageEvent, EventInstigator, DamageCauser);
 }

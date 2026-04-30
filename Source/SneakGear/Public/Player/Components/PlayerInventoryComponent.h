@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "GameplayEffectTypes.h"
+#include "Player/Components/PlayerInventoryComponentTypes.h"
 #include "Types/PlayerInventoryTypes.h"
 #include "PlayerInventoryComponent.generated.h"
 
@@ -15,15 +16,6 @@ class FPlayerInventoryPickupQuery;
 class FPlayerInventoryWeaponRuntime;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemSlotUpdated, EPlayerItemSlot, Slot);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveWeaponFired, EPlayerItemSlot);
-DECLARE_MULTICAST_DELEGATE(FOnInventoryStateChanged);
-
-struct FPlayerInventoryWeaponSlotRuntime
-{
-	TObjectPtr<AWeaponBase> WeaponActor = nullptr;
-	int32 InClip = -1;
-	bool bIsReloading = false;
-};
 
 UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
 class SNEAKGEAR_API UPlayerInventoryComponent : public UActorComponent
@@ -94,22 +86,22 @@ public:
 	bool SetWeaponEquipped(bool bNewEquipped);
 
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
-	bool IsWeaponEquipped() const
-	{
-		return bWeaponEquipped;
-	}
+	bool IsWeaponEquipped() const;
 
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
-	EPlayerItemSlot GetActiveWeaponSlot() const
-	{
-		return ActiveWeaponSlot;
-	}
+	EPlayerItemSlot GetActiveWeaponSlot() const;
 
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	AWeaponBase* GetWeaponInSlot(EPlayerItemSlot WeaponSlot) const;
 
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	AWeaponBase* GetActiveWeapon() const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	EPlayerInventoryWeaponState GetWeaponState(EPlayerItemSlot WeaponSlot) const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	EPlayerInventoryWeaponState GetActiveWeaponState() const;
 
 	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
 	void StartActiveWeaponFire();
@@ -119,6 +111,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
 	bool ReloadActiveWeapon();
+
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	bool NotifyActiveWeaponFireAnimation();
+
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	bool NotifyActiveWeaponReloadAnimationFinished();
 
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	int32 GetInClip(EPlayerItemSlot WeaponSlot) const;
@@ -142,17 +140,22 @@ public:
 	int32 GetReserveAmmoCount() const;
 
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	bool WasActiveWeaponFireRequestedRecently(float WindowSeconds = 0.12f) const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	bool IsActiveWeaponFireNotifyPending() const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	bool WasActiveWeaponFiredRecently(float WindowSeconds = 0.12f) const;
 
-	FOnActiveWeaponFired& OnActiveWeaponFiredEvent()
-	{
-		return OnActiveWeaponFired;
-	}
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	bool IsActiveWeaponReloading() const;
 
-	FOnInventoryStateChanged& OnInventoryStateChangedEvent()
-	{
-		return OnInventoryStateChanged;
-	}
+	FOnActiveWeaponFireRequested& OnActiveWeaponFireRequestedEvent();
+
+	FOnActiveWeaponFired& OnActiveWeaponFiredEvent();
+
+	FOnInventoryStateChanged& OnInventoryStateChangedEvent();
 
 	void SetActiveEffectHandleForItem(const UPlayerItemDefinition* ItemDefinition, FActiveGameplayEffectHandle EffectHandle);
 	FActiveGameplayEffectHandle GetActiveEffectHandleForItem(const UPlayerItemDefinition* ItemDefinition) const;
@@ -221,8 +224,10 @@ private:
 	FPlayerInventoryWeaponSlotRuntime SecondaryWeaponRuntime;
 	UPROPERTY(Transient)
 	TObjectPtr<AWeaponBase> UnarmedWeapon = nullptr;
+	FOnActiveWeaponFireRequested OnActiveWeaponFireRequested;
 	FOnActiveWeaponFired OnActiveWeaponFired;
 	FOnInventoryStateChanged OnInventoryStateChanged;
+	float LastActiveWeaponFireRequestTimestamp = -1000.f;
 	float LastActiveWeaponFireTimestamp = -1000.f;
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UPlayerItemDefinition>> EquippedItemDefinitions;
@@ -257,8 +262,11 @@ private:
 	bool HasValidWeaponItem(EPlayerItemSlot Slot) const;
 	bool HasValidWeaponSelection(EPlayerItemSlot Slot) const;
 	EAmmoType GetAmmoTypeForSlot(EPlayerItemSlot Slot) const;
+	void HandleWeaponFireRequested(EPlayerItemSlot Slot);
 	void HandleWeaponFired(EPlayerItemSlot Slot);
 	void HandleWeaponReloaded(EPlayerItemSlot Slot);
+	void OnPrimaryWeaponFireRequested();
+	void OnSecondaryWeaponFireRequested();
 	void OnPrimaryWeaponFired();
 	void OnSecondaryWeaponFired();
 	void OnPrimaryWeaponReloaded();

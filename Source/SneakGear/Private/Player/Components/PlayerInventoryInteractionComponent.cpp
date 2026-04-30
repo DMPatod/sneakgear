@@ -204,6 +204,7 @@ void UPlayerInventoryInteractionComponent::HandlePickUpNearbyItemPressed()
 
 	bPickupButtonDown = true;
 	bPickupHoldTriggered = false;
+
 	World->GetTimerManager().SetTimer(
 		PickupSwapHoldTimer,
 		this,

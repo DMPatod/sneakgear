@@ -62,13 +62,20 @@ void UCoverStateComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		{
 			OwnerCharacter->bUseControllerRotationYaw = false;
 			UpdateCoverRotation(OwnerCharacter, DeltaTime);
-			
+
 			if (!CoverComponent->ValidateCover(CurrentCover.Normal, 90.f))
 			{
 				ExitCover(OwnerCharacter);
 				return;
 			}
 		}
+	}
+
+	const bool bVaultNow = !bIsVaulting && CanVault(OwnerCharacter);
+	if (bVaultNow != bVaultPromptActive)
+	{
+		bVaultPromptActive = bVaultNow;
+		OnVaultPromptChanged.Broadcast(bVaultPromptActive);
 	}
 }
 

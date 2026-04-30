@@ -44,6 +44,11 @@ void UEventFeedWidget::NativeDestruct()
 
 void UEventFeedWidget::HandleEventAdded(const FGameEventEntry& Event)
 {
+	if (Event.Category == EGameEventCategory::Damage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EventFeedWidget received damage event: %s"), *Event.Message.ToString());
+	}
+
 	const float CurrentTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
 	FEventFeedLine& Line = VisibleLines.AddDefaulted_GetRef();
 	Line.EventId = Event.EventId;

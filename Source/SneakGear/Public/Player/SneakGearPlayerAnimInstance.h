@@ -30,7 +30,19 @@ public:
 	float CoverMove = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	bool bWeaponFireRequestedRecently = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	bool bWeaponFirePending = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
 	bool bWeaponFiredRecently = false;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	EPlayerInventoryWeaponState WeaponState = EPlayerInventoryWeaponState::Idle;
+
+	UPROPERTY(BlueprintReadOnly, Category="Weapon")
+	bool bIsReloading = false;
 
 	UPROPERTY(BlueprintReadOnly, Category="Weapon")
 	EPlayerItemSlot ActiveWeaponSlot = EPlayerItemSlot::PrimaryWeapon;
@@ -56,11 +68,23 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Weapon")
 	float AimPitch = 0.f;
 
+	UFUNCTION(BlueprintCallable, Category="Weapon|Animation")
+	bool NotifyWeaponFireAnimation();
+
+	UFUNCTION(BlueprintCallable, Category="Weapon|Animation")
+	bool NotifyWeaponReloadAnimationFinished();
+
+#if WITH_DEV_AUTOMATION_TESTS
+	void RefreshFromCharacterForTest(ASneakGearPlayerCharacter* InCharacter, float DeltaSeconds = 0.f);
+#endif
+
 protected:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 private:
+	void RefreshFromCharacter(float DeltaSeconds);
+
 	UPROPERTY(Transient)
 	TObjectPtr<ASneakGearPlayerCharacter> StealthCharacter;
 };

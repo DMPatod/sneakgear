@@ -62,9 +62,13 @@ private:
 	FTimerHandle StanceHoldTimer;
 	bool bStanceHoldTriggered = false;
 	bool bStanceButtonDown = false;
+	FVector StandingMeshRelativeLocation = FVector::ZeroVector;
+	float StandingMeshCapsuleHalfHeight = 0.f;
+	bool bHasStandingMeshRelativeLocation = false;
 
 	void HandleStanceHold();
 	void UpdateCameraSocketOffset(float DeltaSeconds);
+	void UpdateMeshRelativeLocation(float TargetHalfHeight);
 	void UpdateMovementSpeed();
 	float GetStanceBaseSpeed() const;
 	bool IsCoverActive() const;

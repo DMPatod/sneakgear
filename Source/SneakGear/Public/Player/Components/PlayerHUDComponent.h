@@ -62,8 +62,10 @@ private:
 	void CreateHUDWidgets();
 	void UpdateRadarWidget();
 	void UpdateCrosshairWidget(float DeltaSeconds);
-	void UpdateVaultPromptWidget();
 	void UpdateCoverDebugWidget();
+	void HandleRadarContactsDirty();
+	void HandleVaultPromptChanged(bool bShow);
+	void TryBindVaultPrompt();
 	ASneakGearPlayerController* GetOwningSneakGearPlayerController() const;
 	ASneakGearPlayerCharacter* GetOwningSneakGearPlayerCharacter() const;
 	URadarWidget* GetRadarWidget() const;
@@ -94,7 +96,9 @@ private:
 	FCrosshairSpreadConfig CrosshairSpread;
 	TArray<FRadarContact> RadarContactsCache;
 	float RadarRefreshCooldown = 0.f;
-	float RadarRefreshInterval = 0.1f;
+	static constexpr float RadarPositionRefreshInterval = 0.1f;
+	bool bRadarDirty = false;
+	bool bBoundToVaultPrompt = false;
 	int32 VaultPromptZOrder = 6;
 	int32 CoverDebugWidgetZOrder = 7;
 	UPROPERTY(EditAnywhere, Category="Debug")

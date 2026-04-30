@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Weapon/HitscanWeaponBase.h"
 #include "Weapon/WeaponBase.h"
 #include "Weapon/WeaponFireModeComponent.h"
 #include "TestWeapons.generated.h"
@@ -47,20 +48,6 @@ class SNEAKGEARTESTS_API ATestDelayedReloadWeapon : public ATestWeapon
 
 public:
 	ATestDelayedReloadWeapon();
-
-	virtual float Reload() override;
-
-protected:
-	float DelayedReloadDuration = 10.f;
-};
-
-UCLASS()
-class SNEAKGEARTESTS_API ATestDelayedFireWeapon : public ATestWeapon
-{
-	GENERATED_BODY()
-
-public:
-	virtual float GetFireInterval() const override;
 };
 
 UCLASS()
@@ -70,4 +57,15 @@ class SNEAKGEARTESTS_API ATestDamageWeapon : public AWeaponBase
 
 public:
 	ATestDamageWeapon();
+};
+
+UCLASS()
+class SNEAKGEARTESTS_API ATestHitscanWeapon : public AHitscanWeaponBase
+{
+	GENERATED_BODY()
+
+public:
+	ATestHitscanWeapon();
+
+	UTestWeaponFireModeComponent* GetTestFireMode() const;
 };

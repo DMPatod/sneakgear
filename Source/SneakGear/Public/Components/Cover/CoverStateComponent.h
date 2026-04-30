@@ -8,6 +8,8 @@
 struct FInputActionValue;
 class APlayerCharacterBase;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnVaultPromptChanged, bool);
+
 UENUM(BlueprintType)
 enum class ECoverState : uint8
 {
@@ -61,6 +63,8 @@ public:
 	bool TryVault(ACharacter* OwnerCharacter);
 	void HandleLanded(ACharacter* OwnerCharacter);
 	void RequestExitCover();
+
+	FOnVaultPromptChanged OnVaultPromptChanged;
 
 #if WITH_DEV_AUTOMATION_TESTS
 	void TestSetLockedCover(const FCoverHit& Hit);
@@ -137,4 +141,5 @@ private:
 	float CoverFacingSign = 1.f;
 	float CoverMoveAxis = 0.f;
 	bool bIsVaulting = false;
+	bool bVaultPromptActive = false;
 };

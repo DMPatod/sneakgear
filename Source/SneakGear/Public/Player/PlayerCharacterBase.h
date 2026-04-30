@@ -13,9 +13,10 @@ class USpringArmComponent;
 class UInputAction;
 class UEnhancedInputComponent;
 class UGameplayEffect;
+class UAmmoAttributeSet;
 class UPlayerAimComponent;
-class UPlayerWeaponComponent;
 class UPlayerLocomotionComponent;
+class UStaminaAttributeSet;
 class AWeaponBase;
 class UUserWidget;
 class UMaterialInterface;
@@ -33,6 +34,16 @@ public:
 	virtual AWeaponBase* GetCurrentWeapon() const;
 	virtual bool GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDirection) const override;
 	float GetAmmo() const;
+	const UStaminaAttributeSet* GetStaminaSet() const
+	{
+		return StaminaSet;
+	}
+
+	const UAmmoAttributeSet* GetAmmoSet() const
+	{
+		return AmmoSet;
+	}
+
 	float ConsumeAmmo(float Amount);
 	bool ApplyHealthDelta(float DeltaHealth);
 	FActiveGameplayEffectHandle ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass);
@@ -68,6 +79,7 @@ protected:
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void InitGAS() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -76,6 +88,7 @@ protected:
 	virtual void StartFire();
 	virtual void StopFire();
 	virtual void ReloadWeapon();
+	virtual void ToggleEquip();
 	virtual void OnJumpPressed();
 	virtual void OnJumpReleased();
 
@@ -119,13 +132,22 @@ protected:
 	TObjectPtr<UInputAction> StanceAction;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerAimComponent> AimComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPlayerLocomotionComponent> LocomotionComponent;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<UStaminaAttributeSet> StaminaSet;
+
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="GAS")
+	TObjectPtr<UAmmoAttributeSet> AmmoSet;
+
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<UGameplayEffect> GE_DefaultStamina;
+
+	UPROPERTY(EditDefaultsOnly, Category="GAS")
+	TSubclassOf<UGameplayEffect> GE_DefaultAmmo;
 
 	FOnPlayerUIStanceChanged OnStanceChanged;
 	FOnPlayerUIVitalsChanged OnPlayerUIVitalsChanged;
@@ -146,7 +168,6 @@ private:
 	void StopAim();
 	void ApplyAimRotationMode(bool bEnableAimRotation);
 	void ToggleAimView();
-	void ToggleEquip();
 	void ToggleSprint();
 	
 	void OnStancePressed();

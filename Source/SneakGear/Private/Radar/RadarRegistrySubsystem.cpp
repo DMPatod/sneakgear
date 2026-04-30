@@ -1,6 +1,6 @@
 #include "Radar/RadarRegistrySubsystem.h"
 
-#include "Guards/GuardCharacter.h"
+#include "Guards/Components/GuardAwarenessComponent.h"
 
 namespace
 {
@@ -46,6 +46,14 @@ void URadarRegistrySubsystem::RegisterActor(AActor* Actor)
 	}
 
 	Actors.Add(Actor);
+
+	if (UGuardAwarenessComponent* Awareness = Actor->FindComponentByClass<UGuardAwarenessComponent>())
+	{
+		Awareness->OnAwarenessStateChanged.AddUObject(this, &URadarRegistrySubsystem::HandleGuardAwarenessChanged);
+	}
+
+
+	OnContactsDirty.Broadcast();
 }
 
 void URadarRegistrySubsystem::UnregisterActor(AActor* Actor)
@@ -55,10 +63,22 @@ void URadarRegistrySubsystem::UnregisterActor(AActor* Actor)
 		return;
 	}
 
+	if (UGuardAwarenessComponent* Awareness = Actor->FindComponentByClass<UGuardAwarenessComponent>())
+	{
+		Awareness->OnAwarenessStateChanged.RemoveAll(this);
+	}
+
 	Actors.RemoveAll([Actor](const TWeakObjectPtr<AActor>& Item)
 	{
 		return !Item.IsValid() || Item.Get() == Actor;
 	});
+
+	OnContactsDirty.Broadcast();
+}
+
+void URadarRegistrySubsystem::HandleGuardAwarenessChanged()
+{
+	OnContactsDirty.Broadcast();
 }
 
 void URadarRegistrySubsystem::BuildGuardContacts(const APawn* ViewerPawn, float ReferenceYawDeg, float RadarRadiusPx,
@@ -78,19 +98,25 @@ void URadarRegistrySubsystem::BuildGuardContacts(const APawn* ViewerPawn, float 
 
 	for (const TWeakObjectPtr<AActor>& WeakActor : Actors)
 	{
-		const AGuardCharacter* Guard = Cast<AGuardCharacter>(WeakActor.Get());
-		if (!Guard)
+		const AActor* Actor = WeakActor.Get();
+		if (!Actor)
+		{
+			continue;
+		}
+
+		const UGuardAwarenessComponent* Awareness = Actor->FindComponentByClass<UGuardAwarenessComponent>();
+		if (!Awareness)
 		{
 			continue;
 		}
 
 		FRadarContact Contact;
-		Contact.Awareness = Guard->GetAwareness();
-		Contact.VisionRange = Guard->GetVisionRange();
-		Contact.HearingRange = Guard->GetHearingRange();
-		Contact.bHasLOS = Guard->HasLineOfSight();
-		Contact.LookYawOnRadarDeg = FMath::FindDeltaAngleDegrees(ReferenceYawDeg, Guard->GetActorRotation().Yaw);
-		Contact.RadarPos = WorldToRadarPosition(ViewerLocation, ReferenceYawDeg, Guard->GetActorLocation(), RadarRadiusPx, RadarRangeWorld);
+		Contact.Awareness = Awareness->GetAwareness();
+		Contact.VisionRange = Awareness->GetVisionRange();
+		Contact.HearingRange = Awareness->GetHearingRange();
+		Contact.bHasLOS = Awareness->HasLineOfSight();
+		Contact.LookYawOnRadarDeg = FMath::FindDeltaAngleDegrees(ReferenceYawDeg, Actor->GetActorRotation().Yaw);
+		Contact.RadarPos = WorldToRadarPosition(ViewerLocation, ReferenceYawDeg, Actor->GetActorLocation(), RadarRadiusPx, RadarRangeWorld);
 		OutContacts.Add(Contact);
 	}
 }

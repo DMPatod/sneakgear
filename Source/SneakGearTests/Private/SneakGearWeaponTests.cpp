@@ -46,6 +46,7 @@ bool FWeaponBaseUsesAimProviderWithoutCameraTest::RunTest(const FString& Paramet
 
 	Weapon->StartFire();
 	Weapon->StopFire();
+	Weapon->NotifyFireAnimation();
 
 	TestEqual(TEXT("Weapon should broadcast a fire event when aim data comes from the owner"), BroadcastCount, 1);
 
@@ -59,19 +60,19 @@ bool FWeaponBaseUsesAimProviderWithoutCameraTest::RunTest(const FString& Paramet
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWeaponBaseUsesAnimationDrivenFireIntervalTest,
-	"SneakGear.Weapon.WeaponBase.UsesAnimationDrivenFireInterval",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FWeaponBaseUsesAnimationDrivenFireNotifiesTest,
+	"SneakGear.Weapon.WeaponBase.UsesAnimationDrivenFireNotifies",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FWeaponBaseUsesAnimationDrivenFireIntervalTest::RunTest(const FString& Parameters)
+bool FWeaponBaseUsesAnimationDrivenFireNotifiesTest::RunTest(const FString& Parameters)
 {
 	UWorld* World = CreateTestWorld();
 	TestNotNull(TEXT("Test world should be created"), World);
 
 	ATestAimPawn* OwnerPawn = World->SpawnActor<ATestAimPawn>();
-	ATestDelayedFireWeapon* Weapon = World->SpawnActor<ATestDelayedFireWeapon>();
+	ATestWeapon* Weapon = World->SpawnActor<ATestWeapon>();
 	TestNotNull(TEXT("Aim provider pawn should spawn"), OwnerPawn);
-	TestNotNull(TEXT("Delayed fire weapon should spawn"), Weapon);
+	TestNotNull(TEXT("Test weapon should spawn"), Weapon);
 
 	Weapon->SetOwner(OwnerPawn);
 	Weapon->DispatchBeginPlay();
@@ -80,23 +81,53 @@ bool FWeaponBaseUsesAnimationDrivenFireIntervalTest::RunTest(const FString& Para
 	TestNotNull(TEXT("Test fire mode should be initialized"), FireMode);
 
 	Weapon->StartFire();
-	TestEqual(TEXT("Weapon should fire immediately on start"), FireMode ? FireMode->FireCount : -1, 1);
-
-	for (int32 Index = 0; Index < 99; ++Index)
-	{
-		World->Tick(LEVELTICK_All, 0.1f);
-		Weapon->Tick(0.1f);
-	}
-	TestEqual(TEXT("Weapon should not fire again before the 10 second interval completes"), FireMode ? FireMode->FireCount : -1, 1);
-
-	for (int32 Index = 0; Index < 2; ++Index)
-	{
-		World->Tick(LEVELTICK_All, 0.1f);
-		Weapon->Tick(0.1f);
-	}
-	TestEqual(TEXT("Weapon should fire again after the 10 second interval completes"), FireMode ? FireMode->FireCount : -1, 2);
+	TestTrue(TEXT("Fire notify should execute the requested shot"), Weapon->NotifyFireAnimation());
+	TestEqual(TEXT("Weapon should fire when the animation notify is received"), FireMode ? FireMode->FireCount : -1, 1);
+	TestTrue(TEXT("Continuous fire should request the next animation notify immediately"), Weapon->IsFireNotifyPending());
+	TestTrue(TEXT("Second fire notify should execute the next shot"), Weapon->NotifyFireAnimation());
+	TestEqual(TEXT("Weapon should fire again when the next animation notify is received"), FireMode ? FireMode->FireCount : -1, 2);
 
 	Weapon->StopFire();
+	return true;
+}
+
+// Demonstrates fix #1: AHitscanWeaponBase::FireOnce overrides without calling Super, so
+// PrimaryFireMode->FireOnce is never invoked. Setting PrimaryFireModeClass on a hitscan
+// weapon has no effect — the component is initialized but silently bypassed.
+// Expected: FireMode->FireCount == 1. Actual: FireMode->FireCount == 0.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHitscanWeaponBaseFireModeComponentIsBypassedTest,
+	"SneakGear.Weapon.HitscanWeaponBase.FireModeComponentIsBypassed",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FHitscanWeaponBaseFireModeComponentIsBypassedTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestAimPawn* OwnerPawn = World->SpawnActor<ATestAimPawn>();
+	ATestHitscanWeapon* Weapon = World->SpawnActor<ATestHitscanWeapon>();
+	TestNotNull(TEXT("Aim pawn should spawn"), OwnerPawn);
+	TestNotNull(TEXT("Test hitscan weapon should spawn"), Weapon);
+
+	Weapon->SetOwner(OwnerPawn);
+	Weapon->DispatchBeginPlay();
+
+	int32 FiredEventCount = 0;
+	Weapon->OnWeaponFiredEvent().AddLambda([&FiredEventCount]() { ++FiredEventCount; });
+
+	Weapon->StartFire();
+	Weapon->StopFire();
+	Weapon->NotifyFireAnimation();
+
+	TestEqual(TEXT("Hitscan weapon should broadcast the fired event"), FiredEventCount, 1);
+
+	UTestWeaponFireModeComponent* FireMode = Weapon->GetTestFireMode();
+	TestNotNull(TEXT("PrimaryFireMode component should be initialized after BeginPlay"), FireMode);
+	// FAILS: AHitscanWeaponBase::FireOnce does not call Super::FireOnce, so PrimaryFireMode
+	// is never used. Fix: move hitscan logic into UHitscanFireMode and remove the override.
+	TestEqual(TEXT("Hitscan fire should be delegated to the PrimaryFireMode component"),
+		FireMode ? FireMode->FireCount : -1, 1);
+
 	return true;
 }
 

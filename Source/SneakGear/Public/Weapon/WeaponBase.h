@@ -7,8 +7,8 @@
 
 class UWeaponFireModeComponent;
 class UAnimInstance;
-class UAnimMontage;
 struct FWeaponFireContext;
+DECLARE_MULTICAST_DELEGATE(FOnWeaponFireRequested);
 DECLARE_MULTICAST_DELEGATE(FOnWeaponFired);
 DECLARE_MULTICAST_DELEGATE(FOnWeaponReloaded);
 
@@ -20,10 +20,14 @@ class SNEAKGEAR_API AWeaponBase : public AActor
 public:
 	AWeaponBase();
 
-	virtual void Tick(float DeltaSeconds) override;
 	virtual void StartFire();
 	virtual void StopFire();
 	virtual float Reload();
+
+	FOnWeaponFireRequested& OnWeaponFireRequestedEvent()
+	{
+		return OnWeaponFireRequested;
+	}
 
 	FOnWeaponFired& OnWeaponFiredEvent()
 	{
@@ -33,13 +37,6 @@ public:
 	FOnWeaponReloaded& OnWeaponReloadedEvent()
 	{
 		return OnWeaponReloaded;
-	}
-
-	UFUNCTION(BlueprintCallable, Category="Weapon")
-	float GetFireRate() const
-	{
-		const float FireInterval = GetFireInterval();
-		return FireInterval > 0.f ? 1.f / FireInterval : 0.f;
 	}
 
 	UFUNCTION(BlueprintCallable, Category="Weapon")
@@ -65,26 +62,33 @@ public:
 		return bUseHolsterOffset ? HolsterOffset : GripOffset;
 	}
 
+	UFUNCTION(BlueprintCallable, Category="Weapon|Animation")
+	bool NotifyFireAnimation();
+
+	UFUNCTION(BlueprintCallable, Category="Weapon|Animation")
+	bool NotifyReloadAnimationFinished();
+
+	UFUNCTION(BlueprintPure, Category="Weapon|Animation")
+	bool IsFireNotifyPending() const
+	{
+		return bFireNotifyPending;
+	}
+
+	UFUNCTION(BlueprintPure, Category="Weapon|Animation")
+	bool IsReloadNotifyPending() const
+	{
+		return bReloadPending;
+	}
+
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TSubclassOf<UAnimInstance> AnimationSetBP;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation")
-	TObjectPtr<UAnimMontage> ReloadMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animation")
-	TObjectPtr<UAnimMontage> FireMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ammo")
 	EAmmoType AmmoType = EAmmoType::None;
 
 protected:
-	FTimerHandle FireTimer;
-
 	UPROPERTY(VisibleAnywhere, Category="Weapon")
 	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
-
-	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	float FireRate = 10.f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Weapon")
 	TSubclassOf<UWeaponFireModeComponent> PrimaryFireModeClass;
@@ -108,21 +112,17 @@ protected:
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 
 	bool BuildFireContext(FWeaponFireContext& OutContext) const;
-	void FireOnce();
+	virtual void FireOnce();
 	void HandleReloadFinished();
-	virtual float GetFireInterval() const;
-	virtual float PlayFireAnimation() const;
-	virtual float PlayReloadAnimation() const;
-	void FireAndScheduleNextShot();
-	void ScheduleReloadCompletion(float Duration);
+	void RequestFireAnimationNotify();
 
 private:
+	FOnWeaponFireRequested OnWeaponFireRequested;
 	FOnWeaponFired OnWeaponFired;
 	FOnWeaponReloaded OnWeaponReloaded;
 	bool bWantsToFire = false;
+	bool bFireNotifyPending = false;
 	bool bReloadPending = false;
-	float NextFireTimeSeconds = -1.f;
-	float ReloadCompleteTimeSeconds = -1.f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Details")
 	FName Name;

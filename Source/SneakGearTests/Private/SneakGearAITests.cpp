@@ -8,6 +8,7 @@
 #include "Components/CharacterWeaponComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Game/GAS/HealthAttributeSet.h"
+#include "Guards/Components/GuardAwarenessComponent.h"
 #include "Guards/Patrol/PatrolPath.h"
 
 #include "SneakGearTestTypes.h"
@@ -102,11 +103,13 @@ bool FGuardAIControllerUpdatesBlackboardFromGuardTargetTest::RunTest(const FStri
 	TestEqual(TEXT("Blackboard target should match the guard target actor"),
 		BlackboardComponent->GetValueAsObject(TEXT("TargetActor")),
 		static_cast<UObject*>(TargetActor));
-	TestEqual(TEXT("Blackboard awareness should reflect the guard awareness"), BlackboardComponent->GetValueAsFloat(TEXT("Awareness")), Guard->GetAwareness());
-	TestEqual(TEXT("Blackboard line-of-sight should reflect the guard state"), BlackboardComponent->GetValueAsBool(TEXT("HasLineOfSight")), Guard->HasLineOfSight());
+	const UGuardAwarenessComponent* Awareness = Guard->GetAwarenessComponent();
+	TestNotNull(TEXT("Guard should have an awareness component"), Awareness);
+	TestEqual(TEXT("Blackboard awareness should reflect the guard awareness"), BlackboardComponent->GetValueAsFloat(TEXT("Awareness")), Awareness ? Awareness->GetAwareness() : 0.f);
+	TestEqual(TEXT("Blackboard line-of-sight should reflect the guard state"), BlackboardComponent->GetValueAsBool(TEXT("HasLineOfSight")), Awareness ? Awareness->HasLineOfSight() : false);
 	TestEqual(TEXT("Blackboard awareness state should reflect the guard state"),
 		BlackboardComponent->GetValueAsInt(TEXT("AwarenessState")),
-		static_cast<int32>(Guard->GetAwarenessState()));
+		static_cast<int32>(Awareness ? Awareness->GetAwarenessState() : EGuardAwarenessState::Calm));
 
 	return true;
 }
@@ -154,7 +157,8 @@ bool FGuardFiringAtPlayerDecreasesPlayerHealthTest::RunTest(const FString& Param
 
 	const float HealthBeforeShot = PlayerCharacter->GetHealthSet() ? PlayerCharacter->GetHealthSet()->GetHealth() : -1.f;
 	TestEqual(TEXT("Player health should start at 100"), HealthBeforeShot, 100.f);
-	TestTrue(TEXT("Guard should have line of sight to the player"), GuardCharacter->HasLineOfSight());
+	const UGuardAwarenessComponent* GuardAwareness = GuardCharacter->GetAwarenessComponent();
+	TestTrue(TEXT("Guard should have line of sight to the player"), GuardAwareness && GuardAwareness->HasLineOfSight());
 	TestNotNull(TEXT("Guard should have a weapon"), GuardCharacter->GetCurrentWeapon());
 
 	GuardCharacter->SetCombatFiringEnabled(true);

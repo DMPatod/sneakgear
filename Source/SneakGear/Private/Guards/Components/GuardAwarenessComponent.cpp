@@ -106,6 +106,7 @@ void UGuardAwarenessComponent::UpdateAwarenessStateAndEmitEvent()
 	}
 
 	AwarenessState = NewState;
+	OnAwarenessStateChanged.Broadcast();
 
 	FText StateLabel = NSLOCTEXT("SneakGear", "AwarenessCalm", "Calm");
 	if (AwarenessState == EGuardAwarenessState::Suspicious)

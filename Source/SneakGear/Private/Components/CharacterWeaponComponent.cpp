@@ -63,6 +63,7 @@ void UCharacterWeaponComponent::BeginPlay()
 
 	CurrentWeapon->SetOwner(OwnerCharacter);
 	AttachWeaponToSocket(HolsterSocketName);
+	CurrentWeapon->OnWeaponFireRequestedEvent().AddUObject(this, &UCharacterWeaponComponent::HandleWeaponFireRequested);
 	CurrentWeapon->OnWeaponFiredEvent().AddUObject(this, &UCharacterWeaponComponent::HandleWeaponFired);
 	CurrentWeapon->OnWeaponReloadedEvent().AddUObject(this, &UCharacterWeaponComponent::HandleWeaponReloaded);
 	
@@ -73,6 +74,7 @@ void UCharacterWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason
 {
 	if (CurrentWeapon)
 	{
+		CurrentWeapon->OnWeaponFireRequestedEvent().RemoveAll(this);
 		CurrentWeapon->OnWeaponFiredEvent().RemoveAll(this);
 		CurrentWeapon->OnWeaponReloadedEvent().RemoveAll(this);
 	}
@@ -161,6 +163,33 @@ void UCharacterWeaponComponent::Reload()
 	CurrentWeapon->Reload();
 }
 
+bool UCharacterWeaponComponent::NotifyCurrentWeaponFireAnimation()
+{
+	return CurrentWeapon ? CurrentWeapon->NotifyFireAnimation() : false;
+}
+
+bool UCharacterWeaponComponent::NotifyCurrentWeaponReloadAnimationFinished()
+{
+	return CurrentWeapon ? CurrentWeapon->NotifyReloadAnimationFinished() : false;
+}
+
+bool UCharacterWeaponComponent::WasCurrentWeaponFireRequestedRecently(float WindowSeconds) const
+{
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	const float SafeWindow = FMath::Max(WindowSeconds, 0.01f);
+	return (World->GetTimeSeconds() - LastWeaponFireRequestTimestamp) <= SafeWindow;
+}
+
+bool UCharacterWeaponComponent::IsCurrentWeaponFireNotifyPending() const
+{
+	return CurrentWeapon ? CurrentWeapon->IsFireNotifyPending() : false;
+}
+
 #if WITH_DEV_AUTOMATION_TESTS
 void UCharacterWeaponComponent::SetStartedWeaponClassForTesting(TSubclassOf<AWeaponBase> InWeaponClass)
 {
@@ -194,6 +223,11 @@ bool UCharacterWeaponComponent::CanReload() const
 void UCharacterWeaponComponent::FinishReload()
 {
 	InClip = FMath::Max(GetClipSize(), 0);
+}
+
+void UCharacterWeaponComponent::HandleWeaponFireRequested()
+{
+	LastWeaponFireRequestTimestamp = GetWorld() ? GetWorld()->GetTimeSeconds() : LastWeaponFireRequestTimestamp;
 }
 
 void UCharacterWeaponComponent::HandleWeaponFired()

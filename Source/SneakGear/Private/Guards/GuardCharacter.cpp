@@ -217,6 +217,31 @@ bool AGuardCharacter::ReloadWeaponIfNeeded()
 	return true;
 }
 
+bool AGuardCharacter::NotifyWeaponFireAnimation()
+{
+	return WeaponComponent ? WeaponComponent->NotifyCurrentWeaponFireAnimation() : false;
+}
+
+bool AGuardCharacter::NotifyWeaponReloadAnimationFinished()
+{
+	return WeaponComponent ? WeaponComponent->NotifyCurrentWeaponReloadAnimationFinished() : false;
+}
+
+bool AGuardCharacter::WasWeaponFireRequestedRecently(float WindowSeconds) const
+{
+	return WeaponComponent ? WeaponComponent->WasCurrentWeaponFireRequestedRecently(WindowSeconds) : false;
+}
+
+bool AGuardCharacter::IsWeaponFireNotifyPending() const
+{
+	return WeaponComponent ? WeaponComponent->IsCurrentWeaponFireNotifyPending() : false;
+}
+
+bool AGuardCharacter::IsWeaponReloading() const
+{
+	return WeaponComponent ? WeaponComponent->IsReloading() : false;
+}
+
 void AGuardCharacter::SetTargetActor(AActor* NewTarget)
 {
 	if (AwarenessComponent)
@@ -314,11 +339,11 @@ bool AGuardCharacter::GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDir
 
 void AGuardCharacter::OnCharacterDeath()
 {
-	Super::OnCharacterDeath();
-
 	bIsFiringAtTarget = false;
 	if (WeaponComponent)
 	{
 		WeaponComponent->StopFire();
 	}
+
+	Super::OnCharacterDeath();
 }

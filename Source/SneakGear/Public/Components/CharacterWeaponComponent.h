@@ -25,6 +25,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Weapon|Ammo")
 	virtual void Reload();
 
+	UFUNCTION(BlueprintCallable, Category="Weapon|Animation")
+	bool NotifyCurrentWeaponFireAnimation();
+
+	UFUNCTION(BlueprintCallable, Category="Weapon|Animation")
+	bool NotifyCurrentWeaponReloadAnimationFinished();
+
+	UFUNCTION(BlueprintPure, Category="Weapon|Animation")
+	bool WasCurrentWeaponFireRequestedRecently(float WindowSeconds = 0.12f) const;
+
+	UFUNCTION(BlueprintPure, Category="Weapon|Animation")
+	bool IsCurrentWeaponFireNotifyPending() const;
+
+	UFUNCTION(BlueprintPure, Category="Weapon|Ammo")
+	bool IsReloading() const
+	{
+		return bIsReloading;
+	}
+
 #if WITH_DEV_AUTOMATION_TESTS
 	void SetStartedWeaponClassForTesting(TSubclassOf<AWeaponBase> InWeaponClass);
 	void InitializeWeaponForTesting();
@@ -59,12 +77,14 @@ protected:
 
 	int32 InClip = -1;
 	bool bIsReloading = false;
+	float LastWeaponFireRequestTimestamp = -1000.f;
 
 private:
 	UPROPERTY()
 	TObjectPtr<AWeaponBase> CurrentWeapon;
 
 	void AttachWeaponToSocket(FName SocketName) const;
+	void HandleWeaponFireRequested();
 	void HandleWeaponFired();
 	void HandleWeaponReloaded();
 };

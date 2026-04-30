@@ -7,6 +7,8 @@
 
 class UGuardArchetypeData;
 
+DECLARE_MULTICAST_DELEGATE(FOnGuardAwarenessStateChanged);
+
 UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
 class SNEAKGEAR_API UGuardAwarenessComponent : public UActorComponent
 {
@@ -23,6 +25,8 @@ public:
 	void InitializeFromArchetype(const UGuardArchetypeData* ArchetypeData);
 	void SetTargetActor(AActor* NewTarget);
 	void AddAwareness(float DeltaAwareness);
+
+	FOnGuardAwarenessStateChanged OnAwarenessStateChanged;
 
 	float GetAwareness() const
 	{

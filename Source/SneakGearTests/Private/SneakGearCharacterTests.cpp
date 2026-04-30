@@ -6,6 +6,7 @@
 #include "Items/ScannerItemDefinition.h"
 #include "Components/Cover/CoverStateComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Player/SneakGearPlayerAnimInstance.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "Game/GAS/HealthAttributeSet.h"
 
@@ -97,6 +98,76 @@ bool FBaseCharacterDeathOnlyRunsOnceTest::RunTest(const FString& Parameters)
 	Character->ApplyHealthDeltaForTest(-10.f);
 
 	TestEqual(TEXT("Death should only trigger once"), Character->DeathCount, 1);
+	TestTrue(TEXT("Character should be destroyed when health reaches zero"), Character->IsActorBeingDestroyed());
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerAnimInstanceMirrorsWeaponStateTest,
+	"SneakGear.Player.SneakGearPlayerAnimInstance.MirrorsWeaponState",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSneakGearPlayerAnimInstanceMirrorsWeaponStateTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	ATestPickupActor* PickupActor = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	UPlayerItemDefinition* WeaponDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+
+	TestNotNull(TEXT("Player character should spawn"), Character);
+	TestNotNull(TEXT("Pickup actor should spawn"), PickupActor);
+	TestNotNull(TEXT("Weapon definition should be created"), WeaponDefinition);
+	TestNotNull(TEXT("Player character mesh should exist"), Character ? Character->GetMesh() : nullptr);
+	USneakGearPlayerAnimInstance* AnimInstance = Character && Character->GetMesh()
+		? NewObject<USneakGearPlayerAnimInstance>(Character->GetMesh())
+		: nullptr;
+	TestNotNull(TEXT("Anim instance should be created"), AnimInstance);
+
+	WeaponDefinition->ItemId = TEXT("AnimStatePrimaryRifle");
+	WeaponDefinition->DisplayName = FText::FromString(TEXT("Anim State Primary Rifle"));
+	WeaponDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	WeaponDefinition->WeaponClass = ATestWeapon::StaticClass();
+	PickupActor->GetPickupComponent()->SetItemDefinitionForTest(WeaponDefinition);
+
+	TestTrue(TEXT("Weapon pickup should succeed"), Character->GetItemComponent()->PickUpFromFloor(PickupActor));
+	Character->GetItemComponent()->SetAmmoReserve(EAmmoType::Light, 3, 10);
+
+	AWeaponBase* Weapon = Character->GetCurrentWeapon();
+	TestNotNull(TEXT("Runtime weapon should exist"), Weapon);
+	if (Weapon)
+	{
+		Weapon->DispatchBeginPlay();
+	}
+
+	AnimInstance->RefreshFromCharacterForTest(Character);
+	TestEqual(TEXT("Anim instance should expose idle weapon state"),
+		AnimInstance->WeaponState, EPlayerInventoryWeaponState::Idle);
+	TestFalse(TEXT("Idle weapon should not expose fire pending"), AnimInstance->bWeaponFirePending);
+	TestFalse(TEXT("Idle weapon should not expose reload"), AnimInstance->bIsReloading);
+
+	Character->GetItemComponent()->StartActiveWeaponFire();
+	AnimInstance->RefreshFromCharacterForTest(Character);
+	TestEqual(TEXT("Anim instance should expose fire-requested weapon state"),
+		AnimInstance->WeaponState, EPlayerInventoryWeaponState::FireRequested);
+	TestTrue(TEXT("Fire-requested weapon state should drive fire pending"), AnimInstance->bWeaponFirePending);
+	TestFalse(TEXT("Fire-requested weapon state should not drive reload"), AnimInstance->bIsReloading);
+
+	Character->GetItemComponent()->StopActiveWeaponFire();
+	TestTrue(TEXT("Fire notify should consume the queued shot"),
+		Character->GetItemComponent()->NotifyActiveWeaponFireAnimation());
+	AnimInstance->RefreshFromCharacterForTest(Character);
+	TestEqual(TEXT("Anim instance should return to idle after released shot"),
+		AnimInstance->WeaponState, EPlayerInventoryWeaponState::Idle);
+
+	TestTrue(TEXT("Reload should start after one shot"),
+		Character->GetItemComponent()->ReloadActiveWeapon());
+	AnimInstance->RefreshFromCharacterForTest(Character);
+	TestEqual(TEXT("Anim instance should expose reloading weapon state"),
+		AnimInstance->WeaponState, EPlayerInventoryWeaponState::Reloading);
+	TestFalse(TEXT("Reloading weapon state should not drive fire pending"), AnimInstance->bWeaponFirePending);
+	TestTrue(TEXT("Reloading weapon state should drive reload"), AnimInstance->bIsReloading);
+
 	return true;
 }
 

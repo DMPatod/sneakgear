@@ -70,6 +70,7 @@ void ATestDeathCharacter::ApplyHealthDeltaForTest(float Delta)
 void ATestDeathCharacter::OnCharacterDeath()
 {
 	++DeathCount;
+	Super::OnCharacterDeath();
 }
 
 ATestInventoryCharacter::ATestInventoryCharacter()

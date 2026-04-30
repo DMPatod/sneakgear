@@ -23,6 +23,15 @@ enum class EAmmoType : uint8
 	Energy UMETA(DisplayName="Energy")
 };
 
+UENUM(BlueprintType)
+enum class EPlayerInventoryWeaponState : uint8
+{
+	Idle UMETA(DisplayName="Idle"),
+	FireRequested UMETA(DisplayName="Fire Requested"),
+	Firing UMETA(DisplayName="Firing"),
+	Reloading UMETA(DisplayName="Reloading")
+};
+
 USTRUCT(BlueprintType)
 struct SNEAKGEARCORE_API FAmmoReserve
 {

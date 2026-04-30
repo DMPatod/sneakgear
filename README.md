@@ -4,10 +4,31 @@ Unreal Engine 5.7 stealth-action project inspired by the Metal Gear Solid series
 
 ## Current State
 
-- Third-person player with aim, cover, inventory-backed weapon slots, and weapon selection UI
-- Guard AI with awareness, patrol paths, Behavior Tree-driven movement, and combat response
-- Shared GAS-based health, stamina, and ammo attributes
-- Radar, crosshair, weapon HUD, vitals, and debug UI
+**Player**
+- Third-person movement with aim, crouch, and cover snap
+- Inventory-backed weapon slots: runtime weapon actors, clip/reserve ammo, weapon selection menu
+- Animation-driven fire system: hitscan (spread, recoil, penetration) and projectile fire modes
+- GAS-based health, stamina, and ammo attributes with reserve-to-clip reload flow
+- Player components: `UPlayerInventoryComponent`, `UPlayerInventoryInteractionComponent`, `UPlayerWeaponComponent`, `UPlayerHUDComponent`, `UPlayerAimComponent`, `UPlayerLocomotionComponent`
+
+**AI**
+- Guard awareness with vision-based perception, alert levels, and patrol path following
+- Behavior Tree-driven movement with combat response and player tracking
+- Custom BT nodes for patrol, firing, reload, and clip-state checks
+- Guard spawner, guard manager subsystem, and guard archetype data assets for tuning
+- `UGuardAwarenessComponent` and `UGuardPatrolComponent` as reusable guard components
+
+**UI**
+- Radar, crosshair, weapon HUD, vitals panel, pickup prompt, and info overlays
+- Equipped item display, weapon selection menu, event log feed, and stealth debug widget
+- UI layer isolated as `SneakGearUI` plugin; reads from `IPlayerUIDataSource`
+
+## Known Issues
+
+These are documented by failing automation tests and tracked in [Technical Debt](Docs/TechnicalDebt.md):
+
+- `AHitscanWeaponBase::FireOnce` overrides without calling `Super`, bypassing `PrimaryFireMode` entirely — `UHitscanFireMode` is initialized but never used (`SneakGear.Weapon.HitscanWeaponBase.FireModeComponentIsBypassed`)
+- Weapon does not auto-resume fire after reload when the trigger is held through the reload (`SneakGear.Inventory.PlayerInventoryComponent.WeaponDoesNotAutoResumeFireAfterReload`)
 
 ## Docs
 

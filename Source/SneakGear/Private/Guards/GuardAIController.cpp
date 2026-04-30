@@ -4,6 +4,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "Guards/GuardCharacter.h"
+#include "Guards/Components/GuardAwarenessComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 namespace
@@ -93,21 +94,27 @@ void AGuardAIController::UpdateBlackboardFromGuard()
 		return;
 	}
 
+	const UGuardAwarenessComponent* Awareness = GuardCharacter->GetAwarenessComponent();
+	if (!Awareness)
+	{
+		return;
+	}
+
 	if (!TargetActorKey.IsNone())
 	{
-		Blackboard->SetValueAsObject(TargetActorKey, GuardCharacter->GetTargetActor());
+		Blackboard->SetValueAsObject(TargetActorKey, Awareness->GetTargetActor());
 	}
 	if (!AwarenessKey.IsNone())
 	{
-		Blackboard->SetValueAsFloat(AwarenessKey, GuardCharacter->GetAwareness());
+		Blackboard->SetValueAsFloat(AwarenessKey, Awareness->GetAwareness());
 	}
 	if (!HasLineOfSightKey.IsNone())
 	{
-		Blackboard->SetValueAsBool(HasLineOfSightKey, GuardCharacter->HasLineOfSight());
+		Blackboard->SetValueAsBool(HasLineOfSightKey, Awareness->HasLineOfSight());
 	}
 	if (!AwarenessStateKey.IsNone())
 	{
-		Blackboard->SetValueAsInt(AwarenessStateKey, static_cast<int32>(GuardCharacter->GetAwarenessState()));
+		Blackboard->SetValueAsInt(AwarenessStateKey, static_cast<int32>(Awareness->GetAwarenessState()));
 	}
 }
 

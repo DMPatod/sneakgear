@@ -27,10 +27,12 @@ void UEventLogSubsystem::AddEvent(const FText& Message, EGameEventCategory Categ
 	}
 }
 
-void UEventLogSubsystem::ReportDamageTaken(AActor* Victim, float DamageAmount, AActor* DamageCauser)
+void UEventLogSubsystem::ReportDamageTaken(AActor* Victim, float DamageAmount, float CurrentHealth, AActor* DamageCauser)
 {
 	const FText VictimName = FText::FromString(GetNameSafe(Victim));
 	const FText CauserName = FText::FromString(GetNameSafe(DamageCauser));
+	const FText DamageText = FText::AsNumber(FMath::RoundToInt(DamageAmount));
+	const FText HealthText = FText::AsNumber(FMath::RoundToInt(FMath::Max(CurrentHealth, 0.f)));
 	const APawn* VictimPawn = Cast<APawn>(Victim);
 	const AController* VictimController = VictimPawn ? VictimPawn->GetController() : nullptr;
 	const bool bVictimIsPlayer = VictimPawn
@@ -40,21 +42,21 @@ void UEventLogSubsystem::ReportDamageTaken(AActor* Victim, float DamageAmount, A
 	if (DamageCauser)
 	{
 		const FText FormatText = bVictimIsPlayer
-			                         ? NSLOCTEXT("SneakGear", "EventPlayerDamageWithCauser", "Player took {0} damage from {1}")
-			                         : NSLOCTEXT("SneakGear", "EventGuardDamageWithCauser", "Guard {0} took {1} damage from {2}");
+			                         ? NSLOCTEXT("SneakGear", "EventPlayerDamageWithCauser", "Player took {0} damage from {1} (Health: {2})")
+			                         : NSLOCTEXT("SneakGear", "EventGuardDamageWithCauser", "Guard {0} took {1} damage from {2} (Health: {3})");
 		AddEvent(bVictimIsPlayer
-			         ? FText::Format(FormatText, FText::AsNumber(FMath::RoundToInt(DamageAmount)), CauserName)
-			         : FText::Format(FormatText, VictimName, FText::AsNumber(FMath::RoundToInt(DamageAmount)), CauserName),
+			         ? FText::Format(FormatText, DamageText, CauserName, HealthText)
+			         : FText::Format(FormatText, VictimName, DamageText, CauserName, HealthText),
 		         EGameEventCategory::Damage);
 		return;
 	}
 
-	const FText FormatText = bVictimIsPlayer ? NSLOCTEXT("SneakGear", "EventPlayerDamage", "Player took {0} damage")
-	                                         : NSLOCTEXT("SneakGear", "EventGuardDamage", "Guard {0} took {1} damage");
+	const FText FormatText = bVictimIsPlayer ? NSLOCTEXT("SneakGear", "EventPlayerDamage", "Player took {0} damage (Health: {1})")
+	                                         : NSLOCTEXT("SneakGear", "EventGuardDamage", "Guard {0} took {1} damage (Health: {2})");
 
 	AddEvent(bVictimIsPlayer
-		         ? FText::Format(FormatText, FText::AsNumber(FMath::RoundToInt(DamageAmount)))
-		         : FText::Format(FormatText, VictimName, FText::AsNumber(FMath::RoundToInt(DamageAmount))),
+		         ? FText::Format(FormatText, DamageText, HealthText)
+		         : FText::Format(FormatText, VictimName, DamageText, HealthText),
 	         EGameEventCategory::Damage);
 }
 

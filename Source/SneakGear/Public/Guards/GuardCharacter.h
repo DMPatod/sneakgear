@@ -62,8 +62,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category="AI|Combat")
 	bool ReloadWeaponIfNeeded();
 
+	UFUNCTION(BlueprintCallable, Category="AI|Combat|Animation")
+	bool NotifyWeaponFireAnimation();
+
+	UFUNCTION(BlueprintCallable, Category="AI|Combat|Animation")
+	bool NotifyWeaponReloadAnimationFinished();
+
+	UFUNCTION(BlueprintPure, Category="AI|Combat|Animation")
+	bool WasWeaponFireRequestedRecently(float WindowSeconds = 0.12f) const;
+
+	UFUNCTION(BlueprintPure, Category="AI|Combat|Animation")
+	bool IsWeaponFireNotifyPending() const;
+
+	UFUNCTION(BlueprintPure, Category="AI|Combat|Animation")
+	bool IsWeaponReloading() const;
+
 	virtual AWeaponBase* GetCurrentWeapon() const override;
 	virtual bool GetWeaponAimData(FVector& OutAimOrigin, FVector& OutAimDirection) const override;
+
+	UGuardAwarenessComponent* GetAwarenessComponent() const { return AwarenessComponent; }
+	UGuardPatrolComponent* GetPatrolComponent() const { return PatrolComponent; }
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Stealth|Archetype")

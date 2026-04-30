@@ -6,6 +6,18 @@
 #include "Misc/DataValidation.h"
 #include "Weapon/WeaponFireModeComponent.h"
 
+namespace
+{
+FCollisionObjectQueryParams BuildWeaponTraceObjectParams()
+{
+	FCollisionObjectQueryParams ObjectParams;
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectParams.AddObjectTypesToQuery(ECC_Pawn);
+	return ObjectParams;
+}
+}
+
 AHitscanWeaponBase::AHitscanWeaponBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -67,6 +79,14 @@ EDataValidationResult AHitscanWeaponBase::IsDataValid(FDataValidationContext& Co
 
 void AHitscanWeaponBase::FireOnce()
 {
+	if (PrimaryFireMode)
+	{
+		Super::FireOnce();
+		ApplyRecoil();
+		CurrentSpreadDegrees = FMath::Min(MaxSpreadDegrees, CurrentSpreadDegrees + SpreadIncreasePerShot);
+		return;
+	}
+
 	if (!WeaponMesh)
 	{
 		return;
@@ -89,13 +109,14 @@ void AHitscanWeaponBase::FireOnce()
 	auto CollisionParams = FCollisionQueryParams(SCENE_QUERY_STAT(RealWeaponCameraTrace), true);
 	CollisionParams.AddIgnoredActor(this);
 	CollisionParams.AddIgnoredActor(Context.InstigatorPawn);
+	const FCollisionObjectQueryParams ObjectParams = BuildWeaponTraceObjectParams();
 
 	auto CameraHit = FHitResult();
-	const auto bAimHit = World->LineTraceSingleByChannel(
+	const auto bAimHit = World->LineTraceSingleByObjectType(
 		CameraHit,
 		Context.AimOrigin,
 		AimEnd,
-		ECC_Visibility,
+		ObjectParams,
 		CollisionParams);
 	const auto AimPoint = bAimHit ? CameraHit.ImpactPoint : AimEnd;
 
@@ -111,11 +132,11 @@ void AHitscanWeaponBase::FireOnce()
 	{
 		auto FireHit = FHitResult();
 		const auto TraceEnd = TraceStart + ShotDirection * RemainingRange;
-		const auto bHit = World->LineTraceSingleByChannel(
+		const auto bHit = World->LineTraceSingleByObjectType(
 			FireHit,
 			TraceStart,
 			TraceEnd,
-			ECC_Visibility,
+			ObjectParams,
 			CollisionParams);
 
 		if (bDrawDebug)
@@ -130,11 +151,20 @@ void AHitscanWeaponBase::FireOnce()
 
 		if (!bHit)
 		{
+			if (bDrawDebug)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("HitscanWeaponBase missed"));
+			}
 			break;
 		}
 
 		if (auto* HitActor = FireHit.GetActor())
 		{
+			if (bDrawDebug)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("HitscanWeaponBase hit %s"), *GetNameSafe(HitActor));
+			}
+
 			UGameplayStatics::ApplyPointDamage(
 				HitActor,
 				Damage,

@@ -3,6 +3,7 @@
 #include "Player/Components/PlayerInventoryComponent.h"
 #include "Player/PlayerCharacterBase.h"
 #include "Player/SneakGearPlayerCharacter.h"
+#include "UI/EventLogSubsystem.h"
 #include "Weapon/WeaponBase.h"
 
 void USneakGearPlayerAnimInstance::NativeInitializeAnimation()
@@ -22,6 +23,16 @@ void USneakGearPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			return;
 		}
+	}
+
+	RefreshFromCharacter(DeltaSeconds);
+}
+
+void USneakGearPlayerAnimInstance::RefreshFromCharacter(float DeltaSeconds)
+{
+	if (!StealthCharacter)
+	{
+		return;
 	}
 
 	bIsAiming = StealthCharacter->IsAiming();
@@ -52,6 +63,40 @@ void USneakGearPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (const UPlayerInventoryComponent* ItemComponent = StealthCharacter->GetItemComponent())
 	{
 		ActiveWeaponSlot = ItemComponent->GetActiveWeaponSlot();
+		WeaponState = ItemComponent->GetActiveWeaponState();
+		bWeaponFireRequestedRecently = ItemComponent->WasActiveWeaponFireRequestedRecently();
+		bWeaponFirePending = WeaponState == EPlayerInventoryWeaponState::FireRequested;
 		bWeaponFiredRecently = ItemComponent->WasActiveWeaponFiredRecently();
+		bIsReloading = WeaponState == EPlayerInventoryWeaponState::Reloading;
 	}
+}
+
+#if WITH_DEV_AUTOMATION_TESTS
+void USneakGearPlayerAnimInstance::RefreshFromCharacterForTest(ASneakGearPlayerCharacter* InCharacter, float DeltaSeconds)
+{
+	StealthCharacter = InCharacter;
+	RefreshFromCharacter(DeltaSeconds);
+}
+#endif
+
+bool USneakGearPlayerAnimInstance::NotifyWeaponFireAnimation()
+{
+	if (!StealthCharacter)
+	{
+		NativeInitializeAnimation();
+	}
+
+	UPlayerInventoryComponent* ItemComponent = StealthCharacter ? StealthCharacter->GetItemComponent() : nullptr;
+	return ItemComponent ? ItemComponent->NotifyActiveWeaponFireAnimation() : false;
+}
+
+bool USneakGearPlayerAnimInstance::NotifyWeaponReloadAnimationFinished()
+{
+	if (!StealthCharacter)
+	{
+		NativeInitializeAnimation();
+	}
+
+	UPlayerInventoryComponent* ItemComponent = StealthCharacter ? StealthCharacter->GetItemComponent() : nullptr;
+	return ItemComponent ? ItemComponent->NotifyActiveWeaponReloadAnimationFinished() : false;
 }

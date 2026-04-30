@@ -3,6 +3,7 @@
 #include "Player/PlayerCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/Cover/CoverStateComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputActionValue.h"
@@ -15,6 +16,19 @@ UPlayerLocomotionComponent::UPlayerLocomotionComponent()
 void UPlayerLocomotionComponent::Initialize(USpringArmComponent* InCameraBoom)
 {
 	CameraBoom = InCameraBoom;
+
+	if (const APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter())
+	{
+		if (const USkeletalMeshComponent* Mesh = PlayerCharacter->GetMesh())
+		{
+			StandingMeshRelativeLocation = Mesh->GetRelativeLocation();
+			StandingMeshCapsuleHalfHeight = PlayerCharacter->GetCapsuleComponent()
+				                                ? PlayerCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()
+				                                : StandingHalfHeight;
+			bHasStandingMeshRelativeLocation = true;
+		}
+	}
+
 	UpdateMovementSpeed();
 }
 
@@ -114,6 +128,7 @@ void UPlayerLocomotionComponent::SetStance(EStance NewStance)
 	{
 		PlayerCharacter->AddActorWorldOffset(FVector(0.f, 0.f, HeightDelta), true);
 	}
+	UpdateMeshRelativeLocation(TargetHalfHeight);
 
 	PlayerCharacter->Stance = NewStance;
 	UpdateMovementSpeed();
@@ -161,15 +176,15 @@ void UPlayerLocomotionComponent::OnStanceReleased()
 
 	if (PlayerCharacter->Stance == EStance::Prone)
 	{
-		SetStance(EStance::Crouching);
+		PlayerCharacter->SetStance(EStance::Crouching);
 	}
 	else if (PlayerCharacter->Stance == EStance::Crouching)
 	{
-		SetStance(EStance::Standing);
+		PlayerCharacter->SetStance(EStance::Standing);
 	}
 	else
 	{
-		SetStance(EStance::Crouching);
+		PlayerCharacter->SetStance(EStance::Crouching);
 	}
 }
 
@@ -213,11 +228,11 @@ void UPlayerLocomotionComponent::HandleStanceHold()
 
 	if (PlayerCharacter->Stance == EStance::Prone)
 	{
-		SetStance(EStance::Standing);
+		PlayerCharacter->SetStance(EStance::Standing);
 	}
 	else
 	{
-		SetStance(EStance::Prone);
+		PlayerCharacter->SetStance(EStance::Prone);
 	}
 }
 
@@ -240,6 +255,34 @@ void UPlayerLocomotionComponent::UpdateCameraSocketOffset(float DeltaSeconds)
 	}
 
 	CameraBoom->SocketOffset = FMath::VInterpTo(CameraBoom->SocketOffset, TargetOffset, DeltaSeconds, 10.f);
+}
+
+void UPlayerLocomotionComponent::UpdateMeshRelativeLocation(float TargetHalfHeight)
+{
+	APlayerCharacterBase* PlayerCharacter = GetPlayerCharacter();
+	if (!PlayerCharacter)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* Mesh = PlayerCharacter->GetMesh();
+	if (!Mesh)
+	{
+		return;
+	}
+
+	if (!bHasStandingMeshRelativeLocation)
+	{
+		StandingMeshRelativeLocation = Mesh->GetRelativeLocation();
+		StandingMeshCapsuleHalfHeight = PlayerCharacter->GetCapsuleComponent()
+			                                ? PlayerCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()
+			                                : StandingHalfHeight;
+		bHasStandingMeshRelativeLocation = true;
+	}
+
+	FVector TargetRelativeLocation = StandingMeshRelativeLocation;
+	TargetRelativeLocation.Z += StandingMeshCapsuleHalfHeight - TargetHalfHeight;
+	Mesh->SetRelativeLocation(TargetRelativeLocation);
 }
 
 void UPlayerLocomotionComponent::UpdateMovementSpeed()

@@ -8,7 +8,6 @@
 #include "Player/Components/PlayerInventoryInteractionComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Player/SneakGearPlayerController.h"
-#include "Player/Components/PlayerWeaponComponent.h"
 #include "UI/EventLogSubsystem.h"
 #include "Weapon/WeaponBase.h"
 
@@ -50,13 +49,6 @@ void ASneakGearPlayerCharacter::BeginPlay()
 		InventoryInteractionComponent->InitializeActiveWeaponFromInventory();
 	}
 
-	if (WeaponComponent && WeaponComponent->GetCurrentWeapon())
-	{
-		WeaponComponent->StopFire();
-		WeaponComponent->GetCurrentWeapon()->SetActorHiddenInGame(true);
-		WeaponComponent->GetCurrentWeapon()->SetActorEnableCollision(false);
-	}
-
 	if (ItemComponent)
 	{
 		ItemComponent->OnActiveWeaponFiredEvent().AddUObject(this, &ASneakGearPlayerCharacter::HandleActiveWeaponFired);
@@ -83,8 +75,6 @@ void ASneakGearPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason
 
 void ASneakGearPlayerCharacter::OnCharacterDeath()
 {
-	Super::OnCharacterDeath();
-
 	if (InventoryInteractionComponent)
 	{
 		InventoryInteractionComponent->ResetInteractionState();
@@ -99,6 +89,8 @@ void ASneakGearPlayerCharacter::OnCharacterDeath()
 	{
 		ItemComponent->StopActiveWeaponFire();
 	}
+
+	Super::OnCharacterDeath();
 }
 
 EDataValidationResult ASneakGearPlayerCharacter::IsDataValid(FDataValidationContext& Context) const
@@ -263,7 +255,7 @@ void ASneakGearPlayerCharacter::Move(const FInputActionValue& Value)
 
 AWeaponBase* ASneakGearPlayerCharacter::GetCurrentWeapon() const
 {
-	return ItemComponent ? ItemComponent->GetActiveWeapon() : Super::GetCurrentWeapon();
+	return ItemComponent ? ItemComponent->GetActiveWeapon() : nullptr;
 }
 
 bool ASneakGearPlayerCharacter::GetWeaponStatusViewData(FWeaponStatusViewData& OutData) const
@@ -283,7 +275,7 @@ bool ASneakGearPlayerCharacter::GetWeaponStatusViewData(FWeaponStatusViewData& O
 
 	OutData.bHasWeapon = true;
 	OutData.WeaponName = GetInventoryItemDisplayName(ActiveSlot);
-	OutData.FireRate = Weapon->GetFireRate();
+	OutData.FireRate = 0.f;
 	OutData.InClip = ItemComponent->GetActiveWeaponInClip();
 	OutData.ClipSize = ItemComponent->GetActiveWeaponClipSize();
 	OutData.ReserveAmmo = ItemComponent->GetReserveAmmoCount();
@@ -479,10 +471,7 @@ void ASneakGearPlayerCharacter::StartFire()
 	if (ItemComponent && ItemComponent->GetActiveWeapon())
 	{
 		ItemComponent->StartActiveWeaponFire();
-		return;
 	}
-
-	Super::StartFire();
 }
 
 void ASneakGearPlayerCharacter::StopFire()
@@ -490,10 +479,7 @@ void ASneakGearPlayerCharacter::StopFire()
 	if (ItemComponent && ItemComponent->GetActiveWeapon())
 	{
 		ItemComponent->StopActiveWeaponFire();
-		return;
 	}
-
-	Super::StopFire();
 }
 
 void ASneakGearPlayerCharacter::ReloadWeapon()
@@ -501,10 +487,15 @@ void ASneakGearPlayerCharacter::ReloadWeapon()
 	if (ItemComponent && ItemComponent->GetActiveWeapon())
 	{
 		ItemComponent->ReloadActiveWeapon();
-		return;
 	}
+}
 
-	Super::ReloadWeapon();
+void ASneakGearPlayerCharacter::ToggleEquip()
+{
+	if (ItemComponent)
+	{
+		ItemComponent->SetWeaponEquipped(!ItemComponent->IsWeaponEquipped());
+	}
 }
 
 void ASneakGearPlayerCharacter::OnJumpPressed()

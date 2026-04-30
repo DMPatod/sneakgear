@@ -25,6 +25,7 @@ public:
 	bool IsVaultAvailable() const;
 	float GetCoverObstacleHeight() const;
 	float GetCurrentVaultMaxObstacleHeight() const;
+	UCoverStateComponent* GetCoverStateComponent() const { return CoverStateComponent; }
 
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	UPlayerInventoryComponent* GetItemComponent() const
@@ -69,6 +70,7 @@ protected:
 	virtual void StartFire() override;
 	virtual void StopFire() override;
 	virtual void ReloadWeapon() override;
+	virtual void ToggleEquip() override;
 	virtual void OnJumpPressed() override;
 	virtual void OnJumpReleased() override;
 	virtual void Landed(const FHitResult& Hit) override;
