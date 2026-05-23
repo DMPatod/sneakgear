@@ -38,6 +38,20 @@
 		{
 			"Name": "SneakGearUI",
 			"Enabled": true
+		},
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		{
+			"Name": "CodexBlueprintMCP",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		}
 	],
 	"TargetPlatforms": [

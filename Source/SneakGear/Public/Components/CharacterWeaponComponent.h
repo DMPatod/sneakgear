@@ -21,6 +21,7 @@ public:
 	void StartFire();
 	void StopFire();
 	void ToggleEquip();
+	void DestroyCurrentWeapon();
 
 	UFUNCTION(BlueprintCallable, Category="Weapon|Ammo")
 	virtual void Reload();

@@ -54,14 +54,13 @@ Everything owned by the player character.
 | `APlayerCharacterBase` | Third-person movement, camera, aim, weapon host |
 | `ASneakGearPlayerCharacter` | Stealth-specific behavior (cover, vault) |
 | `ASneakGearPlayerController` | Player controller |
-| `UPlayerInventoryComponent` | Weapon slots, ammo bookkeeping, active-weapon state |
+| `UPlayerInventoryComponent` | Inventory item slots, item definitions, reserve ammo, weapon-slot storage |
 | `UPlayerInventoryInteractionComponent` | Nearby pickup search and item pickup flow |
-| `UPlayerWeaponComponent` | Player-side weapon firing and reload delegation |
+| `UPlayerWeaponComponent` | Combat-facing weapon equip, fire, reload, state, and animation notify API |
 | `UPlayerHUDComponent` | Radar, crosshair, HUD widget ownership |
-| `UPlayerWeaponMenuComponent` | Quick select and weapon selection menu flow |
 | `UPlayerAimComponent` | Aiming mechanics |
 | `UPlayerLocomotionComponent` | Movement handling |
-| `UPlayerWeaponSelectionComponent` | Weapon menu state logic |
+| `UPlayerWeaponSelectionComponent` | Quick select and hold-to-open weapon selection menu flow |
 
 ### `Guards/`
 Guard AI character, controller, behavior tree nodes, and patrol.
@@ -167,9 +166,9 @@ Automated test suites using the Unreal Automation Framework.
 
 | File | Tests |
 |------|-------|
-| `TestInventory` | Inventory slot management, ammo bookkeeping, weapon slot state |
+| `TestInventory` | Inventory slot management, ammo bookkeeping, pickup/swap rules, weapon slot state |
 | `TestAI` | Guard awareness, perception, state transitions |
-| `TestWeapons` | Weapon firing, reload, fire mode switching |
+| `TestWeapons` | Weapon firing, reload, primary fire mode delegation |
 | `TestCharacters` | Character lifecycle, death, damage handling |
 | `TestUIWidgets` | UI data source responses and widget state |
 

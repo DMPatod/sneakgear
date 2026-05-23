@@ -16,7 +16,8 @@ Current shortlist of project weaknesses worth addressing.
 
 ## Player / Inventory
 
-- `UPlayerInventoryComponent` (1064 LOC) still consolidates slot management, active-weapon state, reserve ammo, and attachment presentation — pickup interaction lives in `UPlayerInventoryInteractionComponent`, weapon firing in `UPlayerWeaponComponent`, and internal pickup/weapon-runtime logic is extracted into private helpers (`FPlayerInventoryPickupQuery`, `FPlayerInventoryWeaponRuntime`), but the public component surface is still too wide
+- `UPlayerInventoryComponent` (1064 LOC) still owns runtime weapon storage, active-weapon slot, reserve ammo, and attachment presentation — pickup interaction lives in `UPlayerInventoryInteractionComponent`, combat-facing weapon behavior now goes through `UPlayerWeaponComponent`, and internal pickup/weapon-runtime logic is extracted into private helpers (`FPlayerInventoryPickupQuery`, `FPlayerInventoryWeaponRuntime`)
+- Deprecated weapon/combat wrappers remain on `UPlayerInventoryComponent` for Blueprint and test compatibility; they should be removed after call sites and assets are migrated
 - Inventory content rules are still lightweight; there is no stronger item definition/data model yet for loadout validation or progression
 
 ## Combat
@@ -31,9 +32,6 @@ Current shortlist of project weaknesses worth addressing.
 
 ## Tooling / Validation
 
-- The project still lacks automated tests for:
-  - guard BT assumptions
-  - inventory slot validity
-  - weapon firing behavior across player and AI owners
-  - death / damage lifecycle expectations
+- Automation coverage now spans inventory, AI, weapons, player character flow, animation, UI, and death/damage lifecycle, but many tests still emit warnings from lightweight test actors with missing meshes/sockets
+- Guard BT setup is runtime-tested but still lacks editor-facing data validation for required blackboard keys and behavior tree assets
 - There is no central project health checklist for verifying a new guard, weapon, or player setup in-editor

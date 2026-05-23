@@ -82,6 +82,8 @@ class SNEAKGEARTESTS_API ATestGuardCharacter : public AGuardCharacter
 	GENERATED_BODY()
 
 public:
+	void ForceDeathForTest();
+
 protected:
 	ATestGuardCharacter();
 	virtual void BeginPlay() override;

@@ -158,6 +158,11 @@ void ATestGuardCharacter::BeginPlay()
 	}
 }
 
+void ATestGuardCharacter::ForceDeathForTest()
+{
+	OnCharacterDeath();
+}
+
 ATestCoverObstacle::ATestCoverObstacle()
 {
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));

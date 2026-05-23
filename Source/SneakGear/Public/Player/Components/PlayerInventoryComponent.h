@@ -79,55 +79,55 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	bool UseActiveUtilityItem();
 
-	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::SetActiveWeaponSlot."))
 	bool SetActiveWeaponSlot(EPlayerItemSlot WeaponSlot, bool bEquipInHand = true);
 
-	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::SetWeaponEquipped."))
 	bool SetWeaponEquipped(bool bNewEquipped);
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::IsWeaponEquipped."))
 	bool IsWeaponEquipped() const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetActiveWeaponSlot."))
 	EPlayerItemSlot GetActiveWeaponSlot() const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetWeaponInSlot."))
 	AWeaponBase* GetWeaponInSlot(EPlayerItemSlot WeaponSlot) const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetActiveWeapon."))
 	AWeaponBase* GetActiveWeapon() const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetWeaponState."))
 	EPlayerInventoryWeaponState GetWeaponState(EPlayerItemSlot WeaponSlot) const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetActiveWeaponState."))
 	EPlayerInventoryWeaponState GetActiveWeaponState() const;
 
-	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::StartActiveWeaponFire."))
 	void StartActiveWeaponFire();
 
-	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::StopActiveWeaponFire."))
 	void StopActiveWeaponFire();
 
-	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::ReloadActiveWeapon."))
 	bool ReloadActiveWeapon();
 
-	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::NotifyActiveWeaponFireAnimation."))
 	bool NotifyActiveWeaponFireAnimation();
 
-	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintCallable, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::NotifyActiveWeaponReloadAnimationFinished."))
 	bool NotifyActiveWeaponReloadAnimationFinished();
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetInClip."))
 	int32 GetInClip(EPlayerItemSlot WeaponSlot) const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetClipSize."))
 	int32 GetClipSize(EPlayerItemSlot WeaponSlot) const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetActiveWeaponInClip."))
 	int32 GetActiveWeaponInClip() const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::GetActiveWeaponClipSize."))
 	int32 GetActiveWeaponClipSize() const;
 
 	UFUNCTION(BlueprintCallable, Category="Inventory|Ammo")
@@ -139,16 +139,16 @@ public:
 	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
 	int32 GetReserveAmmoCount() const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::WasActiveWeaponFireRequestedRecently."))
 	bool WasActiveWeaponFireRequestedRecently(float WindowSeconds = 0.12f) const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::IsActiveWeaponFireNotifyPending."))
 	bool IsActiveWeaponFireNotifyPending() const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::WasActiveWeaponFiredRecently."))
 	bool WasActiveWeaponFiredRecently(float WindowSeconds = 0.12f) const;
 
-	UFUNCTION(BlueprintPure, Category="Inventory|Weapons")
+	UFUNCTION(BlueprintPure, Category="Inventory|Weapons", meta=(DeprecatedFunction, DeprecationMessage="Use UPlayerWeaponComponent::IsActiveWeaponReloading."))
 	bool IsActiveWeaponReloading() const;
 
 	FOnActiveWeaponFireRequested& OnActiveWeaponFireRequestedEvent();

@@ -1,6 +1,6 @@
 #include "Player/SneakGearPlayerAnimInstance.h"
 
-#include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/Components/PlayerWeaponComponent.h"
 #include "Player/PlayerCharacterBase.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "UI/EventLogSubsystem.h"
@@ -60,13 +60,13 @@ void USneakGearPlayerAnimInstance::RefreshFromCharacter(float DeltaSeconds)
 		LinkedWeaponSet = WeaponSetAnimationBP;
 	}
 
-	if (const UPlayerInventoryComponent* ItemComponent = StealthCharacter->GetItemComponent())
+	if (const UPlayerWeaponComponent* WeaponComponent = StealthCharacter->GetWeaponComponent())
 	{
-		ActiveWeaponSlot = ItemComponent->GetActiveWeaponSlot();
-		WeaponState = ItemComponent->GetActiveWeaponState();
-		bWeaponFireRequestedRecently = ItemComponent->WasActiveWeaponFireRequestedRecently();
+		ActiveWeaponSlot = WeaponComponent->GetActiveWeaponSlot();
+		WeaponState = WeaponComponent->GetActiveWeaponState();
+		bWeaponFireRequestedRecently = WeaponComponent->WasActiveWeaponFireRequestedRecently();
 		bWeaponFirePending = WeaponState == EPlayerInventoryWeaponState::FireRequested;
-		bWeaponFiredRecently = ItemComponent->WasActiveWeaponFiredRecently();
+		bWeaponFiredRecently = WeaponComponent->WasActiveWeaponFiredRecently();
 		bIsReloading = WeaponState == EPlayerInventoryWeaponState::Reloading;
 	}
 }
@@ -86,8 +86,8 @@ bool USneakGearPlayerAnimInstance::NotifyWeaponFireAnimation()
 		NativeInitializeAnimation();
 	}
 
-	UPlayerInventoryComponent* ItemComponent = StealthCharacter ? StealthCharacter->GetItemComponent() : nullptr;
-	return ItemComponent ? ItemComponent->NotifyActiveWeaponFireAnimation() : false;
+	UPlayerWeaponComponent* WeaponComponent = StealthCharacter ? StealthCharacter->GetWeaponComponent() : nullptr;
+	return WeaponComponent ? WeaponComponent->NotifyActiveWeaponFireAnimation() : false;
 }
 
 bool USneakGearPlayerAnimInstance::NotifyWeaponReloadAnimationFinished()
@@ -97,6 +97,6 @@ bool USneakGearPlayerAnimInstance::NotifyWeaponReloadAnimationFinished()
 		NativeInitializeAnimation();
 	}
 
-	UPlayerInventoryComponent* ItemComponent = StealthCharacter ? StealthCharacter->GetItemComponent() : nullptr;
-	return ItemComponent ? ItemComponent->NotifyActiveWeaponReloadAnimationFinished() : false;
+	UPlayerWeaponComponent* WeaponComponent = StealthCharacter ? StealthCharacter->GetWeaponComponent() : nullptr;
+	return WeaponComponent ? WeaponComponent->NotifyActiveWeaponReloadAnimationFinished() : false;
 }

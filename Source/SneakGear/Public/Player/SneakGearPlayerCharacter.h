@@ -8,6 +8,7 @@ class UCoverComponent;
 class UCoverStateComponent;
 class UPlayerInventoryInteractionComponent;
 class UPlayerInventoryComponent;
+class UPlayerWeaponComponent;
 class AWeaponBase;
 class UInputAction;
 struct FInputActionValue;
@@ -31,6 +32,12 @@ public:
 	UPlayerInventoryComponent* GetItemComponent() const
 	{
 		return ItemComponent;
+	}
+
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	UPlayerWeaponComponent* GetWeaponComponent() const
+	{
+		return WeaponComponent;
 	}
 
 	UFUNCTION(BlueprintPure, Category="Cover")
@@ -98,6 +105,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	TObjectPtr<UPlayerInventoryComponent> ItemComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat")
+	TObjectPtr<UPlayerWeaponComponent> WeaponComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Inventory")
 	TObjectPtr<UPlayerInventoryInteractionComponent> InventoryInteractionComponent;

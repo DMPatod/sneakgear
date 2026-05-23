@@ -1,6 +1,6 @@
 #include "Player/Components/PlayerWeaponSelectionComponent.h"
 
-#include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/Components/PlayerWeaponComponent.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "Player/SneakGearPlayerController.h"
 #include "TimerManager.h"
@@ -130,9 +130,9 @@ void UPlayerWeaponSelectionComponent::SelectWeaponFromSelectionMenu(EPlayerItemS
 
 	if (ASneakGearPlayerCharacter* PlayerCharacter = GetOwningSneakGearPlayerCharacter())
 	{
-		if (UPlayerInventoryComponent* ItemComponent = PlayerCharacter->GetItemComponent())
+		if (UPlayerWeaponComponent* WeaponComponent = PlayerCharacter->GetWeaponComponent())
 		{
-			ItemComponent->SetActiveWeaponSlot(Slot, true);
+			WeaponComponent->SetActiveWeaponSlot(Slot, true);
 		}
 	}
 

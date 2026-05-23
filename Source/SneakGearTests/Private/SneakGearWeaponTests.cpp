@@ -91,15 +91,11 @@ bool FWeaponBaseUsesAnimationDrivenFireNotifiesTest::RunTest(const FString& Para
 	return true;
 }
 
-// Demonstrates fix #1: AHitscanWeaponBase::FireOnce overrides without calling Super, so
-// PrimaryFireMode->FireOnce is never invoked. Setting PrimaryFireModeClass on a hitscan
-// weapon has no effect — the component is initialized but silently bypassed.
-// Expected: FireMode->FireCount == 1. Actual: FireMode->FireCount == 0.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHitscanWeaponBaseFireModeComponentIsBypassedTest,
-	"SneakGear.Weapon.HitscanWeaponBase.FireModeComponentIsBypassed",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FHitscanWeaponBaseUsesPrimaryFireModeComponentTest,
+	"SneakGear.Weapon.HitscanWeaponBase.UsesPrimaryFireModeComponent",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FHitscanWeaponBaseFireModeComponentIsBypassedTest::RunTest(const FString& Parameters)
+bool FHitscanWeaponBaseUsesPrimaryFireModeComponentTest::RunTest(const FString& Parameters)
 {
 	UWorld* World = CreateTestWorld();
 	TestNotNull(TEXT("Test world should be created"), World);
@@ -123,8 +119,6 @@ bool FHitscanWeaponBaseFireModeComponentIsBypassedTest::RunTest(const FString& P
 
 	UTestWeaponFireModeComponent* FireMode = Weapon->GetTestFireMode();
 	TestNotNull(TEXT("PrimaryFireMode component should be initialized after BeginPlay"), FireMode);
-	// FAILS: AHitscanWeaponBase::FireOnce does not call Super::FireOnce, so PrimaryFireMode
-	// is never used. Fix: move hitscan logic into UHitscanFireMode and remove the override.
 	TestEqual(TEXT("Hitscan fire should be delegated to the PrimaryFireMode component"),
 		FireMode ? FireMode->FireCount : -1, 1);
 

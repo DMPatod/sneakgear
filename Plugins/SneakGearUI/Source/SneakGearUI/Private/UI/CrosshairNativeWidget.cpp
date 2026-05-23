@@ -61,13 +61,15 @@ void UCrosshairNativeWidget::BuildWidgetTree()
 		WidgetTree->RootWidget = Root;
 	}
 
+	const float ArmCenterOffset = CenterGap + ArmLength * 0.5f;
+
 	if (!Crosshair_Up)
 	{
 		Crosshair_Up = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), TEXT("Crosshair_Up"));
 		Crosshair_Up->SetBrushFromTexture(WhiteTexture, true);
 		Crosshair_Up->SetColorAndOpacity(CrosshairColor);
 		ConfigureCanvasSlot(Cast<UCanvasPanelSlot>(Root->AddChild(Crosshair_Up)), FVector2D(ArmThickness, ArmLength),
-		                    FVector2D(0.f, -(CenterGap + ArmLength)));
+		                    FVector2D(0.f, -ArmCenterOffset));
 	}
 
 	if (!Crosshair_Down)
@@ -76,7 +78,7 @@ void UCrosshairNativeWidget::BuildWidgetTree()
 		Crosshair_Down->SetBrushFromTexture(WhiteTexture, true);
 		Crosshair_Down->SetColorAndOpacity(CrosshairColor);
 		ConfigureCanvasSlot(Cast<UCanvasPanelSlot>(Root->AddChild(Crosshair_Down)), FVector2D(ArmThickness, ArmLength),
-		                    FVector2D(0.f, CenterGap));
+		                    FVector2D(0.f, ArmCenterOffset));
 	}
 
 	if (!Crosshair_Left)
@@ -85,7 +87,7 @@ void UCrosshairNativeWidget::BuildWidgetTree()
 		Crosshair_Left->SetBrushFromTexture(WhiteTexture, true);
 		Crosshair_Left->SetColorAndOpacity(CrosshairColor);
 		ConfigureCanvasSlot(Cast<UCanvasPanelSlot>(Root->AddChild(Crosshair_Left)), FVector2D(ArmLength, ArmThickness),
-		                    FVector2D(-(CenterGap + ArmLength), 0.f));
+		                    FVector2D(-ArmCenterOffset, 0.f));
 	}
 
 	if (!Crosshair_Right)
@@ -94,7 +96,7 @@ void UCrosshairNativeWidget::BuildWidgetTree()
 		Crosshair_Right->SetBrushFromTexture(WhiteTexture, true);
 		Crosshair_Right->SetColorAndOpacity(CrosshairColor);
 		ConfigureCanvasSlot(Cast<UCanvasPanelSlot>(Root->AddChild(Crosshair_Right)), FVector2D(ArmLength, ArmThickness),
-		                    FVector2D(CenterGap, 0.f));
+		                    FVector2D(ArmCenterOffset, 0.f));
 	}
 
 	if (!HitMarker)
@@ -106,5 +108,3 @@ void UCrosshairNativeWidget::BuildWidgetTree()
 		                    FVector2D(0.f, 0.f));
 	}
 }
-
-

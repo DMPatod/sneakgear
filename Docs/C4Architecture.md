@@ -64,7 +64,7 @@ C4Component
     Component(characters, "Characters", "ABaseCharacter", "Base GAS character: lifecycle, damage, death hook")
 
     Component(player, "Player", "APlayerCharacterBase\nASneakGearPlayerCharacter", "Third-person movement, aim, cover, vault, camera")
-    Component(playercomps, "Player Components", "UPlayerInventoryComponent\nUPlayerWeaponComponent\nUPlayerHUDComponent\nUPlayerInventoryInteractionComponent\nUPlayerWeaponMenuComponent", "Inventory, weapon firing, HUD ownership, pickup, weapon menu")
+    Component(playercomps, "Player Components", "UPlayerInventoryComponent\nUPlayerWeaponComponent\nUPlayerHUDComponent\nUPlayerInventoryInteractionComponent\nUPlayerWeaponSelectionComponent", "Inventory, combat-facing weapon API, HUD ownership, pickup, weapon menu")
 
     Component(guards, "Guards", "AGuardCharacter\nAGuardAIController\nUGuardAwarenessComponent\nUGuardPatrolComponent", "Guard AI: awareness, patrol, combat, BT synchronization")
     Component(bttasks, "Guard BT Nodes", "BTTask_SetNextPatrolPoint\nBTTask_StartGuardFire / StopGuardFire\nBTTask_ReloadGuardWeapon\nBTService_UpdateGuardFireState\nBTDecorator_IsGuardClipEmpty", "Behavior tree tasks, services, and decorators")
@@ -84,7 +84,7 @@ C4Component
   Rel(guards, characters, "Extends")
 
   Rel(player, playercomps, "Owns")
-  Rel(playercomps, weapon, "Fires and reloads via")
+  Rel(playercomps, weapon, "Equips, fires, and reloads via UPlayerWeaponComponent")
   Rel(playercomps, items, "Stores slot items from")
   Rel(playercomps, sharedcomps, "Uses cover and stealth")
   Rel(player, radar, "Contacts displayed on HUD via")

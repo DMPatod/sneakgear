@@ -1,10 +1,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/AnimInstance.h"
 #include "Weapon/HitscanWeaponBase.h"
 #include "Weapon/WeaponBase.h"
 #include "Weapon/WeaponFireModeComponent.h"
 #include "TestWeapons.generated.h"
+
+UCLASS()
+class SNEAKGEARTESTS_API UTestPrimaryWeaponAnimLayer : public UAnimInstance
+{
+	GENERATED_BODY()
+};
+
+UCLASS()
+class SNEAKGEARTESTS_API UTestSecondaryWeaponAnimLayer : public UAnimInstance
+{
+	GENERATED_BODY()
+};
 
 UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
 class SNEAKGEARTESTS_API UTestWeaponFireModeComponent : public UWeaponFireModeComponent

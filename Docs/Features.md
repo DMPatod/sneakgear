@@ -6,6 +6,7 @@
 - Aim mode with first-person / third-person camera switching
 - Cover and vault behavior
 - Inventory-backed primary / secondary weapon slots
+- Player weapon component for equip/fire/reload/animation notify flow
 - Hold-to-open weapon selection menu
 - Quick weapon indicator
 - Shared aim-provider path for both player and AI weapons
@@ -17,7 +18,8 @@
 - Hitscan fire mode
 - Projectile fire mode
 - Shared `UCharacterWeaponComponent` for non-inventory characters
-- Player inventory weapon runtime through `UPlayerInventoryComponent`
+- Player combat-facing weapon API through `UPlayerWeaponComponent`
+- Runtime weapon spawning, attachment, clip, and reserve synchronization backed by the inventory runtime helper
 
 ## AI
 

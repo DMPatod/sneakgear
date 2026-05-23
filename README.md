@@ -23,13 +23,6 @@ Unreal Engine 5.7 stealth-action project inspired by the Metal Gear Solid series
 - Equipped item display, weapon selection menu, event log feed, and stealth debug widget
 - UI layer isolated as `SneakGearUI` plugin; reads from `IPlayerUIDataSource`
 
-## Known Issues
-
-These are documented by failing automation tests and tracked in [Technical Debt](Docs/TechnicalDebt.md):
-
-- `AHitscanWeaponBase::FireOnce` overrides without calling `Super`, bypassing `PrimaryFireMode` entirely — `UHitscanFireMode` is initialized but never used (`SneakGear.Weapon.HitscanWeaponBase.FireModeComponentIsBypassed`)
-- Weapon does not auto-resume fire after reload when the trigger is held through the reload (`SneakGear.Inventory.PlayerInventoryComponent.WeaponDoesNotAutoResumeFireAfterReload`)
-
 ## Docs
 
 | Document | Description |

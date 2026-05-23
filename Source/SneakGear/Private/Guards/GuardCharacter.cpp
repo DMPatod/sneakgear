@@ -342,7 +342,7 @@ void AGuardCharacter::OnCharacterDeath()
 	bIsFiringAtTarget = false;
 	if (WeaponComponent)
 	{
-		WeaponComponent->StopFire();
+		WeaponComponent->DestroyCurrentWeapon();
 	}
 
 	Super::OnCharacterDeath();

@@ -72,12 +72,7 @@ void UCharacterWeaponComponent::BeginPlay()
 
 void UCharacterWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->OnWeaponFireRequestedEvent().RemoveAll(this);
-		CurrentWeapon->OnWeaponFiredEvent().RemoveAll(this);
-		CurrentWeapon->OnWeaponReloadedEvent().RemoveAll(this);
-	}
+	DestroyCurrentWeapon();
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -135,6 +130,30 @@ void UCharacterWeaponComponent::ToggleEquip()
 		                          : HolsterSocketName;
 
 	AttachWeaponToSocket(TargetSocket);
+}
+
+void UCharacterWeaponComponent::DestroyCurrentWeapon()
+{
+	if (!CurrentWeapon)
+	{
+		return;
+	}
+
+	CurrentWeapon->StopFire();
+	CurrentWeapon->OnWeaponFireRequestedEvent().RemoveAll(this);
+	CurrentWeapon->OnWeaponFiredEvent().RemoveAll(this);
+	CurrentWeapon->OnWeaponReloadedEvent().RemoveAll(this);
+
+	AWeaponBase* WeaponToDestroy = CurrentWeapon;
+	CurrentWeapon = nullptr;
+	InClip = -1;
+	bIsReloading = false;
+	LastWeaponFireRequestTimestamp = -1000.f;
+
+	if (!WeaponToDestroy->IsActorBeingDestroyed())
+	{
+		WeaponToDestroy->Destroy();
+	}
 }
 
 void UCharacterWeaponComponent::AttachWeaponToSocket(FName SocketName) const

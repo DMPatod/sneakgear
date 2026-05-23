@@ -4,11 +4,13 @@
 
 #include "Items/MedkitItemDefinition.h"
 #include "Items/ScannerItemDefinition.h"
+#include "Components/CharacterWeaponComponent.h"
 #include "Components/Cover/CoverStateComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/SneakGearPlayerAnimInstance.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "Game/GAS/HealthAttributeSet.h"
+#include "Weapon/WeaponBase.h"
 
 #include "SneakGearTestTypes.h"
 #include "TestCharacters.h"
@@ -102,6 +104,44 @@ bool FBaseCharacterDeathOnlyRunsOnceTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FGuardCharacterDeathDestroysWeaponTest,
+	"SneakGear.Characters.GuardCharacter.DeathDestroysWeapon",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FGuardCharacterDeathDestroysWeaponTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ATestGuardCharacter* Guard = World->SpawnActor<ATestGuardCharacter>();
+	TestNotNull(TEXT("Test guard should be created"), Guard);
+	if (!Guard)
+	{
+		return false;
+	}
+
+	UCharacterWeaponComponent* WeaponComponent = Guard->FindComponentByClass<UCharacterWeaponComponent>();
+	TestNotNull(TEXT("Guard weapon component should exist"), WeaponComponent);
+	if (!WeaponComponent)
+	{
+		return false;
+	}
+
+	WeaponComponent->InitializeWeaponForTesting();
+	AWeaponBase* Weapon = WeaponComponent->GetCurrentWeapon();
+	TestNotNull(TEXT("Guard should have a spawned weapon before death"), Weapon);
+	if (!Weapon)
+	{
+		return false;
+	}
+
+	Guard->ForceDeathForTest();
+
+	TestNull(TEXT("Guard weapon component should clear current weapon on death"), WeaponComponent->GetCurrentWeapon());
+	TestTrue(TEXT("Guard weapon actor should be destroyed on guard death"), Weapon->IsActorBeingDestroyed());
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerAnimInstanceMirrorsWeaponStateTest,
 	"SneakGear.Player.SneakGearPlayerAnimInstance.MirrorsWeaponState",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -167,6 +207,86 @@ bool FSneakGearPlayerAnimInstanceMirrorsWeaponStateTest::RunTest(const FString& 
 		AnimInstance->WeaponState, EPlayerInventoryWeaponState::Reloading);
 	TestFalse(TEXT("Reloading weapon state should not drive fire pending"), AnimInstance->bWeaponFirePending);
 	TestTrue(TEXT("Reloading weapon state should drive reload"), AnimInstance->bIsReloading);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSneakGearPlayerAnimInstanceChangesLayerWithWeaponTest,
+	"SneakGear.Player.SneakGearPlayerAnimInstance.ChangesLayerWithWeapon",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSneakGearPlayerAnimInstanceChangesLayerWithWeaponTest::RunTest(const FString& Parameters)
+{
+	UWorld* World = CreateTestWorld();
+	TestNotNull(TEXT("Test world should be created"), World);
+
+	ASneakGearPlayerCharacter* Character = World->SpawnActor<ASneakGearPlayerCharacter>(FVector::ZeroVector, FRotator::ZeroRotator);
+	ATestPickupActor* PrimaryPickup = World->SpawnActor<ATestPickupActor>(FVector(50.f, 0.f, 0.f), FRotator::ZeroRotator);
+	ATestPickupActor* SecondaryPickup = World->SpawnActor<ATestPickupActor>(FVector(75.f, 0.f, 0.f), FRotator::ZeroRotator);
+	UPlayerItemDefinition* PrimaryWeaponDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+	UPlayerItemDefinition* SecondaryWeaponDefinition = NewObject<UPlayerItemDefinition>(GetTransientPackage());
+
+	TestNotNull(TEXT("Player character should spawn"), Character);
+	TestNotNull(TEXT("Primary weapon pickup should spawn"), PrimaryPickup);
+	TestNotNull(TEXT("Secondary weapon pickup should spawn"), SecondaryPickup);
+	TestNotNull(TEXT("Primary weapon definition should be created"), PrimaryWeaponDefinition);
+	TestNotNull(TEXT("Secondary weapon definition should be created"), SecondaryWeaponDefinition);
+	TestNotNull(TEXT("Player character mesh should exist"), Character ? Character->GetMesh() : nullptr);
+
+	USneakGearPlayerAnimInstance* AnimInstance = Character && Character->GetMesh()
+		? NewObject<USneakGearPlayerAnimInstance>(Character->GetMesh())
+		: nullptr;
+	TestNotNull(TEXT("Anim instance should be created"), AnimInstance);
+	if (!Character || !PrimaryPickup || !SecondaryPickup || !PrimaryWeaponDefinition || !SecondaryWeaponDefinition || !AnimInstance)
+	{
+		return false;
+	}
+
+	PrimaryWeaponDefinition->ItemId = TEXT("AnimLayerPrimaryRifle");
+	PrimaryWeaponDefinition->DisplayName = FText::FromString(TEXT("Anim Layer Primary Rifle"));
+	PrimaryWeaponDefinition->SlotType = EPlayerItemSlot::PrimaryWeapon;
+	PrimaryWeaponDefinition->WeaponClass = ATestWeapon::StaticClass();
+	PrimaryPickup->GetPickupComponent()->SetItemDefinitionForTest(PrimaryWeaponDefinition);
+
+	SecondaryWeaponDefinition->ItemId = TEXT("AnimLayerSecondarySMG");
+	SecondaryWeaponDefinition->DisplayName = FText::FromString(TEXT("Anim Layer Secondary SMG"));
+	SecondaryWeaponDefinition->SlotType = EPlayerItemSlot::SecondaryWeapon;
+	SecondaryWeaponDefinition->WeaponClass = ATestWeapon::StaticClass();
+	SecondaryPickup->GetPickupComponent()->SetItemDefinitionForTest(SecondaryWeaponDefinition);
+
+	TestTrue(TEXT("Primary weapon pickup should succeed"), Character->GetItemComponent()->PickUpFromFloor(PrimaryPickup));
+	TestTrue(TEXT("Secondary weapon pickup should succeed"), Character->GetItemComponent()->PickUpFromFloor(SecondaryPickup));
+
+	AWeaponBase* PrimaryWeapon = Character->GetItemComponent()->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon);
+	AWeaponBase* SecondaryWeapon = Character->GetItemComponent()->GetWeaponInSlot(EPlayerItemSlot::SecondaryWeapon);
+	TestNotNull(TEXT("Primary runtime weapon should exist"), PrimaryWeapon);
+	TestNotNull(TEXT("Secondary runtime weapon should exist"), SecondaryWeapon);
+	if (!PrimaryWeapon || !SecondaryWeapon)
+	{
+		return false;
+	}
+
+	PrimaryWeapon->AnimationSetBP = UTestPrimaryWeaponAnimLayer::StaticClass();
+	SecondaryWeapon->AnimationSetBP = UTestSecondaryWeaponAnimLayer::StaticClass();
+
+	AnimInstance->RefreshFromCharacterForTest(Character);
+	TestEqual(TEXT("Primary weapon should initially be active"),
+		AnimInstance->ActiveWeaponSlot, EPlayerItemSlot::PrimaryWeapon);
+	TestEqual(TEXT("Anim instance should expose the primary weapon animation layer"),
+		AnimInstance->WeaponSetAnimationBP.Get(), UTestPrimaryWeaponAnimLayer::StaticClass());
+	TestEqual(TEXT("Anim instance should link the primary weapon animation layer"),
+		AnimInstance->LinkedWeaponSet.Get(), UTestPrimaryWeaponAnimLayer::StaticClass());
+
+	TestTrue(TEXT("Secondary weapon slot should be selectable"),
+		Character->GetItemComponent()->SetActiveWeaponSlot(EPlayerItemSlot::SecondaryWeapon, true));
+
+	AnimInstance->RefreshFromCharacterForTest(Character);
+	TestEqual(TEXT("Secondary weapon should become active"),
+		AnimInstance->ActiveWeaponSlot, EPlayerItemSlot::SecondaryWeapon);
+	TestEqual(TEXT("Anim instance should expose the secondary weapon animation layer after weapon change"),
+		AnimInstance->WeaponSetAnimationBP.Get(), UTestSecondaryWeaponAnimLayer::StaticClass());
+	TestEqual(TEXT("Anim instance should relink the secondary weapon animation layer after weapon change"),
+		AnimInstance->LinkedWeaponSet.Get(), UTestSecondaryWeaponAnimLayer::StaticClass());
 
 	return true;
 }

@@ -4,6 +4,7 @@
 #include "GameFramework/Controller.h"
 #include "Items/PlayerItemPickupComponent.h"
 #include "Player/Components/PlayerInventoryComponent.h"
+#include "Player/Components/PlayerWeaponComponent.h"
 #include "Player/SneakGearPlayerCharacter.h"
 #include "Player/SneakGearPlayerController.h"
 
@@ -14,25 +15,25 @@ UPlayerInventoryInteractionComponent::UPlayerInventoryInteractionComponent()
 
 void UPlayerInventoryInteractionComponent::InitializeActiveWeaponFromInventory()
 {
-	UPlayerInventoryComponent* ItemComponent = GetInventoryComponent();
-	if (!ItemComponent)
+	UPlayerWeaponComponent* WeaponComponent = GetWeaponComponent();
+	if (!WeaponComponent)
 	{
 		return;
 	}
 
-	if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon))
+	if (WeaponComponent->GetWeaponInSlot(EPlayerItemSlot::PrimaryWeapon))
 	{
-		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon, true);
+		WeaponComponent->SetActiveWeaponSlot(EPlayerItemSlot::PrimaryWeapon, true);
 		return;
 	}
 
-	if (ItemComponent->GetWeaponInSlot(EPlayerItemSlot::SecondaryWeapon))
+	if (WeaponComponent->GetWeaponInSlot(EPlayerItemSlot::SecondaryWeapon))
 	{
-		ItemComponent->SetActiveWeaponSlot(EPlayerItemSlot::SecondaryWeapon, true);
+		WeaponComponent->SetActiveWeaponSlot(EPlayerItemSlot::SecondaryWeapon, true);
 		return;
 	}
 
-	ItemComponent->SetWeaponEquipped(true);
+	WeaponComponent->SetWeaponEquipped(true);
 }
 
 void UPlayerInventoryInteractionComponent::ResetInteractionState()
@@ -270,6 +271,12 @@ UPlayerInventoryComponent* UPlayerInventoryInteractionComponent::GetInventoryCom
 	return Character ? Character->GetItemComponent() : nullptr;
 }
 
+UPlayerWeaponComponent* UPlayerInventoryInteractionComponent::GetWeaponComponent() const
+{
+	ASneakGearPlayerCharacter* Character = GetOwnerCharacter();
+	return Character ? Character->GetWeaponComponent() : nullptr;
+}
+
 void UPlayerInventoryInteractionComponent::HandleWeaponSlotPressed(EPlayerItemSlot Slot)
 {
 	UWorld* World = GetWorld();
@@ -320,25 +327,25 @@ void UPlayerInventoryInteractionComponent::HandleWeaponSlotReleased(EPlayerItemS
 
 void UPlayerInventoryInteractionComponent::HandleWeaponSlotSelect(EPlayerItemSlot Slot)
 {
-	UPlayerInventoryComponent* ItemComponent = GetInventoryComponent();
+	UPlayerWeaponComponent* WeaponComponent = GetWeaponComponent();
 	ASneakGearPlayerCharacter* Character = GetOwnerCharacter();
-	if (!ItemComponent || !Character)
+	if (!WeaponComponent || !Character)
 	{
 		return;
 	}
 
-	const bool bSameSlot = ItemComponent->GetActiveWeaponSlot() == Slot;
-	const bool bCurrentlyEquipped = ItemComponent->IsWeaponEquipped();
+	const bool bSameSlot = WeaponComponent->GetActiveWeaponSlot() == Slot;
+	const bool bCurrentlyEquipped = WeaponComponent->IsWeaponEquipped();
 	if (bSameSlot && bCurrentlyEquipped)
 	{
-		if (ItemComponent->SetWeaponEquipped(false))
+		if (WeaponComponent->SetWeaponEquipped(false))
 		{
 			Character->OnPlayerUIWeaponStateChangedEvent().Broadcast();
 		}
 		return;
 	}
 
-	if (ItemComponent->SetActiveWeaponSlot(Slot, true))
+	if (WeaponComponent->SetActiveWeaponSlot(Slot, true))
 	{
 		Character->OnPlayerUIWeaponStateChangedEvent().Broadcast();
 	}

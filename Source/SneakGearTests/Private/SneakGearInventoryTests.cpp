@@ -39,11 +39,11 @@ FPlayerInventoryItem MakeInventoryItem(FName ItemId, EPlayerItemSlot Slot, const
 }
 
 // Guards held-trigger behavior while reload animation completion is driven by a notify.
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentWeaponDoesNotAutoResumeFireAfterReloadTest,
-	"SneakGear.Inventory.PlayerInventoryComponent.WeaponDoesNotAutoResumeFireAfterReload",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FPlayerInventoryComponentWeaponAutoResumesFireAfterReloadTest,
+	"SneakGear.Inventory.PlayerInventoryComponent.WeaponAutoResumesFireAfterReload",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FPlayerInventoryComponentWeaponDoesNotAutoResumeFireAfterReloadTest::RunTest(const FString& Parameters)
+bool FPlayerInventoryComponentWeaponAutoResumesFireAfterReloadTest::RunTest(const FString& Parameters)
 {
 	UWorld* World = CreateTestWorld();
 	TestNotNull(TEXT("Test world should be created"), World);

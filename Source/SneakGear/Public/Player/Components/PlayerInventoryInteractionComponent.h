@@ -7,6 +7,7 @@
 
 class ASneakGearPlayerCharacter;
 class UPlayerInventoryComponent;
+class UPlayerWeaponComponent;
 class UPlayerItemPickupComponent;
 
 UCLASS(ClassGroup=(SneakGear), meta=(BlueprintSpawnableComponent))
@@ -51,6 +52,7 @@ protected:
 private:
 	ASneakGearPlayerCharacter* GetOwnerCharacter() const;
 	UPlayerInventoryComponent* GetInventoryComponent() const;
+	UPlayerWeaponComponent* GetWeaponComponent() const;
 	void HandleWeaponSlotPressed(EPlayerItemSlot Slot);
 	void HandleWeaponSlotReleased(EPlayerItemSlot Slot);
 	void HandleWeaponSlotSelect(EPlayerItemSlot Slot);
